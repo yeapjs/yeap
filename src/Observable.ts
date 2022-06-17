@@ -3,15 +3,15 @@ import { isDefined } from "./utils"
 
 const observableSymbol = Symbol("observable")
 
-export class DeepObservable<T, P> {
+export class DeepObservable<T> {
   static isObservable(arg: any): arg is Reactor<any> {
     return !!arg[observableSymbol]
   }
 
   [observableSymbol] = true
-  #parent: DeepObservable<T, this> | null
+  #parent: DeepObservable<T> | null
   #handlers: Array<SubscribeHandler<T>> = []
-  constructor(public value: T, parent: DeepObservable<T, unknown> | null = null) {
+  constructor(public value: T, parent: DeepObservable<T> | null = null) {
     this.#parent = parent
     if (this.#parent) this.#handlers = this.#parent.#handlers
 
