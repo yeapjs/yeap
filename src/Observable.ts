@@ -1,4 +1,4 @@
-import { Reactor, SubcribeHandler } from "../types/global"
+import { Reactor, SubscribeHandler } from "../types/global"
 import { isDefined } from "./utils"
 
 const observableSymbol = Symbol("observable")
@@ -10,12 +10,13 @@ export class DeepObservable<T, P> {
 
   [observableSymbol] = true
   #parent: DeepObservable<T, this> | null
-  #handlers: Array<SubcribeHandler<T>> = []
+  #handlers: Array<SubscribeHandler<T>> = []
   constructor(public value: T, parent: DeepObservable<T, unknown> | null = null) {
     this.#parent = parent
+    if (this.#parent) this.#handlers = this.#parent.#handlers
 
     this.call = this.call.bind(this)
-    this.subcribe = this.subcribe.bind(this)
+    this.subscribe = this.subscribe.bind(this)
 
     return new Proxy(() => this.value, {
       apply: (target, thisArg, argArray: [((v: T) => T) | T] | []) => {
@@ -41,9 +42,8 @@ export class DeepObservable<T, P> {
     }) as any
   }
 
-  subcribe(handler: SubcribeHandler<T>) {
-    if (this.#parent) this.#parent.subcribe(handler)
-    else this.#handlers = [...this.#handlers, handler]
+  subscribe(handler: SubscribeHandler<T>) {
+    this.#handlers.push(handler)
   }
 
   call(prev: T, next: T) {

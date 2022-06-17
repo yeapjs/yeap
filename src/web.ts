@@ -30,7 +30,7 @@ function append(parent: HTMLElement, children: ReccursiveArray<HTMLElement | Rea
     else if (child instanceof Array) append(parent, child)
     else if (DeepObservable.isObservable(child)) {
       let text = document.createTextNode(stringify(child()))
-      child.subcribe((_: any, value: any) => {
+      child.subscribe((_: any, value: any) => {
         let newChild = document.createTextNode(stringify(child()))
         parent.replaceChild(newChild, text)
         text = newChild
