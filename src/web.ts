@@ -1,7 +1,7 @@
 import { Children, Component } from "../types/global";
 import { createReactor } from "./app";
 import { generateList } from "./dom";
-import { isDefined, isEvent, stringify } from "./utils";
+import { isDefined, isEvent, stringify, toArray } from "./utils";
 
 interface Props { [key: string]: EventListenerOrEventListenerObject | any }
 
@@ -30,5 +30,5 @@ export function h(tag: Component | string, props: Props | null, ...children: Chi
 }
 
 export function render(children: Children, container: HTMLElement) {
-  container.append(...generateList([], children))
+  container.append(...generateList([], toArray(children)))
 }

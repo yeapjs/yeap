@@ -5,7 +5,7 @@ const observableSymbol = Symbol("observable")
 
 export class DeepObservable<T> {
   static isObservable(arg: any): arg is Reactor<any> {
-    return !!arg[observableSymbol]
+    return !!arg?.[observableSymbol]
   }
 
   [observableSymbol] = true
@@ -33,10 +33,13 @@ export class DeepObservable<T> {
         return value
       },
       get: (target, p, receiver) => {
-        const v = (value as any)[p]
+        const value = (target() as any)[p]
         if (p in this) {
           return (this as any)[p]
-        } else if (isDefined(v)) return new DeepObservable(v, parent ?? this)
+        } else if (isDefined(value)) {
+          if (DeepObservable.isObservable(value)) return value
+          return new DeepObservable(value, parent ?? this)
+        }
         return undefined
       }
     }) as any
