@@ -18,7 +18,11 @@ export function h(tag: string, props: Props | null, ...children: ReccursiveArray
     }
   }
 
-  element.append(...generateList([], children))
+  render(children, element)
 
   return element
+}
+
+export function render(children: ReccursiveArray<HTMLElement | Reactor<any> | any>, container: HTMLElement) {
+  container.append(...generateList([], children))
 }
