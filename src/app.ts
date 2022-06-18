@@ -1,4 +1,4 @@
-import { Reactor } from "../types/global"
+import { Children, Component, Reactor } from "../types/global"
 import { DeepObservable } from "./Observable"
 
 function getValue<T>(a: T | Reactor<T>): T {
@@ -23,4 +23,8 @@ export function createComputed<T>(reactorHandle: () => (T | Reactor<T>), ...deps
 
 export function createReactor<T>(initialValue: T): Reactor<T> {
   return new DeepObservable(initialValue, null) as any
+}
+
+export const Fragment: Component<{}> = (_, children) => {
+  return children
 }
