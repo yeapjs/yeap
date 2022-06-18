@@ -7,6 +7,10 @@ export function stringify(v: unknown): string {
   return String(v)
 }
 
+export function toArray<T>(value: T | Array<T>): Array<T> {
+  return value instanceof Array ? value : [value]
+}
+
 export function isDefined(v: any): boolean {
   return v !== null && v !== undefined
 }
