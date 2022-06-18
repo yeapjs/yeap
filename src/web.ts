@@ -7,14 +7,13 @@ interface Props { [key: string]: EventListenerOrEventListenerObject | any }
 
 export function h(tag: Component | string, props: Props | null, ...children: Children) {
   if (!isDefined(props)) props = {}
-  let element
   if (typeof tag === "function") {
-    const reactiveProps = createReactor(props || {})
-    element = tag(reactiveProps, children)
-  } else {
-    const is = props?.is?.toString()
-    element = document.createElement(tag, { is })
+    const reactiveProps = createReactor(props!)
+    return tag(reactiveProps, children)
   }
+
+  const is = props?.is?.toString()
+  const element = document.createElement(tag, { is })
 
   for (const prop in props) {
     if (prop === "is") continue

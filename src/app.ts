@@ -3,7 +3,7 @@ import { DeepObservable } from "./Observable"
 
 function getValue<T>(a: T | Reactor<T>): T {
   if (DeepObservable.isObservable(a)) return (a as Reactor<T>)()
-  return a
+  return a as T
 }
 
 export function createComputed<T>(reactorHandle: () => (T | Reactor<T>), ...deps: Array<Reactor<T>>): Reactor<T> {
