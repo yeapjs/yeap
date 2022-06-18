@@ -1,4 +1,4 @@
-import { HTMLContainer, Reactor, ReccursiveArray } from "../types/global";
+import { Children, HTMLContainer, Reactor } from "../types/global";
 import { DeepObservable } from "./Observable";
 import { isDefined, stringify, toArray } from "./utils";
 
@@ -6,7 +6,7 @@ export function generateDOM(content: any): Text {
   return document.createTextNode(stringify(content))
 }
 
-export function generateList(container: HTMLContainer, children: ReccursiveArray<HTMLElement | Reactor<any> | any>): HTMLContainer {
+export function generateList(container: HTMLContainer, children: Children): HTMLContainer {
   for (const child of children) {
     if (child instanceof HTMLElement) container = [...container, child]
     else if (child instanceof Array) container = [...generateList(container, child)]
