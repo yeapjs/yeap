@@ -2,18 +2,29 @@
   "name": "yeap",
   "version": "1.0.0-alpha.1",
   "description": "Magicless UI builder",
-  "main": "index.js",
+  "main": "./lib/app.js",
+  "types": "./types/app.d.ts",
   "type": "module",
   "exports": {
     ".": {
       "default": "./lib/app.js"
+    },
+    "./web": {
+      "default": "./lib/web.js"
     }
   },
   "typesVersions": {
     ">=3.1": {
-      
+      "*": [
+        "types/*"
+      ]
     }
   },
+  "files": [
+    "lib/**/*",
+    "types/**/*",
+    "README.md"
+  ],
   "scripts": {
     "dev": "tsc --watch",
     "build": "tsc",

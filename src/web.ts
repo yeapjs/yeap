@@ -1,11 +1,11 @@
-import { Children, Component } from "../types/global";
+import { Component } from "../types/app";
 import { createReactor } from "./app";
 import { generateList } from "./dom";
 import { isDefined, isEvent, stringify, toArray } from "./utils";
 
 interface Props { [key: string]: EventListenerOrEventListenerObject | any }
 
-export function h(tag: Component | string, props: Props | null, ...children: Children) {
+export function h(tag: Component | string, props: Props | null, ...children: Array<JSX.Element>) {
   if (!isDefined(props)) props = {}
   if (typeof tag === "function") {
     const reactiveProps = createReactor(props!)
@@ -29,6 +29,6 @@ export function h(tag: Component | string, props: Props | null, ...children: Chi
   return element
 }
 
-export function render(children: Children, container: HTMLElement) {
+export function render(children: Array<JSX.Element>, container: HTMLElement) {
   container.append(...generateList([], toArray(children)))
 }

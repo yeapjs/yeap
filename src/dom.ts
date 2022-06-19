@@ -1,12 +1,14 @@
-import { Children, HTMLContainer, Reactor } from "../types/global";
+import { Reactor } from "../types/app";
 import { DeepObservable } from "./Observable";
 import { isDefined, stringify, toArray } from "./utils";
+
+type HTMLContainer = Array<HTMLElement | Text>
 
 export function generateDOM(content: any): Text {
   return document.createTextNode(stringify(content))
 }
 
-export function generateList(container: HTMLContainer, children: Children): HTMLContainer {
+export function generateList(container: HTMLContainer, children: Array<JSX.Element>): HTMLContainer {
   for (const child of children) {
     if (child instanceof HTMLElement) container = [...container, child]
     else if (child instanceof Array) container = [...generateList(container, child)]
@@ -20,7 +22,7 @@ export function generateList(container: HTMLContainer, children: Children): HTML
 function insertReactor<T>(previousSibling: HTMLElement | Text, reactor: Reactor<T>) {
   let values = toArray(reactor())
   let elements = generateList([], values)
-  reactor.subscribe((prev, curr) => {
+  reactor.subscribe!((prev, curr) => {
     if (prev === curr) return
     const newValues = toArray(curr)
     const length = Math.max(newValues.length, values.length)

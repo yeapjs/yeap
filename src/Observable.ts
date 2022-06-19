@@ -1,4 +1,4 @@
-import { Reactor, SubscribeHandler } from "../types/global"
+import { Reactor, SubscribeHandler } from "../types/app"
 import { isDefined } from "./utils"
 
 const observableSymbol = Symbol("observable")

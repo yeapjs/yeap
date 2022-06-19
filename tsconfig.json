@@ -8,7 +8,6 @@
     "preserveConstEnums": true,
     "experimentalDecorators": true,
     "noEmitOnError": true,
-    "declaration": true,
     "target": "ES6",
     "moduleResolution": "node",
     "strict": true,

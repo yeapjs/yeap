@@ -1,4 +1,4 @@
-import { Children, Component, Reactor } from "../types/global"
+import { Component, Reactor } from "../types/app"
 import { DeepObservable } from "./Observable"
 
 function getValue<T>(a: T | Reactor<T>): T {
@@ -13,7 +13,7 @@ export function createComputed<T>(reactorHandle: () => (T | Reactor<T>), ...deps
   const reactor = createReactor(getValue(initialValue))
 
   for (const dep of deps) {
-    dep.subscribe(() => {
+    dep.subscribe!(() => {
       reactor(getValue(reactorHandle()))
     })
   }
