@@ -1,4 +1,4 @@
-import { Component, Reactor } from "../types/app"
+import { Component, CreateEffectOption, Reactor } from "../types/app"
 import { DeepObservable } from "./Observable"
 
 function getValue<T>(a: T | Reactor<T>): T {
@@ -19,6 +19,27 @@ export function createComputed<T>(reactorHandle: () => (T | Reactor<T>), ...deps
   }
 
   return reactor
+}
+
+export function createEffect<T>(reactorHandle: () => any, option: CreateEffectOption | Reactor<T>, ...deps: Array<Reactor<T>>): void {
+  const observableOption = DeepObservable.isObservable(option)
+  let first = true;
+  if (observableOption) deps = [option as Reactor<T>, ...deps]
+  if (observableOption || (option as CreateEffectOption).immediate) {
+    let initialValue = reactorHandle()
+    if (DeepObservable.isObservable(initialValue)) deps = [initialValue as Reactor<T>, ...deps]
+    first = false
+  }
+
+  for (const dep of deps) {
+    dep.subscribe!(() => {
+      if (first) {
+        let value = reactorHandle()
+        if (DeepObservable.isObservable(value)) deps = [value, ...deps]
+        first = false
+      } else reactorHandle()
+    })
+  }
 }
 
 export function createReactor<T>(initialValue: T): Reactor<T> {
