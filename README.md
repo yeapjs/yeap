@@ -1,3 +1,5 @@
+<img width="128" src="./logo.svg" alt="Yeap logo">
+
 # Yeap 🎉
 A magicless UI builder
 
