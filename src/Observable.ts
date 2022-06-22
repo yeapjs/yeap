@@ -1,4 +1,5 @@
 import { Reactor, SubscribeHandler } from "../types/app"
+import { createReactor } from "./app"
 import { isDefined } from "./utils"
 
 const observableSymbol = Symbol("observable")
@@ -17,6 +18,7 @@ export class DeepObservable<T> {
 
     this.call = this.call.bind(this)
     this.subscribe = this.subscribe.bind(this)
+    this.where = this.where.bind(this)
 
     return new Proxy(() => this.value, {
       apply: (target, thisArg, argArray: [((v: T) => T) | T] | []) => {
@@ -52,5 +54,17 @@ export class DeepObservable<T> {
   call(prev: T, next: T) {
     this.#handlers.forEach((handle) => handle(prev, next))
     this.#parent?.call(prev, next)
+  }
+
+  where(truthy: JSX.Element, falsy: JSX.Element) {
+    const reactor = createReactor(this.value ? truthy : falsy)
+
+    this.subscribe((prev, curr) => {
+      if (prev === curr) return
+      if (curr) reactor(truthy)
+      else reactor(falsy)
+    })
+
+    return reactor
   }
 }

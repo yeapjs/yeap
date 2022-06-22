@@ -14,6 +14,7 @@ export type ToReactive<T = object> = {
 export type Reactor<T> = ToReactive<T> & {
   (v?: T | ((v: T) => T)): T
   subscribe?(handler: SubscribeHandler<T>): void
+  where?(truthy: JSX.Element, falsy: JSX.Element): Reactor<JSX.Element>
 }
 
 export function createComputed<T>(reactorHandle: () => (T | Reactor<T>), ...deps: Array<Reactor<T>>): Reactor<T>
