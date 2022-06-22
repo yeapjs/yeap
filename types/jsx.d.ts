@@ -1,4 +1,4 @@
-import { Component } from "./app"
+import { Component, Reactor } from "./app"
 
 declare global {
   // JSX type definitions for Yeap
@@ -192,6 +192,7 @@ declare global {
 
     interface YeapAtributes<T> {
       ref?: T;
+      classList?: { [key: PropertyKey]: boolean | Reactor<any> };
     }
 
     interface DOMAttributes<T> extends YeapAtributes<T> {
