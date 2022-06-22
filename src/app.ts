@@ -7,8 +7,9 @@ function getValue<T>(a: T | Reactor<T>): T {
 }
 
 export function createComputed<T>(reactorHandle: () => (T | Reactor<T>), ...deps: Array<Reactor<T>>): Reactor<T> {
-  let initialValue = reactorHandle()
-  if (DeepObservable.isObservable(initialValue)) deps = [initialValue as Reactor<T>, ...deps]
+  const dependencies = new Set(deps)
+  const initialValue = reactorHandle()
+  if (DeepObservable.isObservable(initialValue)) dependencies.add(initialValue as Reactor<T>)
 
   const reactor = createReactor(getValue(initialValue))
 
@@ -23,21 +24,22 @@ export function createComputed<T>(reactorHandle: () => (T | Reactor<T>), ...deps
 
 export function createEffect<T>(reactorHandle: () => any, option: CreateEffectOption | Reactor<T>, ...deps: Array<Reactor<T>>): void {
   const observableOption = DeepObservable.isObservable(option)
-  let first = true;
-  if (observableOption) deps = [option as Reactor<T>, ...deps]
+  const dependencies = new Set(deps)
+  let first = true
+  if (observableOption) dependencies.add(option as Reactor<T>)
   if (observableOption || (option as CreateEffectOption).immediate) {
     let initialValue = reactorHandle()
-    if (DeepObservable.isObservable(initialValue)) deps = [initialValue as Reactor<T>, ...deps]
+    if (DeepObservable.isObservable(initialValue)) dependencies.add(initialValue as Reactor<T>)
     first = false
   }
 
   for (const dep of deps) {
     dep.subscribe!(() => {
+      const value = reactorHandle()
       if (first) {
-        let value = reactorHandle()
-        if (DeepObservable.isObservable(value)) deps = [value, ...deps]
+        if (DeepObservable.isObservable(value)) dependencies.add(value)
         first = false
-      } else reactorHandle()
+      }
     })
   }
 }
