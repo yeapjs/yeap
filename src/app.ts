@@ -7,7 +7,7 @@ export function createComputed<T>(reactorHandle: () => (T | Reactor<T>), ...deps
   const initialValue = reactorHandle()
   if (DeepObservable.isObservable(initialValue)) dependencies.add(initialValue as Reactor<T>)
 
-  const reactor = createReactor(getValue(initialValue))
+  const reactor = createReactor(initialValue)
 
   for (const dep of deps) {
     dep.subscribe!(() => {
@@ -40,8 +40,8 @@ export function createEffect<T>(reactorHandle: () => any, option: CreateEffectOp
   }
 }
 
-export function createReactor<T>(initialValue: T): Reactor<T> {
-  return new DeepObservable(initialValue, null) as any
+export function createReactor<T>(initialValue: T | Reactor<T>): Reactor<T> {
+  return new DeepObservable(getValue(initialValue), null) as any
 }
 
 export const Fragment: Component<{}> = (_, children) => {
