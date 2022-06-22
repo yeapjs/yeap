@@ -2,7 +2,7 @@ import { Component } from "../types/app"
 import { createReactor } from "./app"
 import { generateList } from "./dom"
 import { DeepObservable } from "./Observable"
-import { isDefined, isEvent, stringify, toArray } from "./utils"
+import { getValue, isDefined, isEvent, stringify, toArray } from "./utils"
 
 interface Props { [key: string]: EventListenerOrEventListenerObject | any }
 
@@ -15,12 +15,11 @@ export function h(tag: Component | string, props: Props | null, ...children: Arr
 
   const is = props?.is?.toString()
   const element = document.createElement(tag, { is })
-  const emptyNode = new Text()
 
-  let display = true
+  const display = createReactor(true)
 
   for (const prop in props) {
-    if (prop === "is") continue
+    if (prop === "is" || prop === "fallback") continue
     else if (prop === "ref") {
       props[prop](element)
     } else if (prop === "class") {
@@ -28,24 +27,16 @@ export function h(tag: Component | string, props: Props | null, ...children: Arr
     } else if (prop === "classList") {
       const classList = props[prop]
       for (const item in classList) {
-        if (DeepObservable.isObservable(classList[item])) {
-          classList[item].subscribe((_: any, curr: any) => {
-            if (curr) element.classList.add(item)
-            else element.classList.remove(item)
-          })
-          if (classList[item]()) element.classList.add(item)
-        } else if (classList[item]) element.classList.add(item)
+        if (DeepObservable.isObservable(classList[item])) classList[item].subscribe((_: any, curr: any) => {
+          if (!!curr) element.classList.add(item)
+          else element.classList.remove(item)
+        })
+
+        if (!!getValue(classList[item])) element.classList.add(item)
       }
     } else if (prop === "where") {
-      if (DeepObservable.isObservable(props[prop])) {
-        props[prop].subscribe((prev: any, curr: any) => {
-          if (prev === curr) return
-
-          if (curr) emptyNode.replaceWith(element)
-          else element.replaceWith(emptyNode)
-        })
-        display = props[prop]()
-      } else display = props[prop]
+      if (DeepObservable.isObservable(props[prop])) props[prop].subscribe((_: any, curr: any) => display(!!curr))
+      display(!!getValue(props[prop]))
     } else if (isEvent(prop)) {
       element.addEventListener(prop.slice(2).toLowerCase(), props[prop] as EventListenerOrEventListenerObject)
     } else {
@@ -55,9 +46,7 @@ export function h(tag: Component | string, props: Props | null, ...children: Arr
 
   render(children, element)
 
-  if (!display)
-    setTimeout(() => element.replaceWith(emptyNode), 0)
-
+  if ("where" in props!) return display.where!(element, toArray(props!["fallback"] ?? [new Text()]))
   return element
 }
 
