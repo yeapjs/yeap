@@ -1,6 +1,6 @@
-import { Reactor } from "../types/app";
-import { DeepObservable } from "./Observable";
-import { isDefined, stringify, toArray } from "./utils";
+import { Reactor } from "../types/app"
+import { DeepObservable } from "./Observable"
+import { isDefined, stringify, toArray } from "./utils"
 
 type HTMLContainer = Array<HTMLElement | Text>
 
@@ -30,8 +30,8 @@ function insertReactor<T>(previousSibling: HTMLElement | Text, reactor: Reactor<
     let newElements: HTMLContainer = []
     let prevElement: HTMLElement | Text = previousSibling
     for (let i = 0; i < length; i++) {
-      const oldValue = values[i];
-      const newValue = newValues[i];
+      const oldValue = values[i]
+      const newValue = newValues[i]
 
       if (oldValue === newValue) {
         newElements = [...newElements, elements[i]]

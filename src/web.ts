@@ -1,8 +1,8 @@
-import { Component } from "../types/app";
-import { createReactor } from "./app";
-import { generateList } from "./dom";
-import { DeepObservable } from "./Observable";
-import { isDefined, isEvent, stringify, toArray } from "./utils";
+import { Component } from "../types/app"
+import { createReactor } from "./app"
+import { generateList } from "./dom"
+import { DeepObservable } from "./Observable"
+import { isDefined, isEvent, stringify, toArray } from "./utils"
 
 interface Props { [key: string]: EventListenerOrEventListenerObject | any }
 
