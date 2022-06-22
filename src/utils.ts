@@ -1,3 +1,6 @@
+import { Reactor } from "../types/app"
+import { DeepObservable } from "./Observable"
+
 export function stringify(v: unknown): string {
   if (typeof v === "string") return v
   if (typeof v === "object" && v !== null) return JSON.stringify(v)
@@ -5,6 +8,11 @@ export function stringify(v: unknown): string {
   if (v === null) return "null"
 
   return String(v)
+}
+
+export function getValue<T>(a: T | Reactor<T>): T {
+  if (DeepObservable.isObservable(a)) return (a as Reactor<T>)()
+  return a as T
 }
 
 export function toArray<T>(value: T | Array<T>): Array<T> {

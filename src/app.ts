@@ -1,10 +1,6 @@
 import { Component, CreateEffectOption, Reactor } from "../types/app"
 import { DeepObservable } from "./Observable"
-
-function getValue<T>(a: T | Reactor<T>): T {
-  if (DeepObservable.isObservable(a)) return (a as Reactor<T>)()
-  return a as T
-}
+import { getValue } from "./utils"
 
 export function createComputed<T>(reactorHandle: () => (T | Reactor<T>), ...deps: Array<Reactor<T>>): Reactor<T> {
   const dependencies = new Set(deps)

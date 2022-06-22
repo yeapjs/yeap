@@ -4,13 +4,14 @@ import { isDefined, stringify, toArray } from "./utils"
 
 type HTMLContainer = Array<HTMLElement | Text>
 
-export function generateDOM(content: any): Text {
+export function generateDOM(content: any): HTMLElement | Text {
+  if (content instanceof HTMLElement) return content
   return document.createTextNode(stringify(content))
 }
 
 export function generateList(container: HTMLContainer, children: Array<JSX.Element>): HTMLContainer {
   for (const child of children) {
-    if (child instanceof HTMLElement) container = [...container, child]
+    if (child instanceof HTMLElement || child instanceof Text) container = [...container, child]
     else if (child instanceof Array) container = [...generateList(container, child)]
     else if (DeepObservable.isObservable(child)) container = [...container, ...insertReactor(container[container.length - 1], child)]
     else container = [...container, generateDOM(child)]
