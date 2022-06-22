@@ -191,8 +191,9 @@ declare global {
     }
 
     interface YeapAtributes<T> {
-      ref?: T
-      classList?: { [key: PropertyKey]: boolean | Reactor<any> }
+      classList?: { [key: PropertyKey]: boolean | Reactor<boolean> }
+      ref?: (v: T) => any
+      where?: boolean | Reactor<boolean>
     }
 
     interface DOMAttributes<T> extends YeapAtributes<T> {
