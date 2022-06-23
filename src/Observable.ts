@@ -18,7 +18,7 @@ export class DeepObservable<T> {
 
     this.call = this.call.bind(this)
     this.subscribe = this.subscribe.bind(this)
-    this.where = this.where.bind(this)
+    this.when = this.when.bind(this)
 
     return new Proxy(() => this.value, {
       apply: (target, thisArg, argArray: [((v: T) => T) | T] | []) => {
@@ -56,7 +56,7 @@ export class DeepObservable<T> {
     this.#parent?.call(prev, next)
   }
 
-  where(truthy: JSX.Element | Function, falsy: JSX.Element | Function) {
+  when(truthy: JSX.Element | Function, falsy: JSX.Element | Function) {
     const reactor = createReactor(
       this.value ?
         typeof truthy === "function" ? truthy() : truthy :

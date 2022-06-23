@@ -12,16 +12,16 @@ export function h(tag: Component | string, props: Props | null, ...children: Arr
   const display = createReactor(true)
 
   const fallback = toArray(props!["fallback"] ?? [new Text()])
-  if ("where" in props!) {
-    if (DeepObservable.isObservable(props["where"])) props["where"].subscribe!((_: any, curr: any) => display(!!curr))
-    display(!!getValue(props["where"]))
+  if ("when" in props!) {
+    if (DeepObservable.isObservable(props["when"])) props["when"].subscribe!((_: any, curr: any) => display(!!curr))
+    display(!!getValue(props["when"]))
   }
 
   if (typeof tag === "function") {
     const reactiveProps = createReactor(props!)
     const element = () => tag(reactiveProps, children)
 
-    if ("where" in props! && DeepObservable.isObservable(props["where"])) return display.where!(element, fallback)
+    if ("when" in props! && DeepObservable.isObservable(props["when"])) return display.when!(element, fallback)
     return display() ? element() : fallback
   }
 
@@ -29,7 +29,7 @@ export function h(tag: Component | string, props: Props | null, ...children: Arr
   const element = document.createElement(tag, { is })
 
   for (const prop in props) {
-    if (prop === "is" || prop === "fallback" || prop === "where") continue
+    if (prop === "is" || prop === "fallback" || prop === "when") continue
     else if (prop === "ref") {
       props[prop](element)
     } else if (prop === "class") {
@@ -53,7 +53,7 @@ export function h(tag: Component | string, props: Props | null, ...children: Arr
 
   render(children, element)
 
-  if ("where" in props! && DeepObservable.isObservable(props["where"])) return display.where!(element, fallback)
+  if ("when" in props! && DeepObservable.isObservable(props["when"])) return display.when!(element, fallback)
   return display() ? element : fallback
 }
 

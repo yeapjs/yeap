@@ -194,7 +194,7 @@ declare global {
       classList?: { [key: PropertyKey]: any | Reactor<any> }
       fallback?: JSX.Element
       ref?: (v: T) => any
-      where?: any | Reactor<any>
+      when?: any | Reactor<any>
     }
 
     interface DOMAttributes<T> extends YeapAtributes<T> {
