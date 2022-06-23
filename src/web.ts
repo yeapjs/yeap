@@ -8,18 +8,28 @@ interface Props { [key: string]: EventListenerOrEventListenerObject | any }
 
 export function h(tag: Component | string, props: Props | null, ...children: Array<JSX.Element>) {
   if (!isDefined(props)) props = {}
+
+  const display = createReactor(true)
+
+  const fallback = toArray(props!["fallback"] ?? [new Text()])
+  if ("where" in props!) {
+    if (DeepObservable.isObservable(props["where"])) props["where"].subscribe!((_: any, curr: any) => display(!!curr))
+    display(!!getValue(props["where"]))
+  }
+
   if (typeof tag === "function") {
     const reactiveProps = createReactor(props!)
-    return tag(reactiveProps, children)
+    const element = () => tag(reactiveProps, children)
+
+    if ("where" in props! && DeepObservable.isObservable(props["where"])) return display.where!(element, fallback)
+    return display() ? element() : fallback
   }
 
   const is = props?.is?.toString()
   const element = document.createElement(tag, { is })
 
-  const display = createReactor(true)
-
   for (const prop in props) {
-    if (prop === "is" || prop === "fallback") continue
+    if (prop === "is" || prop === "fallback" || prop === "where") continue
     else if (prop === "ref") {
       props[prop](element)
     } else if (prop === "class") {
@@ -34,9 +44,6 @@ export function h(tag: Component | string, props: Props | null, ...children: Arr
 
         if (!!getValue(classList[item])) element.classList.add(item)
       }
-    } else if (prop === "where") {
-      if (DeepObservable.isObservable(props[prop])) props[prop].subscribe((_: any, curr: any) => display(!!curr))
-      display(!!getValue(props[prop]))
     } else if (isEvent(prop)) {
       element.addEventListener(prop.slice(2).toLowerCase(), props[prop] as EventListenerOrEventListenerObject)
     } else {
@@ -46,8 +53,8 @@ export function h(tag: Component | string, props: Props | null, ...children: Arr
 
   render(children, element)
 
-  if ("where" in props!) return display.where!(element, toArray(props!["fallback"] ?? [new Text()]))
-  return element
+  if ("where" in props! && DeepObservable.isObservable(props["where"])) return display.where!(element, fallback)
+  return display() ? element : fallback
 }
 
 export function render(children: Array<JSX.Element>, container: HTMLElement) {

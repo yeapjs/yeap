@@ -56,13 +56,17 @@ export class DeepObservable<T> {
     this.#parent?.call(prev, next)
   }
 
-  where(truthy: JSX.Element, falsy: JSX.Element) {
-    const reactor = createReactor(this.value ? truthy : falsy)
+  where(truthy: JSX.Element | Function, falsy: JSX.Element | Function) {
+    const reactor = createReactor(
+      this.value ?
+        typeof truthy === "function" ? truthy() : truthy :
+        typeof falsy === "function" ? falsy() : falsy
+    )
 
     this.subscribe((prev, curr) => {
       if (prev === curr) return
-      if (curr) reactor(truthy)
-      else reactor(falsy)
+      if (curr) reactor(typeof truthy === "function" ? truthy() : truthy)
+      else reactor(typeof falsy === "function" ? falsy() : falsy)
     })
 
     return reactor
