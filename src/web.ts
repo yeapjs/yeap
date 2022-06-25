@@ -1,8 +1,8 @@
-import { Component } from "../types/app"
+import { Component, Reactor } from "../types/app"
 import { createReactor } from "./app"
 import { generateList } from "./dom"
 import { DeepObservable } from "./Observable"
-import { getValue, isDefined, isEvent, stringify, toArray } from "./utils"
+import { createContext, getValue, isDefined, isEvent, stringify, toArray } from "./utils"
 
 interface Props { [key: string]: EventListenerOrEventListenerObject | any }
 
@@ -17,13 +17,7 @@ export function h(tag: Component | string, props: Props | null, ...children: Arr
     display(!!getValue(props["when"]))
   }
 
-  if (typeof tag === "function") {
-    const reactiveProps = createReactor(props!)
-    const element = () => tag(reactiveProps, children)
-
-    if ("when" in props! && DeepObservable.isObservable(props["when"])) return display.when!(element, fallback)
-    return display() ? element() : fallback
-  }
+  if (typeof tag === "function") return hComp(tag, props, display, fallback, children)
 
   const is = props?.is?.toString()
   const element = document.createElement(tag, { is })
@@ -55,6 +49,40 @@ export function h(tag: Component | string, props: Props | null, ...children: Arr
 
   if ("when" in props! && DeepObservable.isObservable(props["when"])) return display.when!(element, fallback)
   return display() ? element : fallback
+}
+
+export function hComp(
+  component: Component,
+  props: Props | null,
+  display: Reactor<boolean>,
+  fallback: JSX.Element,
+  children: Array<JSX.Element>
+) {
+  const reactiveProps = createReactor(props!)
+  const element = () => component(reactiveProps, children)
+  const context = createContext()
+
+  setTimeout(() => {
+    if (isDefined(context.mounted)) context.mounted!.forEach((handle) => handle())
+    context.mounted = null
+  }, 0)
+
+  if ("when" in props! && DeepObservable.isObservable(props["when"])) {
+    const reactor = display.when!(element, fallback)
+    reactor.subscribe!((_, curr) => {
+      if (curr !== fallback) {
+        if (isDefined(context.mounted)) context.mounted!.forEach((handle) => handle())
+        context.mounted = null
+      } else {
+        if (isDefined(context.unmounted)) context.unmounted!.forEach((handle) => handle())
+        context.unmounted = null
+      }
+    })
+
+    return reactor
+  }
+
+  return display() ? element() : fallback
 }
 
 export function render(children: Array<JSX.Element>, container: HTMLElement) {

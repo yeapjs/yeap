@@ -24,4 +24,7 @@ export function createEffect<T>(reactorHandle: () => any, ...deps: Array<Reactor
 
 export function createReactor<T>(initialValue: T): Reactor<T>
 
+export function onMounted(handle: Function): void
+export function onUnmounted(handle: Function): void
+
 export const Fragment: Component<{}>
