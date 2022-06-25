@@ -24,6 +24,8 @@ export function createEffect<T>(reactorHandle: () => any, ...deps: Array<Reactor
 
 export function createReactor<T>(initialValue: T): Reactor<T>
 
+export function createPersistor<T>(handle: () => T): T
+
 export function onMounted(handle: Function): void
 export function onUnmounted(handle: Function): void
 

@@ -1,6 +1,6 @@
 import { Component, CreateEffectOption, Reactor } from "../types/app"
 import { DeepObservable } from "./Observable"
-import { getContextCurrent, getValue, isDefined } from "./utils"
+import { getCurrentContext, getValue, isDefined } from "./utils"
 
 export function createComputed<T>(reactorHandle: () => (T | Reactor<T>), ...deps: Array<Reactor<T>>): Reactor<T> {
   const dependencies = new Set(deps)
@@ -40,18 +40,34 @@ export function createEffect<T>(reactorHandle: () => any, option: CreateEffectOp
   }
 }
 
+let a: any = null
+
+export function createPersistor<T>(handle: () => T): T {
+  const context = getCurrentContext()
+  if (context.hookIndex in context.hooks) {
+    return context.hooks[context.hookIndex]
+  }
+
+  const value = handle()
+
+  context.hooks.push(value)
+  context.hookIndex++
+
+  return value
+}
+
 export function createReactor<T>(initialValue: T | Reactor<T>): Reactor<T> {
   return new DeepObservable(getValue(initialValue), null) as any
 }
 
 export function onMounted(handler: Function) {
-  const context = getContextCurrent()
+  const context = getCurrentContext()
   if (!isDefined(context.mounted)) context.mounted = [handler]
   else context.mounted!.push(handler)
 }
 
 export function onUnmounted(handler: Function) {
-  const context = getContextCurrent()
+  const context = getCurrentContext()
   if (!isDefined(context.unmounted)) context.unmounted = [handler]
   else context.unmounted!.push(handler)
 }
