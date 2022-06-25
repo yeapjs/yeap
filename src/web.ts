@@ -2,7 +2,7 @@ import { Component, Reactor } from "../types/app"
 import { createReactor } from "./app"
 import { generateList } from "./dom"
 import { DeepObservable } from "./Observable"
-import { createContext, getValue, isDefined, isEvent, stringify, toArray } from "./utils"
+import { createContext, getValue, isDefined, isEvent, setCurrentContext, stringify, toArray } from "./utils"
 
 interface Props { [key: string]: EventListenerOrEventListenerObject | any }
 
@@ -59,8 +59,12 @@ export function hComp(
   children: Array<JSX.Element>
 ) {
   const reactiveProps = createReactor(props!)
-  const element = () => component(reactiveProps, children)
   const context = createContext()
+  const element = () => {
+    setCurrentContext(context)
+    context.hookIndex = 0
+    return component(reactiveProps, children)
+  }
 
   setTimeout(() => {
     if (isDefined(context.mounted)) context.mounted!.forEach((handle) => handle())

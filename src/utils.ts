@@ -5,24 +5,32 @@ export interface ComponentContext {
   owner: ComponentContext | null
   mounted: Array<Function> | null
   unmounted: Array<Function> | null
+  hooks: Array<any>
+  hookIndex: number
 }
 
-const contexts: ComponentContext[] = []
+let current: ComponentContext | null = null
 
 export function createContext(): ComponentContext {
   const context = {
     owner: null,
     mounted: null,
-    unmounted: null
+    unmounted: null,
+    hooks: [],
+    hookIndex: 0
   }
 
-  contexts.push(context)
+  current = context
 
   return context
 }
 
-export function getContextCurrent(): ComponentContext {
-  return contexts[contexts.length - 1]
+export function setCurrentContext(context: ComponentContext) {
+  current = context
+}
+
+export function getCurrentContext(): ComponentContext {
+  return current!
 }
 
 export function stringify(v: unknown): string {
