@@ -1,6 +1,13 @@
 import { Component } from "../types/app"
-import { createReactor } from "./app"
-import { render } from "./web"
+import { createReactor, onMounted, onUnmounted } from "./app"
+import { generateList } from "./dom"
+import { h } from "./web"
+
+export const Dynamic: Component<{
+  component?: Component<any> | string
+}> = ({ component, ...props }, children) => {
+  return h(component!()!, props, children)
+}
 
 export const Fragment: Component<{}> = (_, children) => {
   return children
@@ -21,7 +28,14 @@ export function lazy(callback: (...args: Array<any>) => Promise<any>): Component
 }
 
 export const Portal: Component<{ mount: HTMLElement }> = ({ mount }, children) => {
-  render(children, mount())
+  const childs = generateList([], children)
+
+  onMounted(() => {
+    mount().append(...childs)
+  })
+  onUnmounted(() => {
+    childs.forEach((child) => child.remove())
+  })
 
   return ""
 }

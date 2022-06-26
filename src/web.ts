@@ -58,6 +58,7 @@ function hComp(
   fallback: JSX.Element,
   children: Array<JSX.Element>
 ) {
+  console.log(component)
   const reactiveProps = createReactor(Object.assign({}, component.defaultProps, props))
   const context = createComponentContext()
   const element = () => {
