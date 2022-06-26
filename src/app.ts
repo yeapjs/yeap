@@ -40,8 +40,6 @@ export function createEffect<T>(reactorHandle: () => any, option: CreateEffectOp
   }
 }
 
-let a: any = null
-
 export function createPersistor<T>(handle: () => T): T {
   const context = getCurrentContext()
   if (context.hookIndex in context.hooks) {

@@ -2,18 +2,17 @@ import { Reactor } from "../types/app"
 import { DeepObservable } from "./Observable"
 
 export interface ComponentContext {
-  owner: ComponentContext | null
   mounted: Array<Function> | null
   unmounted: Array<Function> | null
   hooks: Array<any>
   hookIndex: number
 }
 
-let current: ComponentContext | null = null
+let current: ComponentContext
+export const globalContext = createComponentContext()
 
-export function createContext(): ComponentContext {
-  const context = {
-    owner: null,
+export function createComponentContext(): ComponentContext {
+  const context: ComponentContext = {
     mounted: null,
     unmounted: null,
     hooks: [],
@@ -30,7 +29,7 @@ export function setCurrentContext(context: ComponentContext) {
 }
 
 export function getCurrentContext(): ComponentContext {
-  return current!
+  return current
 }
 
 export function stringify(v: unknown): string {
