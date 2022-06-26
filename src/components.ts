@@ -1,5 +1,6 @@
 import { Component } from "../types/app"
 import { createReactor } from "./app"
+import { render } from "./web"
 
 export const Fragment: Component<{}> = (_, children) => {
   return children
@@ -17,4 +18,14 @@ export function lazy(callback: (...args: Array<any>) => Promise<any>): Component
 
     return reactor.when!(() => content, fallback)
   }
+}
+
+export const Portal: Component<{ mount: HTMLElement }> = ({ mount }, children) => {
+  render(children, mount())
+
+  return ""
+}
+
+Portal.defaultProps = {
+  mount: document.body
 }

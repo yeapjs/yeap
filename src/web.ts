@@ -58,7 +58,7 @@ function hComp(
   fallback: JSX.Element,
   children: Array<JSX.Element>
 ) {
-  const reactiveProps = createReactor(props!)
+  const reactiveProps = createReactor(Object.assign({}, component.defaultProps, props))
   const context = createComponentContext()
   const element = () => {
     setCurrentContext(context)

@@ -6,13 +6,17 @@ export interface CreateEffectOption {
 
 export type SubscribeHandler<T> = (prev: T, next: T) => void
 
-export type Component<T = object> = (props: ToReactive<T>, children: Array<JSX.Element>) => JSX.Element
+export interface Component<T = object> {
+  (props: ToReactive<T>, children: Array<JSX.Element>): JSX.Element
+  defaultProps?: T
+}
 
 export type ToReactive<T = object> = {
   [K in keyof T]: Reactor<T[K]>
 }
 export type Reactor<T> = ToReactive<T> & {
   (v?: T | ((v: T) => T)): T
+  or?(defaultValue: T): T
   subscribe?(handler: SubscribeHandler<T>): void
   when?(truthy: JSX.Element, falsy: JSX.Element): Reactor<JSX.Element>
 }
