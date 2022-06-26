@@ -2,9 +2,34 @@ import { Component, Reactor } from "../types/app"
 import { createReactor } from "./app"
 import { generateList } from "./dom"
 import { DeepObservable } from "./Observable"
-import { createComponentContext, getValue, globalContext, isDefined, isEvent, setCurrentContext, stringify, toArray } from "./utils"
+import { ComponentContext, createComponentContext, getValue, globalContext, isDefined, isEvent, setCurrentContext, stringify, toArray } from "./utils"
 
 interface Props { [key: string]: EventListenerOrEventListenerObject | any }
+
+export function define<T>(name: string, component: Component<T & { ref: HTMLElement }>) {
+  class Component extends HTMLElement {
+    private context: ComponentContext
+
+    constructor() {
+      super()
+      this.context = createComponentContext()
+      const props = createReactor({ ref: this })
+      this.append(...generateList([], component(props as any, Array.from(this.childNodes))))
+    }
+
+    connectedCallback() {
+      if (isDefined(this.context.mounted)) this.context.mounted!.forEach((handle) => handle())
+      this.context.mounted = null
+    }
+
+    disconnectedCallback() {
+      if (isDefined(this.context.unmounted)) this.context.unmounted!.forEach((handle) => handle())
+      this.context.unmounted = null
+    }
+  }
+
+  customElements.define(name, Component)
+}
 
 export function h(tag: Component | string, props: Props | null, ...children: Array<JSX.Element>) {
   if (!isDefined(props)) props = {}
