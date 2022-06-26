@@ -28,5 +28,3 @@ export function createPersistor<T>(handle: () => T): T
 
 export function onMounted(handle: Function): void
 export function onUnmounted(handle: Function): void
-
-export const Fragment: Component<{}>

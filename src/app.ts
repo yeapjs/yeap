@@ -1,4 +1,4 @@
-import { Component, CreateEffectOption, Reactor } from "../types/app"
+import { CreateEffectOption, Reactor } from "../types/app"
 import { DeepObservable } from "./Observable"
 import { getCurrentContext, getValue, isDefined } from "./utils"
 
@@ -68,8 +68,4 @@ export function onUnmounted(handler: Function) {
   const context = getCurrentContext()
   if (!isDefined(context.unmounted)) context.unmounted = [handler]
   else context.unmounted!.push(handler)
-}
-
-export const Fragment: Component<{}> = (_, children) => {
-  return children
 }

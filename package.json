@@ -9,6 +9,9 @@
     ".": {
       "default": "./lib/app.js"
     },
+    "./components": {
+      "default": "./lib/components.js"
+    },
     "./web": {
       "default": "./lib/web.js"
     }
