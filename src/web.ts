@@ -5,20 +5,21 @@ import { DeepObservable } from "./Observable"
 import { ComponentContext, createComponentContext, getValue, globalContext, isDefined, isEvent, setCurrentContext, stringify, toArray } from "./utils"
 
 interface Props { [key: string]: EventListenerOrEventListenerObject | any }
+type CustomAttribute<T, E> = T & { ref: E }
 
-export function define<T>(name: string, component: Component<T & { ref: HTMLElement }>) {
+export function define<T>(name: string, component: Component<CustomAttribute<T>>) {
   class Component extends HTMLElement {
     private context: ComponentContext
 
     constructor() {
       super()
       this.context = createComponentContext()
-      const attrs: Props = { ref: this }
+      const props: CustomAttribute<T, this> = {}
       for (let i = 0; i < this.attributes.length; i++) {
-        attrs[this.attributes[i].nodeName] = this.attributes[i].nodeValue
+        props[this.attributes[i].nodeName] = this.attributes[i].nodeValue
       }
-      const props = createReactor(attrs)
-      this.append(...generateList([], component(props as any, Array.from(this.childNodes))))
+      props.ref = this
+      this.append(...generateList([], component(props, Array.from(this.childNodes))))
     }
 
     connectedCallback() {
@@ -87,13 +88,12 @@ function hComp(
   fallback: JSX.Element,
   children: Array<JSX.Element>
 ) {
-  console.log(component)
-  const reactiveProps = createReactor(Object.assign({}, component.defaultProps, props))
+  const properties = Object.assign({}, component.defaultProps, props)
   const context = createComponentContext()
   const element = () => {
     setCurrentContext(context)
     context.hookIndex = 0
-    return component(reactiveProps, children)
+    return component(properties, children)
   }
 
   setTimeout(() => {
