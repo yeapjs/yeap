@@ -6,7 +6,7 @@ import { h } from "./web"
 export const Dynamic: Component<{
   component?: Component<any> | string
 }> = ({ component, ...props }, children) => {
-  return h(component!()!, props, children)
+  return h(component!, props, children)
 }
 
 export const Fragment: Component<{}> = (_, children) => {
@@ -27,19 +27,15 @@ export function lazy(callback: (...args: Array<any>) => Promise<any>): Component
   }
 }
 
-export const Portal: Component<{ mount: HTMLElement }> = ({ mount }, children) => {
+export const Portal: Component<{ mount: HTMLElement }> = ({ mount = document.body }, children) => {
   const childs = generateList([], children)
 
   onMounted(() => {
-    mount().append(...childs)
+    mount.append(...childs)
   })
   onUnmounted(() => {
     childs.forEach((child) => child.remove())
   })
 
   return ""
-}
-
-Portal.defaultProps = {
-  mount: document.body
 }

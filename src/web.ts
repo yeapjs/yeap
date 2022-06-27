@@ -6,12 +6,12 @@ import { DeepObservable } from "./Observable"
 import { ComponentContext, createComponentContext, getValue, globalContext, isDefined, isEvent, setCurrentContext, stringify, toArray } from "./utils"
 
 interface Props { [key: string]: EventListenerOrEventListenerObject | any }
-type CustomAttribute<T, E> = T & { ref: E }
+type CustomAttribute<T> = T & { ref?: HTMLElement }
 
 export function define<T>(name: string, component: Component<CustomAttribute<T>>, { reactiveAttribute, shadowed }: DefineCustomElementOption) {
   class Component extends HTMLElement {
     private context: ComponentContext
-    private props: CustomAttribute<T, this> = {}
+    private props: CustomAttribute<Props> = {}
 
     static get observedAttributes() { return reactiveAttribute }
 
@@ -26,7 +26,7 @@ export function define<T>(name: string, component: Component<CustomAttribute<T>>
         else this.props[name] = this.attributes[i].nodeValue
       }
       this.props.ref = this
-      parent.append(...generateList([], component(this.props, Array.from(this.childNodes))))
+      parent.append(...generateList([], component(this.props as CustomAttribute<T>, Array.from(this.childNodes))))
     }
 
     connectedCallback() {
@@ -39,7 +39,7 @@ export function define<T>(name: string, component: Component<CustomAttribute<T>>
       this.context.unmounted = null
     }
 
-    attributeChangedCallback(propName, prev, curr) {
+    attributeChangedCallback(propName: string, prev: string, curr: string) {
       if (prev === curr) return
       this.props[propName](curr)
     }

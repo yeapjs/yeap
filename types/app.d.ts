@@ -7,7 +7,7 @@ export interface CreateEffectOption {
 export type SubscribeHandler<T> = (prev: T, next: T) => void
 
 export interface Component<T = object> {
-  (props: ToReactive<T>, children: Array<JSX.Element>): JSX.Element
+  (props: T, children: Array<JSX.Element>): JSX.Element
   defaultProps?: T
 }
 
