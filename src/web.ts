@@ -55,7 +55,7 @@ export function h(tag: Component | string, props: Props | null, ...children: Arr
 
   const fallback = toArray(props!["fallback"] ?? [new Text()])
   if ("when" in props!) {
-    if (DeepObservable.isObservable(props["when"])) props["when"].subscribe!((_: any, curr: any) => display(!!curr))
+    if (DeepObservable.isObservable(props["when"])) props["when"].subscribe((_: any, curr: any) => display(!!curr))
     display(!!getValue(props["when"]))
   }
 
@@ -89,7 +89,7 @@ export function h(tag: Component | string, props: Props | null, ...children: Arr
 
   render(children, element)
 
-  if ("when" in props! && DeepObservable.isObservable(props["when"])) return display.when!(element, fallback)
+  if ("when" in props! && DeepObservable.isObservable(props["when"])) return display.when(element, fallback)
   return display() ? element : fallback
 }
 
@@ -114,8 +114,8 @@ function hComp(
   }, 0)
 
   if ("when" in props! && DeepObservable.isObservable(props["when"])) {
-    const reactor = display.when!(element, fallback)
-    reactor.subscribe!((_, curr) => {
+    const reactor = display.when(element, fallback)
+    reactor.subscribe((_, curr) => {
       if (curr !== fallback) {
         if (isDefined(context.mounted)) context.mounted!.forEach((handle) => handle())
         context.mounted = null

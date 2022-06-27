@@ -1,4 +1,4 @@
-import { Reactor } from "../types/app"
+import { Reactive, Reactor } from "../types/app"
 import { DeepObservable } from "./Observable"
 import { isDefined, stringify, toArray } from "./utils"
 
@@ -20,10 +20,10 @@ export function generateList(container: HTMLContainer, children: Array<JSX.Eleme
   return container
 }
 
-function insertReactor<T>(previousSibling: HTMLElement | Text, reactor: Reactor<T>) {
+function insertReactor<T>(previousSibling: HTMLElement | Text, reactor: Reactive<T>) {
   let values = toArray(reactor())
   let elements = generateList([], values)
-  reactor.subscribe!((prev, curr) => {
+  reactor.subscribe((prev, curr) => {
     if (prev === curr) return
     const newValues = toArray(curr)
     const length = Math.max(newValues.length, values.length)

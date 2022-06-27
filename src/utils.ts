@@ -1,4 +1,4 @@
-import { Reactor } from "../types/app"
+import { Reactive } from "../types/app"
 import { DeepObservable } from "./Observable"
 
 export interface ComponentContext {
@@ -41,8 +41,8 @@ export function stringify(v: unknown): string {
   return String(v)
 }
 
-export function getValue<T>(a: T | Reactor<T> | undefined): T | undefined {
-  if (DeepObservable.isObservable(a)) return (a as Reactor<T>)()
+export function getValue<T>(a: Reactive<T> | T | undefined): T | undefined {
+  if (DeepObservable.isObservable(a)) return (a as Reactive<T>)()
   return a as T
 }
 

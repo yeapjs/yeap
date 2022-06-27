@@ -1,22 +1,27 @@
-import { Reactor, SubscribeHandler } from "../types/app"
+import { Reactive, SubscribeHandler } from "../types/app"
 import { createReactor } from "./app"
 import { isDefined } from "./utils"
 
+const forceSymbol = Symbol("forcedToSetValue")
 const observableSymbol = Symbol("observable")
 
 export class DeepObservable<T> {
-  static isObservable(arg: any): arg is Reactor<any> {
+  static isObservable(arg: any): arg is Reactive<any> {
     return !!arg?.[observableSymbol]
   }
 
   [observableSymbol] = true
+  #freeze: boolean
   #parent: DeepObservable<T> | null
   #handlers: Array<SubscribeHandler<T>> = []
-  constructor(public value: T, parent: DeepObservable<T> | null = null) {
+  constructor(public value: T, parent: DeepObservable<T> | null = null, freeze = false) {
+    this.#freeze = freeze
     this.#parent = parent
     if (this.#parent) this.#handlers = this.#parent.#handlers
 
     this.call = this.call.bind(this)
+    this.freeze = this.freeze.bind(this)
+    this.reader = this.reader.bind(this)
     this.subscribe = this.subscribe.bind(this)
     this.when = this.when.bind(this)
 
@@ -25,7 +30,7 @@ export class DeepObservable<T> {
         const value = target()
         if (typeof value === "function")
           return new DeepObservable(value.apply(parent?.value ?? thisArg, argArray), parent ?? this)
-        if (argArray.length === 0) return value
+        if (this.#freeze || argArray.length === 0) return value
 
         if (typeof argArray[0] === "function") this.value = (argArray[0] as Function)(value)
         else this.value = argArray[0]
@@ -34,16 +39,21 @@ export class DeepObservable<T> {
 
         return value
       },
-      get: (target, p, receiver) => {
+      get: (target, p, _) => {
         const value = (target() as any)[p]
-        if (p in this) {
+        if (p in this && p !== "value" && ["function", "boolean"].includes(typeof (this as any)[p])) {
           return (this as any)[p]
         } else if (isDefined(value)) {
           if (DeepObservable.isObservable(value)) return value
           return new DeepObservable(value, parent ?? this)
         }
         return undefined
-      }
+      },
+      set: (target, p, value, _) => {
+        if (p === forceSymbol) this.value = value
+        else (target() as any)[p] = value
+        return true
+      },
     }) as any
   }
 
@@ -54,6 +64,20 @@ export class DeepObservable<T> {
   call(prev: T, next: T) {
     this.#handlers.forEach((handle) => handle(prev, next))
     this.#parent?.call(prev, next)
+  }
+
+  freeze() {
+    return new DeepObservable(this.value, this.#parent ?? this, true)
+  }
+
+  reader() {
+    const observable = new DeepObservable(this.value, this.#parent ?? this, true)
+    this.subscribe((prev, curr) => {
+      if (prev === curr) return
+
+      (observable as any)[forceSymbol] = curr
+    })
+    return observable
   }
 
   when(truthy: JSX.Element | Function, falsy: JSX.Element | Function) {
@@ -69,6 +93,6 @@ export class DeepObservable<T> {
       else reactor(typeof falsy === "function" ? falsy() : falsy)
     })
 
-    return reactor
+    return reactor.reader()
   }
 }

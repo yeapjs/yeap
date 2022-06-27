@@ -23,7 +23,7 @@ export function lazy(callback: (...args: Array<any>) => Promise<any>): Component
       reactor(true)
     })
 
-    return reactor.when!(() => content, fallback)
+    return reactor.when(() => content, fallback)
   }
 }
 

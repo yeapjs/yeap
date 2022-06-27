@@ -6,9 +6,9 @@ export interface CreateEffectOption {
 
 export type AsyncFunction<A extends Array<any>, O> = (...args: A) => Promise<O>
 export interface AsyncComputedReturn<T, E = any> {
-  data: Reactor<T>
-  error: Reactor<E | null>
-  loading: Reactor<boolean>
+  data: ReadOnlyReactor<T>
+  error: ReadOnlyReactor<E | null>
+  loading: ReadOnlyReactor<boolean>
 }
 export interface AsyncReturn<T, E = any> extends AsyncComputedReturn<T, E> {
   refetch(): void
@@ -22,24 +22,40 @@ export interface Component<T = object> {
   defaultProps?: T
 }
 
-export type ToReactive<T = object> = {
-  [K in keyof T]: Reactor<T[K]>
+/// REACTIVE
+export type ToReadOnlyReactorObject<T = object> = {
+  [K in keyof T]: ReadOnlyReactor<T[K]>
 }
-export type Reactor<T> = ToReactive<T> & {
-  (v?: T | ((v: T) => T)): T
-  subscribe?(handler: SubscribeHandler<T>): void
-  when?(truthy: JSX.Element, falsy: JSX.Element): Reactor<JSX.Element>
+export interface ReadOnlyReactorMethod<T> {
+  subscribe(handler: SubscribeHandler<T>): void
+  when(truthy: JSX.Element, falsy: JSX.Element): ReadOnlyReactor<JSX.Element>
+}
+export type ReadOnlyReactor<T> = ToReadOnlyReactorObject<T> & ReadOnlyReactorMethod<T> & {
+  (): T
 }
 
+export interface ReactorMethod<T> extends ReadOnlyReactorMethod<T> {
+  freeze(): ReadOnlyReactor<T>
+  reader(): ReadOnlyReactor<T>
+}
+export type ToReactorObject<T = object> = {
+  [K in keyof T]: Reactor<T[K]>
+}
+export type Reactor<T> = ToReactorObject<T> & ReactorMethod<T> & {
+  (v?: T | ((v: T) => T)): T
+}
+export type Reactive<T> = Reactor<T> | ReadOnlyReactor<T>
+
+/// HOOKS
 export function createAsync<T, E>(fetcher: AsyncFunction<[], T>): AsyncReturn<T, E>
 export function createAsyncComputed<T, E>(fetcher: AsyncFunction<[], T>, ...deps: Array<Reactor<T>>): AsyncComputedReturn<T, E>
 
-export function createComputed<T>(reactorHandle: () => (T | Reactor<T>), ...deps: Array<Reactor<T>>): Reactor<T>
+export function createComputed<T>(reactorHandle: () => (T | Reactor<T>), ...deps: Array<Reactor<T>>): ReadOnlyReactor<T>
 
 export function createEffect<T>(reactorHandle: () => any, option: CreateEffectOption, ...deps: Array<Reactor<T>>): void
 export function createEffect<T>(reactorHandle: () => any, ...deps: Array<Reactor<T>>): void
 
-export function createReactor<T>(initialValue?: T): Reactor<T>
+export function createReactor<T>(initialValue?: Reactive<T> | T): Reactor<T>
 
 export function createPersistor<T>(handle: () => T): T
 
