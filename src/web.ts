@@ -13,7 +13,11 @@ export function define<T>(name: string, component: Component<T & { ref: HTMLElem
     constructor() {
       super()
       this.context = createComponentContext()
-      const props = createReactor({ ref: this })
+      const attrs: Props = { ref: this }
+      for (let i = 0; i < this.attributes.length; i++) {
+        attrs[this.attributes[i].nodeName] = this.attributes[i].nodeValue
+      }
+      const props = createReactor(attrs)
       this.append(...generateList([], component(props as any, Array.from(this.childNodes))))
     }
 
