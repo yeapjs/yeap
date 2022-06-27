@@ -41,7 +41,7 @@ export function stringify(v: unknown): string {
   return String(v)
 }
 
-export function getValue<T>(a: T | Reactor<T>): T {
+export function getValue<T>(a: T | Reactor<T> | undefined): T | undefined {
   if (DeepObservable.isObservable(a)) return (a as Reactor<T>)()
   return a as T
 }

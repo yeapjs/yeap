@@ -1,6 +1,34 @@
-import { CreateEffectOption, Reactor } from "../types/app"
+import { AsyncComputedReturn, AsyncFunction, AsyncReturn, CreateEffectOption, Reactor } from "../types/app"
 import { DeepObservable } from "./Observable"
 import { getCurrentContext, getValue, isDefined } from "./utils"
+
+export function createAsync<T, E>(fetcher: AsyncFunction<[], T>): AsyncReturn<T, E> {
+  const data = createReactor<T>()
+  const error = createReactor<E | null>(null)
+  const loading = createReactor(false)
+
+  function refetch() {
+    loading(true)
+    fetcher()
+      .then((result) => {
+        data(result)
+        if (error() !== null) error(null)
+      })
+      .catch(error)
+      .finally(() => loading(false))
+  }
+
+  refetch()
+
+  return { data, error, loading, refetch }
+}
+
+export function createAsyncComputed<T, E>(fetcher: AsyncFunction<[], T>, ...deps: Array<Reactor<T>>): AsyncComputedReturn<T, E> {
+  const { data, error, loading, refetch } = createAsync<T, E>(fetcher)
+  createEffect(refetch, { immediate: false }, ...deps)
+
+  return { data, error, loading }
+}
 
 export function createComputed<T>(reactorHandle: () => (T | Reactor<T>), ...deps: Array<Reactor<T>>): Reactor<T> {
   const dependencies = new Set(deps)
@@ -54,7 +82,7 @@ export function createPersistor<T>(handle: () => T): T {
   return value
 }
 
-export function createReactor<T>(initialValue: T | Reactor<T>): Reactor<T> {
+export function createReactor<T>(initialValue?: T | Reactor<T>): Reactor<T> {
   return new DeepObservable(getValue(initialValue), null) as any
 }
 
