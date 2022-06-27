@@ -1,4 +1,5 @@
 import { Component, Reactor } from "../types/app"
+import { DefineCustomElementOption } from "../types/web"
 import { createReactor } from "./app"
 import { generateList } from "./dom"
 import { DeepObservable } from "./Observable"
@@ -7,19 +8,25 @@ import { ComponentContext, createComponentContext, getValue, globalContext, isDe
 interface Props { [key: string]: EventListenerOrEventListenerObject | any }
 type CustomAttribute<T, E> = T & { ref: E }
 
-export function define<T>(name: string, component: Component<CustomAttribute<T>>) {
+export function define<T>(name: string, component: Component<CustomAttribute<T>>, { reactiveAttribute, shadowed }: DefineCustomElementOption) {
   class Component extends HTMLElement {
     private context: ComponentContext
+    private props: CustomAttribute<T, this> = {}
+
+    static get observedAttributes() { return reactiveAttribute }
 
     constructor() {
       super()
       this.context = createComponentContext()
-      const props: CustomAttribute<T, this> = {}
+      const parent = shadowed ? this.attachShadow({ mode: shadowed }) : this
+
       for (let i = 0; i < this.attributes.length; i++) {
-        props[this.attributes[i].nodeName] = this.attributes[i].nodeValue
+        const name = this.attributes[i].nodeName
+        if (reactiveAttribute.includes(name)) this.props[name] = createReactor(this.attributes[i].nodeValue)
+        else this.props[name] = this.attributes[i].nodeValue
       }
-      props.ref = this
-      this.append(...generateList([], component(props, Array.from(this.childNodes))))
+      this.props.ref = this
+      parent.append(...generateList([], component(this.props, Array.from(this.childNodes))))
     }
 
     connectedCallback() {
@@ -30,6 +37,11 @@ export function define<T>(name: string, component: Component<CustomAttribute<T>>
     disconnectedCallback() {
       if (isDefined(this.context.unmounted)) this.context.unmounted!.forEach((handle) => handle())
       this.context.unmounted = null
+    }
+
+    attributeChangedCallback(propName, prev, curr) {
+      if (prev === curr) return
+      this.props[propName](curr)
     }
   }
 
