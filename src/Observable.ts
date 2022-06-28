@@ -1,6 +1,6 @@
 import { Reactive, SubscribeHandler } from "../types/app"
-import { createReactor } from "./app"
-import { isDefined } from "./utils"
+import { createComputed, createReactor } from "./app"
+import { getValue, isDefined } from "./utils"
 
 const FORCE_SYMBOL = Symbol("forcedToSetValue")
 const OBSERVABLE_SYMBOL = Symbol("observable")
@@ -29,7 +29,7 @@ export class DeepObservable<T> {
       apply: (target, thisArg, argArray: [((v: T) => T) | T] | []) => {
         const value = target()
         if (typeof value === "function")
-          return new DeepObservable(value.apply(parent?.value ?? thisArg, argArray), parent ?? this)
+          return createComputed(() => value.apply(getValue(thisArg), argArray), this as any)
         if (this.#freeze || argArray.length === 0) return value
 
         if (typeof argArray[0] === "function") this.value = (argArray[0] as Function)(value)
