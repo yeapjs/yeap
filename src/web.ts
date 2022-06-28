@@ -1,8 +1,7 @@
 import { Component, Reactor } from "../types/app"
 import { DefineCustomElementOption } from "../types/web"
-import { createReactor } from "./app"
+import { createReactor, isReactor } from "./app"
 import { generateList } from "./dom"
-import { DeepObservable } from "./Observable"
 import { ComponentContext, createComponentContext, getValue, GLOBAL_CONTEXT, isDefined, isEvent, setCurrentContext, stringify, toArray } from "./utils"
 
 interface Props { [key: string]: EventListenerOrEventListenerObject | any }
@@ -55,7 +54,7 @@ export function h(tag: Component | string, props: Props | null, ...children: Arr
 
   const fallback = toArray(props!["fallback"] ?? [new Text()])
   if ("when" in props!) {
-    if (DeepObservable.isObservable(props["when"])) props["when"].subscribe((_: any, curr: any) => display(!!curr))
+    if (isReactor(props["when"])) props["when"].subscribe((_: any, curr: any) => display(!!curr))
     display(!!getValue(props["when"]))
   }
 
@@ -73,7 +72,7 @@ export function h(tag: Component | string, props: Props | null, ...children: Arr
     } else if (prop === "classList") {
       const classList = props[prop]
       for (const item in classList) {
-        if (DeepObservable.isObservable(classList[item])) classList[item].subscribe((_: any, curr: any) => {
+        if (isReactor(classList[item])) classList[item].subscribe((_: any, curr: any) => {
           if (!!curr) element.classList.add(item)
           else element.classList.remove(item)
         })
@@ -83,7 +82,7 @@ export function h(tag: Component | string, props: Props | null, ...children: Arr
     } else if (prop === "style") {
       const style = props[prop]
       for (const item in style) {
-        if (DeepObservable.isObservable(style[item])) style[item].subscribe((_: any, curr: any) => element.style.setProperty(item, curr))
+        if (isReactor(style[item])) style[item].subscribe((_: any, curr: any) => element.style.setProperty(item, curr))
         element.style.setProperty(item, getValue<string>(style[item])!)
       }
     } else if (isEvent(prop)) {
@@ -95,7 +94,7 @@ export function h(tag: Component | string, props: Props | null, ...children: Arr
 
   render(children, element)
 
-  if ("when" in props! && DeepObservable.isObservable(props["when"])) return display.when(element, fallback)
+  if ("when" in props! && isReactor(props["when"])) return display.when(element, fallback)
   return display() ? element : fallback
 }
 
@@ -119,7 +118,7 @@ function hComp(
     context.mounted = null
   }, 0)
 
-  if ("when" in props! && DeepObservable.isObservable(props["when"])) {
+  if ("when" in props! && isReactor(props["when"])) {
     const reactor = display.when(element, fallback)
     reactor.subscribe((_, curr) => {
       if (curr !== fallback) {

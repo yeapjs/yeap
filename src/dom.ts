@@ -1,5 +1,5 @@
-import { Reactive, Reactor } from "../types/app"
-import { DeepObservable } from "./Observable"
+import { Reactive } from "../types/app"
+import { isReactor } from "./app"
 import { isDefined, stringify, toArray } from "./utils"
 
 type HTMLContainer = Array<HTMLElement | Text>
@@ -13,7 +13,7 @@ export function generateList(container: HTMLContainer, children: Array<JSX.Eleme
   for (const child of children) {
     if (child instanceof HTMLElement || child instanceof Text) container = [...container, child]
     else if (child instanceof Array) container = [...generateList(container, child)]
-    else if (DeepObservable.isObservable(child)) container = [...container, ...insertReactor(child)]
+    else if (isReactor(child)) container = [...container, ...insertReactor(child)]
     else container = [...container, generateDOM(child)]
   }
 

@@ -2,8 +2,8 @@ import { AsyncComputedReturn, AsyncFunction, AsyncReturn, CreateEffectOption, Re
 import { DeepObservable } from "./Observable"
 import { getCurrentContext, getValue, isDefined } from "./utils"
 
-export function createAsync<T, E>(fetcher: AsyncFunction<[], T>): AsyncReturn<T, E> {
-  const data = createReactor<T>()
+export function createAsync<T, E>(fetcher: AsyncFunction<[], T>, defaultValue?: T): AsyncReturn<T, E> {
+  const data = createReactor<T>(defaultValue)
   const error = createReactor<E | null>(null)
   const loading = createReactor(false)
 
@@ -28,8 +28,12 @@ export function createAsync<T, E>(fetcher: AsyncFunction<[], T>): AsyncReturn<T,
   }
 }
 
-export function createAsyncComputed<T, E>(fetcher: AsyncFunction<[], T>, ...deps: Array<Reactive<T>>): AsyncComputedReturn<T, E> {
-  const { data, error, loading, refetch } = createAsync<T, E>(fetcher)
+export function createAsyncComputed<T, E>(fetcher: AsyncFunction<[], T>, defaultValue?: Reactive<T> | T, ...deps: Array<Reactive<T>>): AsyncComputedReturn<T, E> {
+  if (isReactor(defaultValue)) {
+    deps.push(defaultValue)
+    defaultValue = undefined
+  }
+  const { data, error, loading, refetch } = createAsync<T, E>(fetcher, defaultValue)
   createEffect(refetch, { immediate: false }, ...deps)
 
   return { data, error, loading }
@@ -38,7 +42,7 @@ export function createAsyncComputed<T, E>(fetcher: AsyncFunction<[], T>, ...deps
 export function createComputed<T>(reactorHandle: () => (T | Reactive<T>), ...deps: Array<Reactive<T>>): ReadOnlyReactor<T> {
   const dependencies = new Set(deps)
   const initialValue = reactorHandle()
-  if (DeepObservable.isObservable(initialValue)) dependencies.add(initialValue as Reactive<T>)
+  if (isReactor(initialValue)) dependencies.add(initialValue as Reactive<T>)
 
   const reactor = createReactor(initialValue)
 
@@ -54,20 +58,20 @@ export function createComputed<T>(reactorHandle: () => (T | Reactive<T>), ...dep
 }
 
 export function createEffect<T>(reactorHandle: () => any, option: CreateEffectOption | Reactive<T>, ...deps: Array<Reactive<T>>): void {
-  const observableOption = DeepObservable.isObservable(option)
+  const observableOption = isReactor(option)
   const dependencies = new Set(deps)
   let first = true
   if (observableOption) dependencies.add(option as Reactive<T>)
   if (observableOption || (option as CreateEffectOption).immediate) {
     let initialValue = reactorHandle()
-    if (DeepObservable.isObservable(initialValue)) dependencies.add(initialValue as Reactive<T>)
+    if (isReactor(initialValue)) dependencies.add(initialValue as Reactive<T>)
     first = false
   }
 
   function subscriber() {
     const value = reactorHandle()
     if (first) {
-      if (DeepObservable.isObservable(value)) unsubscribes.push(value.subscribe(subscriber))
+      if (isReactor(value)) unsubscribes.push(value.subscribe(subscriber))
       first = false
     }
   }
@@ -98,6 +102,10 @@ export function createPersistentReactor<T>(initialValue?: Reactive<T> | T) {
 }
 export function createReactor<T>(initialValue?: Reactive<T> | T): Reactor<T> {
   return new DeepObservable(getValue(initialValue), null) as any
+}
+
+export function isReactor(arg: any): arg is Reactive<any> {
+  return DeepObservable.isObservable(arg)
 }
 
 export function onMounted(handler: Function) {

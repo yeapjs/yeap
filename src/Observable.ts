@@ -1,5 +1,5 @@
 import { Reactive, SubscribeHandler } from "../types/app"
-import { createComputed, createReactor } from "./app"
+import { createComputed, createReactor, isReactor } from "./app"
 import { getValue, isDefined } from "./utils"
 
 const FORCE_SYMBOL = Symbol("forcedToSetValue")
@@ -44,7 +44,7 @@ export class DeepObservable<T> {
         if (p in this && p !== "value" && ["function", "boolean"].includes(typeof (this as any)[p])) {
           return (this as any)[p]
         } else if (isDefined(value)) {
-          if (DeepObservable.isObservable(value)) return value
+          if (isReactor(value)) return value
           return new DeepObservable(value, parent ?? this)
         }
         return undefined

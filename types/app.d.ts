@@ -48,7 +48,9 @@ export type Reactive<T> = Reactor<T> | ReadOnlyReactor<T>
 
 /// HOOKS
 export function createAsync<T, E>(fetcher: AsyncFunction<[], T>): AsyncReturn<T, E>
+export function createAsync<T, E>(fetcher: AsyncFunction<[], T>, defaultValue: T): AsyncReturn<T, E>
 export function createAsyncComputed<T, E>(fetcher: AsyncFunction<[], T>, ...deps: Array<Reactor<T>>): AsyncComputedReturn<T, E>
+export function createAsyncComputed<T, E>(fetcher: AsyncFunction<[], T>, defaultValue: T, ...deps: Array<Reactor<T>>): AsyncComputedReturn<T, E>
 
 export function createComputed<T>(reactorHandle: () => (T | Reactor<T>), ...deps: Array<Reactor<T>>): ReadOnlyReactor<T>
 
@@ -59,6 +61,8 @@ export function createPersistor<T>(handle: () => T): T
 
 export function createPersistentReactor<T>(initialValue?: Reactive<T> | T): Reactor<T>
 export function createReactor<T>(initialValue?: Reactive<T> | T): Reactor<T>
+
+export function isReactor(arg: any): arg is Reactive<any>
 
 export function onMounted(handle: Function): void
 export function onUnmounted(handle: Function): void
