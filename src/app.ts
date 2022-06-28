@@ -93,6 +93,9 @@ export function createPersistor<T>(handle: () => T): T {
   return value
 }
 
+export function createPersistentReactor<T>(initialValue?: Reactive<T> | T) {
+  return createPersistor(() => createReactor(initialValue))
+}
 export function createReactor<T>(initialValue?: Reactive<T> | T): Reactor<T> {
   return new DeepObservable(getValue(initialValue), null) as any
 }
