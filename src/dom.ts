@@ -13,23 +13,24 @@ export function generateList(container: HTMLContainer, children: Array<JSX.Eleme
   for (const child of children) {
     if (child instanceof HTMLElement || child instanceof Text) container = [...container, child]
     else if (child instanceof Array) container = [...generateList(container, child)]
-    else if (DeepObservable.isObservable(child)) container = [...container, ...insertReactor(container[container.length - 1], child)]
+    else if (DeepObservable.isObservable(child)) container = [...container, ...insertReactor(child)]
     else container = [...container, generateDOM(child)]
   }
 
   return container
 }
 
-function insertReactor<T>(previousSibling: HTMLElement | Text, reactor: Reactive<T>) {
+function insertReactor<T>(reactor: Reactive<T>) {
+  const emptyNode = new Text()
   let values = toArray(reactor())
-  let elements = generateList([], values)
+  let elements = generateList([emptyNode], values)
   reactor.subscribe((prev, curr) => {
     if (prev === curr) return
     const newValues = toArray(curr)
     const length = Math.max(newValues.length, values.length)
 
     let newElements: HTMLContainer = []
-    let prevElement: HTMLElement | Text = previousSibling
+    let prevElement: HTMLElement | Text = emptyNode
     for (let i = 0; i < length; i++) {
       const oldValue = values[i]
       const newValue = newValues[i]
