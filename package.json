@@ -1,6 +1,6 @@
 {
   "name": "yeap",
-  "version": "1.0.0-beta.1",
+  "version": "1.0.0-beta.2",
   "description": "Magicless UI builder",
   "main": "./lib/app.js",
   "types": "./types/app.d.ts",
@@ -38,7 +38,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/Erternys/yeap.git"
+    "url": "git+https://github.com/yeapjs/yeap.git"
   },
   "keywords": [
     "yeap",
@@ -46,11 +46,11 @@
     "front-end"
   ],
   "author": "hanako-eo",
-  "license": "ISC",
+  "license": "MIT",
   "bugs": {
-    "url": "https://github.com/Erternys/yeap/issues"
+    "url": "https://github.com/yeapjs/yeap/issues"
   },
-  "homepage": "https://github.com/Erternys/yeap#readme",
+  "homepage": "https://github.com/yeapjs/yeap#readme",
   "devDependencies": {
     "prettier": "^2.5.1",
     "tslib": "^2.3.1",
