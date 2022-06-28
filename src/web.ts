@@ -3,7 +3,7 @@ import { DefineCustomElementOption } from "../types/web"
 import { createReactor } from "./app"
 import { generateList } from "./dom"
 import { DeepObservable } from "./Observable"
-import { ComponentContext, createComponentContext, getValue, globalContext, isDefined, isEvent, setCurrentContext, stringify, toArray } from "./utils"
+import { ComponentContext, createComponentContext, getValue, GLOBAL_CONTEXT, isDefined, isEvent, setCurrentContext, stringify, toArray } from "./utils"
 
 interface Props { [key: string]: EventListenerOrEventListenerObject | any }
 type CustomAttribute<T> = T & { ref?: HTMLElement }
@@ -80,6 +80,12 @@ export function h(tag: Component | string, props: Props | null, ...children: Arr
 
         if (!!getValue(classList[item])) element.classList.add(item)
       }
+    } else if (prop === "style") {
+      const style = props[prop]
+      for (const item in style) {
+        if (DeepObservable.isObservable(style[item])) style[item].subscribe((_: any, curr: any) => element.style.setProperty(item, curr))
+        element.style.setProperty(item, getValue<string>(style[item])!)
+      }
     } else if (isEvent(prop)) {
       element.addEventListener(prop.slice(2).toLowerCase(), props[prop] as EventListenerOrEventListenerObject)
     } else {
@@ -134,6 +140,6 @@ function hComp(
 export function render(children: Array<JSX.Element>, container: HTMLElement) {
   container.append(...generateList([], toArray(children)))
 
-  if (isDefined(globalContext.mounted)) globalContext.mounted!.forEach((handle) => handle())
-  globalContext.mounted = null
+  if (isDefined(GLOBAL_CONTEXT.mounted)) GLOBAL_CONTEXT.mounted!.forEach((handle) => handle())
+  GLOBAL_CONTEXT.mounted = null
 }
