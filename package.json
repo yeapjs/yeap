@@ -1,12 +1,15 @@
 {
   "name": "yeap",
-  "version": "1.0.0-alpha.1",
+  "version": "1.0.0-beta.1",
   "description": "Magicless UI builder",
   "main": "./lib/app.js",
   "types": "./types/app.d.ts",
   "type": "module",
   "exports": {
     ".": {
+      "default": "./lib/app.js"
+    },
+    "./app": {
       "default": "./lib/app.js"
     },
     "./components": {
