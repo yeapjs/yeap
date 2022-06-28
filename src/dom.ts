@@ -23,7 +23,7 @@ export function generateList(container: HTMLContainer, children: Array<JSX.Eleme
 function insertReactor<T>(reactor: Reactive<T>) {
   const emptyNode = new Text()
   let values = toArray(reactor())
-  let elements = generateList([emptyNode], values)
+  let elements = generateList([], values)
   reactor.subscribe((prev, curr) => {
     if (prev === curr) return
     const newValues = toArray(curr)
@@ -60,5 +60,5 @@ function insertReactor<T>(reactor: Reactive<T>) {
     elements = newElements
     values = newValues
   })
-  return elements
+  return [emptyNode, ...elements]
 }

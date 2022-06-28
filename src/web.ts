@@ -25,7 +25,15 @@ export function define<T>(name: string, component: Component<CustomAttribute<T>>
         else this.props[name] = this.attributes[i].nodeValue
       }
       this.props.ref = this
-      parent.append(...generateList([], component(this.props as CustomAttribute<T>, Array.from(this.childNodes))))
+      parent.append(...generateList(
+        [],
+        toArray(
+          component(
+            this.props as CustomAttribute<T>,
+            Array.from(this.childNodes)
+          )
+        )
+      ))
     }
 
     connectedCallback() {
