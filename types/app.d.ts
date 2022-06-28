@@ -27,7 +27,7 @@ export type ToReadOnlyReactorObject<T = object> = {
   [K in keyof T]: ReadOnlyReactor<T[K]>
 }
 export interface ReadOnlyReactorMethod<T> {
-  subscribe(handler: SubscribeHandler<T>): void
+  subscribe(handler: SubscribeHandler<T>): () => void
   when(truthy: JSX.Element, falsy: JSX.Element): ReadOnlyReactor<JSX.Element>
 }
 export type ReadOnlyReactor<T> = ToReadOnlyReactorObject<T> & ReadOnlyReactorMethod<T> & {

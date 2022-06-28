@@ -59,6 +59,9 @@ export class DeepObservable<T> {
 
   subscribe(handler: SubscribeHandler<T>) {
     this.#handlers.push(handler)
+    return () => {
+      this.#handlers = this.#handlers.filter((callback) => callback !== handler)
+    }
   }
 
   call(prev: T, next: T) {

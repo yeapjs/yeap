@@ -9,8 +9,8 @@ export function createAsync<T, E>(fetcher: AsyncFunction<[], T>): AsyncReturn<T,
 
   function refetch() {
     loading(true)
-    fetcher()
-      .then((result) => {
+    Promise.all([fetcher()])
+      .then(([result]) => {
         data(result)
         if (error() !== null) error(null)
       })
@@ -42,11 +42,13 @@ export function createComputed<T>(reactorHandle: () => (T | Reactive<T>), ...dep
 
   const reactor = createReactor(initialValue)
 
-  for (const dep of deps) {
-    dep.subscribe(() => {
-      reactor(getValue(reactorHandle()))
-    })
-  }
+  const unsubscribes = Array.from(dependencies).map((dep) => dep.subscribe(() => {
+    reactor(getValue(reactorHandle()))
+  }))
+
+  onUnmounted(() => {
+    unsubscribes.forEach((unsubscribe) => unsubscribe())
+  })
 
   return reactor.reader()
 }
@@ -62,15 +64,19 @@ export function createEffect<T>(reactorHandle: () => any, option: CreateEffectOp
     first = false
   }
 
-  for (const dep of deps) {
-    dep.subscribe(() => {
-      const value = reactorHandle()
-      if (first) {
-        if (DeepObservable.isObservable(value)) dependencies.add(value)
-        first = false
-      }
-    })
+  function subscriber() {
+    const value = reactorHandle()
+    if (first) {
+      if (DeepObservable.isObservable(value)) unsubscribes.push(value.subscribe(subscriber))
+      first = false
+    }
   }
+
+  const unsubscribes = Array.from(dependencies).map((dep) => dep.subscribe(subscriber))
+
+  onUnmounted(() => {
+    unsubscribes.forEach((unsubscribe) => unsubscribe())
+  })
 }
 
 export function createPersistor<T>(handle: () => T): T {
