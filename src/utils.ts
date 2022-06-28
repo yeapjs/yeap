@@ -9,7 +9,7 @@ export interface ComponentContext {
 }
 
 let current: ComponentContext
-export const globalContext = createComponentContext()
+export const GLOBAL_CONTEXT = createComponentContext()
 
 export function createComponentContext(): ComponentContext {
   const context: ComponentContext = {

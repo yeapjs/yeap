@@ -2,15 +2,15 @@ import { Reactive, SubscribeHandler } from "../types/app"
 import { createReactor } from "./app"
 import { isDefined } from "./utils"
 
-const forceSymbol = Symbol("forcedToSetValue")
-const observableSymbol = Symbol("observable")
+const FORCE_SYMBOL = Symbol("forcedToSetValue")
+const OBSERVABLE_SYMBOL = Symbol("observable")
 
 export class DeepObservable<T> {
   static isObservable(arg: any): arg is Reactive<any> {
-    return !!arg?.[observableSymbol]
+    return !!arg?.[OBSERVABLE_SYMBOL]
   }
 
-  [observableSymbol] = true
+  [OBSERVABLE_SYMBOL] = true
   #freeze: boolean
   #parent: DeepObservable<T> | null
   #handlers: Array<SubscribeHandler<T>> = []
@@ -50,7 +50,7 @@ export class DeepObservable<T> {
         return undefined
       },
       set: (target, p, value, _) => {
-        if (p === forceSymbol) this.value = value
+        if (p === FORCE_SYMBOL) this.value = value
         else (target() as any)[p] = value
         return true
       },
@@ -78,7 +78,7 @@ export class DeepObservable<T> {
     this.subscribe((prev, curr) => {
       if (prev === curr) return
 
-      (observable as any)[forceSymbol] = curr
+      (observable as any)[FORCE_SYMBOL] = curr
     })
     return observable
   }
