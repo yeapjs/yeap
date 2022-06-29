@@ -5,6 +5,7 @@ declare global {
   namespace JSX {
     type Element =
       | HTMLElement
+      | SVGElement
       | Text
       | Array<Element>
       | Component<any>

@@ -27,7 +27,7 @@ export function lazy(callback: (...args: Array<any>) => Promise<any>): Component
   }
 }
 
-export const Portal: Component<{ mount: HTMLElement }> = ({ mount = document.body }, children) => {
+export const Portal: Component<{ mount: Element }> = ({ mount = document.body }, children) => {
   const childs = generateList([], children)
 
   onMounted(() => {

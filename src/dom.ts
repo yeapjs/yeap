@@ -2,16 +2,16 @@ import { Reactive } from "../types/app"
 import { isReactor } from "./app"
 import { isDefined, stringify, toArray } from "./utils"
 
-type HTMLContainer = Array<HTMLElement | Text>
+type HTMLContainer = Array<Element | Text>
 
-export function generateDOM(content: any): HTMLElement | Text {
+export function generateDOM(content: any): Element | Text {
   if (content instanceof HTMLElement) return content
   return document.createTextNode(stringify(content))
 }
 
 export function generateList(container: HTMLContainer, children: Array<JSX.Element>): HTMLContainer {
   for (const child of children) {
-    if (child instanceof HTMLElement || child instanceof Text) container = [...container, child]
+    if (child instanceof Element || child instanceof Text) container = [...container, child]
     else if (child instanceof Array) container = [...generateList(container, child)]
     else if (isReactor(child)) container = [...container, ...insertReactor(child)]
     else container = [...container, generateDOM(child)]
@@ -30,7 +30,7 @@ function insertReactor<T>(reactor: Reactive<T>) {
     const length = Math.max(newValues.length, values.length)
 
     let newElements: HTMLContainer = []
-    let prevElement: HTMLElement | Text = emptyNode
+    let prevElement: Element | Text = emptyNode
     for (let i = 0; i < length; i++) {
       const oldValue = values[i]
       const newValue = newValues[i]

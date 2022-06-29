@@ -2,7 +2,7 @@ import { Component, Reactor } from "../types/app"
 import { DefineCustomElementOption } from "../types/web"
 import { createReactor, isReactor } from "./app"
 import { generateList } from "./dom"
-import { ComponentContext, createComponentContext, getValue, GLOBAL_CONTEXT, isDefined, isEvent, setCurrentContext, stringify, toArray } from "./utils"
+import { ComponentContext, createComponentContext, getValue, GLOBAL_CONTEXT, isDefined, isEvent, isSVGTag, setCurrentContext, stringify, toArray } from "./utils"
 
 interface Props { [key: string]: EventListenerOrEventListenerObject | any }
 type CustomAttribute<T> = T & { ref?: HTMLElement }
@@ -69,14 +69,14 @@ export function h(tag: Component | string, props: Props | null, ...children: Arr
   if (typeof tag === "function") return hComp(tag, props, display, fallback, children)
 
   const is = props?.is?.toString()
-  const element = document.createElement(tag, { is })
+  const element = isSVGTag(tag) ? document.createElementNS("http://www.w3.org/2000/svg", tag) : document.createElement(tag, { is })
 
   for (const prop in props) {
     if (prop === "is" || prop === "fallback" || prop === "when") continue
     else if (prop === "ref") {
       props[prop](element)
     } else if (prop === "class") {
-      element.className = props[prop]
+      element.classList.add(props[prop].split(" "))
     } else if (prop === "classList") {
       const classList = props[prop]
       for (const item in classList) {
@@ -144,7 +144,7 @@ function hComp(
   return display() ? element() : fallback
 }
 
-export function render(children: Array<JSX.Element>, container: HTMLElement) {
+export function render(children: Array<JSX.Element>, container: HTMLElement | SVGElement) {
   container.append(...generateList([], toArray(children)))
 
   if (isDefined(GLOBAL_CONTEXT.mounted)) GLOBAL_CONTEXT.mounted!.forEach((handle) => handle())

@@ -8,8 +8,20 @@ export interface ComponentContext {
   hookIndex: number
 }
 
+function makeMap(str: string): (key: string) => boolean {
+  const map: Record<string, boolean> = {}
+  const list: Array<string> = str.split(",")
+  for (let i = 0; i < list.length; i++) {
+    map[list[i]] = true
+  }
+  return val => !!map[val]
+}
+
 let current: ComponentContext
 export const GLOBAL_CONTEXT = createComponentContext()
+export const SVG_TAGS = "svg,animate,animateMotion,animateTransform,circle,clipPath,color-profile,defs,desc,discard,ellipse,feBlend,feColorMatrix,feComponentTransfer,feComposite,feConvolveMatrix,feDiffuseLighting,feDisplacementMap,feDistanceLight,feDropShadow,feFlood,feFuncA,feFuncB,feFuncG,feFuncR,feGaussianBlur,feImage,feMerge,feMergeNode,feMorphology,feOffset,fePointLight,feSpecularLighting,feSpotLight,feTile,feTurbulence,filter,foreignObject,g,hatch,hatchpath,image,line,linearGradient,marker,mask,mesh,meshgradient,meshpatch,meshrow,metadata,mpath,path,pattern,polygon,polyline,radialGradient,rect,set,solidcolor,stop,switch,symbol,text,textPath,title,tspan,unknown,use,view"
+
+export const isSVGTag = makeMap(SVG_TAGS)
 
 export function createComponentContext(): ComponentContext {
   const context: ComponentContext = {
