@@ -71,7 +71,7 @@ export function h(tag: Component | string, props: Props | null, ...children: Arr
   const element = isSVGTag(tag) ? document.createElementNS("http://www.w3.org/2000/svg", tag) : document.createElement(tag, { is })
 
   for (const prop in props) {
-    if (prop === "is" || prop === "fallback" || prop === "when") continue
+    if (!isDefined(props[prop]) || prop === "is" || prop === "fallback" || prop === "when") continue
     else if (prop === "ref") {
       props[prop](element)
     } else if (prop === "class") {
