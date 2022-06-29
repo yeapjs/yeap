@@ -1,6 +1,6 @@
-import { Component } from "./app"
+import { Component, Reactive } from "./app"
 
-interface Props { [key: string]: EventListenerOrEventListenerObject | any }
+type Props = Record<string, EventListenerOrEventListenerObject | Reactive<any> | any>
 
 interface DefineCustomElementOption {
   reactiveAttribute: string[]

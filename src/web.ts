@@ -1,10 +1,9 @@
 import { Component, Reactor } from "../types/app"
-import { DefineCustomElementOption } from "../types/web"
+import { DefineCustomElementOption, Props } from "../types/web"
 import { createReactor, isReactor } from "./app"
 import { generateList } from "./dom"
 import { ComponentContext, createComponentContext, getValue, GLOBAL_CONTEXT, isDefined, isEvent, isSVGTag, setCurrentContext, stringify, toArray } from "./utils"
 
-interface Props { [key: string]: EventListenerOrEventListenerObject | any }
 type CustomAttribute<T> = T & { ref?: HTMLElement }
 
 export function define<T>(name: string, component: Component<CustomAttribute<T>>, { reactiveAttribute, shadowed }: DefineCustomElementOption) {
@@ -96,7 +95,12 @@ export function h(tag: Component | string, props: Props | null, ...children: Arr
     } else if (isEvent(prop)) {
       element.addEventListener(prop.slice(2).toLowerCase(), props[prop] as EventListenerOrEventListenerObject)
     } else {
-      element.setAttribute(prop, stringify(props[prop]))
+      if (isReactor(props[prop])) props[prop].subscribe((_: any, curr: any) => {
+        if (isDefined(curr) && curr !== false) element.setAttribute(prop, curr === true ? "" : stringify(curr))
+        else element.removeAttribute(prop)
+      })
+
+      if (isDefined(getValue(props[prop])) && getValue(props[prop]) !== false) element.setAttribute(prop, getValue(props[prop]) === true ? "" : stringify(getValue(props[prop])))
     }
   }
 
