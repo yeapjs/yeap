@@ -3,7 +3,7 @@ import { Component, Reactive } from "./app"
 type Props = Record<string, EventListenerOrEventListenerObject | Reactive<any> | any>
 
 interface DefineCustomElementOption {
-  reactiveAttribute: string[]
+  reactiveAttributes: string[]
   shadowed: "closed" | "open" | false
 }
 

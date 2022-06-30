@@ -6,23 +6,29 @@ import { ComponentContext, createComponentContext, getValue, GLOBAL_CONTEXT, isD
 
 type CustomAttribute<T> = T & { ref?: HTMLElement }
 
-export function define<T>(name: string, component: Component<CustomAttribute<T>>, { reactiveAttribute, shadowed }: DefineCustomElementOption) {
+export function define<T>(name: string, component: Component<CustomAttribute<T>>, { reactiveAttributes, shadowed }: DefineCustomElementOption) {
   class Component extends HTMLElement {
-    private context: ComponentContext
     private props: CustomAttribute<Props> = {}
+    #context: ComponentContext
 
-    static get observedAttributes() { return reactiveAttribute }
+    static get observedAttributes() { return reactiveAttributes ?? [] }
 
     constructor() {
       super()
-      this.context = createComponentContext()
+      this.#context = createComponentContext()
+      this.#context.parent = undefined
       const parent = shadowed ? this.attachShadow({ mode: shadowed }) : this
+
+      for (const reactiveAttribute of reactiveAttributes ?? []) {
+        if (component.defaultProps && reactiveAttribute in component.defaultProps) this.props[reactiveAttribute] = createReactor((component.defaultProps as any)[reactiveAttribute] ?? null)
+      }
 
       for (let i = 0; i < this.attributes.length; i++) {
         const name = this.attributes[i].nodeName
-        if (reactiveAttribute.includes(name)) this.props[name] = createReactor(this.attributes[i].nodeValue)
+        if (reactiveAttributes && reactiveAttributes.includes(name)) continue
         else this.props[name] = this.attributes[i].nodeValue
       }
+
       this.props.ref = this
       parent.append(...generateList(
         [],
@@ -36,13 +42,13 @@ export function define<T>(name: string, component: Component<CustomAttribute<T>>
     }
 
     connectedCallback() {
-      if (isDefined(this.context.mounted)) this.context.mounted!.forEach((handle) => handle())
-      this.context.mounted = null
+      if (isDefined(this.#context.mounted)) this.#context.mounted!.forEach((handle) => handle())
+      this.#context.mounted = null
     }
 
     disconnectedCallback() {
-      if (isDefined(this.context.unmounted)) this.context.unmounted!.forEach((handle) => handle())
-      this.context.unmounted = null
+      if (isDefined(this.#context.unmounted)) this.#context.unmounted!.forEach((handle) => handle())
+      this.#context.unmounted = null
     }
 
     attributeChangedCallback(propName: string, prev: string, curr: string) {
