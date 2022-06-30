@@ -2,7 +2,7 @@ import { Component, Reactor } from "../types/app"
 import { DefineCustomElementOption, Props } from "../types/web"
 import { createReactor, isReactor } from "./app"
 import { generateList } from "./dom"
-import { ComponentContext, createComponentContext, getValue, GLOBAL_CONTEXT, isDefined, isEvent, isSVGTag, setCurrentContext, stringify, toArray } from "./utils"
+import { ComponentContext, createComponentContext, getValue, GLOBAL_CONTEXT, isDefined, isEvent, isSVGTag, setCurrentContext, setContextParent, stringify, toArray } from "./utils"
 
 type CustomAttribute<T> = T & { ref?: HTMLElement }
 
@@ -122,6 +122,7 @@ function hComp(
   const element = () => {
     setCurrentContext(context)
     context.hookIndex = 0
+    setContextParent(context)
     return component(properties, children)
   }
 
