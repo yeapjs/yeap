@@ -17,9 +17,16 @@ export interface AsyncReturn<T, E = any> extends AsyncComputedReturn<T, E> {
 export type SubscribeHandler<T> = (prev: T, next: T) => void
 
 export type ComponentProps<T> = T & { fallback?: JSX.Element, when?: any | Reactor<any> }
-export interface Component<T = object> {
-  (props: ComponentProps<T>, children: Array<JSX.Element>): JSX.Element
+export interface Component<T = object, C extends Array<any> = Array<JSX.Element>> {
+  (props: ComponentProps<T>, children: C): JSX.Element
   defaultProps?: T
+}
+
+export interface Context<T> {
+  id: symbol
+  defaultValue?: T
+  Consumer: Component<{}, [(v: T) => JSX.Element]>
+  Provider: Component<{ value: T }, [Function]>
 }
 
 /// REACTIVE
@@ -54,6 +61,8 @@ export function createAsyncComputed<T, E>(fetcher: AsyncFunction<[], T>, default
 
 export function createComputed<T>(reactorHandle: () => (T | Reactor<T>), ...deps: Array<Reactor<T>>): ReadOnlyReactor<T>
 
+export function createContext<T>(defaultValue?: T): Context<T>
+
 export function createEffect<T>(reactorHandle: () => any, option: CreateEffectOption, ...deps: Array<Reactor<T>>): void
 export function createEffect<T>(reactorHandle: () => any, ...deps: Array<Reactor<T>>): void
 
@@ -66,3 +75,5 @@ export function isReactor(arg: any): arg is Reactive<any>
 
 export function onMounted(handle: Function): void
 export function onUnmounted(handle: Function): void
+
+export function useContext<T>(context: Context<T>): T

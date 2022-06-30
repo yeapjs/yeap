@@ -1,6 +1,6 @@
-import { AsyncComputedReturn, AsyncFunction, AsyncReturn, CreateEffectOption, Reactive, Reactor, ReadOnlyReactor } from "../types/app"
+import { AsyncComputedReturn, AsyncFunction, AsyncReturn, Context, CreateEffectOption, Reactive, Reactor, ReadOnlyReactor } from "../types/app"
 import { DeepObservable } from "./Observable"
-import { getCurrentContext, getValue, isDefined } from "./utils"
+import { ComponentContext, getCurrentContext, getValue, isDefined } from "./utils"
 
 export function createAsync<T, E>(fetcher: AsyncFunction<[], T>, defaultValue?: T): AsyncReturn<T, E> {
   const data = createReactor<T>(defaultValue)
@@ -55,6 +55,38 @@ export function createComputed<T>(reactorHandle: () => (T | Reactive<T>), ...dep
   })
 
   return reactor.reader()
+}
+
+export function createContext<T>(defaultValue?: T): Context<T> {
+  const componentContext = getCurrentContext()
+  const id = Symbol()
+  const context: Context<T> = {
+    id,
+    defaultValue,
+    Consumer({ }, children) {
+      return children[0](useContext(context))
+    },
+    Provider({ value }, children) {
+      const componentContext = getCurrentContext()
+
+      componentContext.contexts[id] = {
+        context: componentContext.contexts[id]?.context ?? null,
+        provider: {
+          id,
+          value
+        },
+      }
+
+      return children[0]()
+    },
+  }
+
+  componentContext.contexts[id] = {
+    provider: componentContext.contexts[id]?.provider ?? null,
+    context
+  }
+
+  return context
 }
 
 export function createEffect<T>(reactorHandle: () => any, option: CreateEffectOption | Reactive<T>, ...deps: Array<Reactive<T>>): void {
@@ -118,4 +150,15 @@ export function onUnmounted(handler: Function) {
   const context = getCurrentContext()
   if (!isDefined(context.unmounted)) context.unmounted = [handler]
   else context.unmounted!.push(handler)
+}
+
+export function useContext<T>(context: Context<T>): T {
+  let componentContext: ComponentContext | undefined = getCurrentContext()
+
+  while (isDefined(componentContext?.contexts)) {
+    if (isDefined(componentContext!.contexts[context.id]?.provider)) return componentContext!.contexts[context.id]!.provider!.value
+    componentContext = componentContext!.parent
+  }
+
+  return context.defaultValue!
 }

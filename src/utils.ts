@@ -1,8 +1,14 @@
-import { Reactive } from "../types/app"
+import { Context, Reactive } from "../types/app"
 import { isReactor } from "./app"
+
+interface ProvidedContext<T> {
+  id: symbol
+  value?: T
+}
 
 export interface ComponentContext {
   parent?: ComponentContext
+  contexts: Record<symbol, { context?: Context<any> | null, provider: ProvidedContext<any> | null }>
   mounted: Array<Function> | null
   unmounted: Array<Function> | null
   hooks: Array<any>
@@ -29,6 +35,7 @@ export const isSVGTag = makeMap(SVG_TAGS)
 export function createComponentContext(): ComponentContext {
   const context: ComponentContext = {
     parent,
+    contexts: {},
     mounted: null,
     unmounted: null,
     hooks: [],
