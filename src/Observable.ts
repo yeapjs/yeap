@@ -1,9 +1,7 @@
 import { Reactive, SubscribeHandler } from "../types/app"
 import { createComputed, createReactor, isReactor } from "./app"
+import { FORCE_SYMBOL, OBSERVABLE_SYMBOL } from "./constantes"
 import { getValue, isDefined } from "./utils"
-
-const FORCE_SYMBOL = Symbol("forcedToSetValue")
-const OBSERVABLE_SYMBOL = Symbol("observable")
 
 export class DeepObservable<T> {
   static isObservable(arg: any): arg is Reactive<any> {

@@ -1,5 +1,6 @@
 import { Context, Reactive } from "../types/app"
 import { isReactor } from "./app"
+import { SVG_TAGS } from "./constantes"
 
 interface ProvidedContext<T> {
   id: symbol
@@ -19,16 +20,15 @@ function makeMap(str: string): (key: string) => boolean {
   const map: Record<string, boolean> = {}
   const list: Array<string> = str.split(",")
   for (let i = 0; i < list.length; i++) {
-    map[list[i]] = true
+    map[list[i].toLowerCase()] = true
   }
-  return val => !!map[val]
+  return val => !!map[val.toLocaleLowerCase()]
 }
 
 let current: ComponentContext
 let parent: ComponentContext
 export const GLOBAL_CONTEXT = createComponentContext()
 setContextParent(GLOBAL_CONTEXT)
-export const SVG_TAGS = "svg,animate,animateMotion,animateTransform,circle,clipPath,color-profile,defs,desc,discard,ellipse,feBlend,feColorMatrix,feComponentTransfer,feComposite,feConvolveMatrix,feDiffuseLighting,feDisplacementMap,feDistanceLight,feDropShadow,feFlood,feFuncA,feFuncB,feFuncG,feFuncR,feGaussianBlur,feImage,feMerge,feMergeNode,feMorphology,feOffset,fePointLight,feSpecularLighting,feSpotLight,feTile,feTurbulence,filter,foreignObject,g,hatch,hatchpath,image,line,linearGradient,marker,mask,mesh,meshgradient,meshpatch,meshrow,metadata,mpath,path,pattern,polygon,polyline,radialGradient,rect,set,solidcolor,stop,switch,symbol,text,textPath,title,tspan,unknown,use,view"
 
 export const isSVGTag = makeMap(SVG_TAGS)
 
