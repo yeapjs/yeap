@@ -1,6 +1,7 @@
 import { Context, Reactive } from "../types/app"
 import { isReactor } from "./app"
-import { SVG_TAGS } from "./constantes"
+import { COMPONENT_SYMBOL, SVG_TAGS } from "./constantes"
+import { ComponentCaller } from "./web"
 
 interface ProvidedContext<T> {
   id: symbol
@@ -9,6 +10,7 @@ interface ProvidedContext<T> {
 
 export interface ComponentContext {
   parent?: ComponentContext
+  condition: Reactive<boolean> | boolean
   contexts: Record<symbol, { context?: Context<any> | null, provider: ProvidedContext<any> | null }>
   mounted: Array<Function> | null
   unmounted: Array<Function> | null
@@ -35,6 +37,7 @@ export const isSVGTag = makeMap(SVG_TAGS)
 export function createComponentContext(): ComponentContext {
   const context: ComponentContext = {
     parent,
+    condition: true,
     contexts: {},
     mounted: null,
     unmounted: null,
@@ -57,6 +60,10 @@ export function setContextParent(context: ComponentContext) {
 
 export function getCurrentContext(): ComponentContext {
   return current
+}
+
+export function isComponent(arg: any): arg is ComponentCaller {
+  return !!arg?.[COMPONENT_SYMBOL]
 }
 
 export function stringify(v: unknown): string {

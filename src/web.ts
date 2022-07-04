@@ -1,10 +1,14 @@
-import { Component, Reactor } from "../types/app"
+import { Component, Reactive } from "../types/app"
 import { DefineCustomElementOption, Props } from "../types/web"
-import { createReactor, isReactor } from "./app"
+import { createComputed, createReactor, isReactor } from "./app"
+import { COMPONENT_SYMBOL } from "./constantes"
 import { generateList } from "./dom"
-import { ComponentContext, createComponentContext, getValue, GLOBAL_CONTEXT, isDefined, isEvent, isSVGTag, setCurrentContext, setContextParent, stringify, toArray } from "./utils"
+import { ComponentContext, createComponentContext, getValue, GLOBAL_CONTEXT, isDefined, isEvent, isSVGTag, setCurrentContext, setContextParent, stringify, toArray, getCurrentContext } from "./utils"
 
 type CustomAttribute<T> = T & { ref?: HTMLElement }
+export interface ComponentCaller extends Function {
+  [COMPONENT_SYMBOL]: true
+}
 
 export function define<T>(name: string, component: Component<CustomAttribute<T>>, { reactiveAttributes, shadowed }: DefineCustomElementOption) {
   class Component extends HTMLElement {
@@ -63,15 +67,15 @@ export function define<T>(name: string, component: Component<CustomAttribute<T>>
 export function h(tag: Component | string, props: Props | null, ...children: Array<JSX.Element>) {
   if (!isDefined(props)) props = {}
 
-  const display = createReactor(true)
-
   const fallback = toArray(props!["fallback"] ?? [new Text()])
+
+  if (typeof tag === "function") return hComp(tag, props, fallback, children)
+
+  const display = createReactor(true)
   if ("when" in props!) {
     if (isReactor(props["when"])) props["when"].subscribe((_: any, curr: any) => display(!!curr))
     display(!!getValue(props["when"]))
   }
-
-  if (typeof tag === "function") return hComp(tag, props, display, fallback, children)
 
   const is = props?.is?.toString()
   const element = isSVGTag(tag) ? document.createElementNS("http://www.w3.org/2000/svg", tag) : document.createElement(tag, { is })
@@ -119,40 +123,55 @@ export function h(tag: Component | string, props: Props | null, ...children: Arr
 function hComp(
   component: Component,
   props: Props | null,
-  display: Reactor<boolean>,
   fallback: JSX.Element,
   children: Array<JSX.Element>
 ) {
   const properties = Object.assign({}, component.defaultProps, props)
-  const context = createComponentContext()
-  const element = () => {
-    setCurrentContext(context)
-    context.hookIndex = 0
-    setContextParent(context)
-    return component(properties, children)
-  }
 
-  setTimeout(() => {
-    if (isDefined(context.mounted)) context.mounted!.forEach((handle) => handle())
-    context.mounted = null
-  }, 0)
+  const createComponent: ComponentCaller = function createComponent() {
+    const context = createComponentContext()
+    if ("when" in props!) context.condition = props["when"]
+    setTimeout(() => {
+      mount(context)
+    }, 0)
 
-  if ("when" in props! && isReactor(props["when"])) {
-    const reactor = display.when(element, fallback)
-    reactor.subscribe((_, curr) => {
-      if (curr !== fallback) {
-        if (isDefined(context.mounted)) context.mounted!.forEach((handle) => handle())
-        context.mounted = null
+    const allConditions: Array<Reactive<boolean>> = []
+    let currentContext = context
+
+    while (currentContext.parent) {
+      if (currentContext.condition === false) return fallback
+      if (isReactor(currentContext.condition)) allConditions.push(currentContext.condition)
+      currentContext = currentContext.parent
+    }
+
+    const element = createComputed(() => {
+      // TODO call component in render like (with ¯\(ツ)/¯) createAsync and add condition detection with HTML element parent in context
+
+      setCurrentContext(context)
+      if (!allConditions.some((reactive) => !reactive())) {
+        setContextParent(context)
+        context.hookIndex = 0
+        mount(context)
+        return component(properties, children)
       } else {
-        if (isDefined(context.unmounted)) context.unmounted!.forEach((handle) => handle())
-        context.unmounted = null
+        unmount(context)
+        return fallback
       }
-    })
+    }, { unsubscription: false }, ...allConditions)
 
-    return reactor
-  }
+    return element
+  } as any
 
-  return display() ? element() : fallback
+  createComponent[COMPONENT_SYMBOL] = true
+
+  return createComponent
+}
+
+function mount(context: ComponentContext) {
+  if (isDefined(context.mounted)) context.mounted!.forEach((handle) => handle())
+}
+function unmount(context: ComponentContext) {
+  if (isDefined(context.unmounted)) context.unmounted!.forEach((handle) => handle())
 }
 
 export function render(children: Array<JSX.Element>, container: HTMLElement | SVGElement) {

@@ -1,3 +1,4 @@
+export const COMPONENT_SYMBOL = Symbol("component")
 export const FORCE_SYMBOL = Symbol("forcedToSetValue")
 export const OBSERVABLE_SYMBOL = Symbol("observable")
 
