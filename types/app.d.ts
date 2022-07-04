@@ -1,12 +1,12 @@
 import "./jsx"
 
 export interface CreateComputedOption {
-  observableInitialValue: boolean
-  unsubscription: boolean
+  observableInitialValue?: boolean
+  unsubscription?: boolean
 }
 
 export interface CreateEffectOption extends CreateComputedOption {
-  immediate: boolean
+  immediate?: boolean
 }
 
 export type AsyncFunction<A extends Array<any>, O> = (...args: A) => Promise<O>

@@ -27,7 +27,7 @@ export class DeepObservable<T> {
       apply: (target, thisArg, argArray: [((v: T) => T) | T] | []) => {
         const value = target()
         if (typeof value === "function")
-          return createComputed(() => value.apply(getValue(thisArg), argArray), this as any)
+          return createComputed(() => value.apply(getValue(thisArg), argArray), { unsubscription: false }, this as any)
         if (this.#freeze || argArray.length === 0) return value
 
         if (typeof argArray[0] === "function") this.value = (argArray[0] as Function)(value)
