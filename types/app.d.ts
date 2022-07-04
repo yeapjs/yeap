@@ -1,6 +1,11 @@
 import "./jsx"
 
-export interface CreateEffectOption {
+export interface CreateComputedOption {
+  observableInitialValue: boolean
+  unsubscription: boolean
+}
+
+export interface CreateEffectOption extends CreateComputedOption {
   immediate: boolean
 }
 
@@ -56,15 +61,17 @@ export type Reactive<T> = Reactor<T> | ReadOnlyReactor<T>
 /// HOOKS
 export function createAsync<T, E>(fetcher: AsyncFunction<[], T>): AsyncReturn<T, E>
 export function createAsync<T, E>(fetcher: AsyncFunction<[], T>, defaultValue: T): AsyncReturn<T, E>
-export function createAsyncComputed<T, E>(fetcher: AsyncFunction<[], T>, ...deps: Array<Reactor<T>>): AsyncComputedReturn<T, E>
-export function createAsyncComputed<T, E>(fetcher: AsyncFunction<[], T>, defaultValue: T, ...deps: Array<Reactor<T>>): AsyncComputedReturn<T, E>
+export function createAsyncComputed<T, E, U>(fetcher: AsyncFunction<[], T>, ...deps: Array<Reactor<U>>): AsyncComputedReturn<T, E>
+export function createAsyncComputed<T, E, U>(fetcher: AsyncFunction<[], T>, defaultValue: T, ...deps: Array<Reactor<U>>): AsyncComputedReturn<T, E>
+export function createAsyncComputed<T, E, U>(fetcher: AsyncFunction<[], T>, defaultValue: T, option: CreateEffectOption, ...deps: Array<Reactive<U>>): AsyncComputedReturn<T, E>
 
-export function createComputed<T>(reactorHandle: () => (T | Reactor<T>), ...deps: Array<Reactor<T>>): ReadOnlyReactor<T>
+export function createComputed<T, U>(reactorHandle: () => (T | Reactive<T>), ...deps: Array<Reactive<U>>): ReadOnlyReactor<T>
+export function createComputed<T, U>(reactorHandle: () => (T | Reactive<T>), option: CreateComputedOption, ...deps: Array<Reactive<U>>): ReadOnlyReactor<T>
 
 export function createContext<T>(defaultValue?: T): Context<T>
 
-export function createEffect<T>(reactorHandle: () => any, option: CreateEffectOption, ...deps: Array<Reactor<T>>): void
 export function createEffect<T>(reactorHandle: () => any, ...deps: Array<Reactor<T>>): void
+export function createEffect<T>(reactorHandle: () => any, option: CreateEffectOption, ...deps: Array<Reactor<T>>): void
 
 export function createPersistor<T>(handle: () => T): T
 

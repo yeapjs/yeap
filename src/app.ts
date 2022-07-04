@@ -1,4 +1,4 @@
-import { AsyncComputedReturn, AsyncFunction, AsyncReturn, Context, CreateEffectOption, Reactive, Reactor, ReadOnlyReactor } from "../types/app"
+import { AsyncComputedReturn, AsyncFunction, AsyncReturn, Context, CreateComputedOption, CreateEffectOption, Reactive, Reactor, ReadOnlyReactor } from "../types/app"
 import { DeepObservable } from "./Observable"
 import { ComponentContext, getCurrentContext, getValue, isDefined } from "./utils"
 
@@ -28,21 +28,49 @@ export function createAsync<T, E>(fetcher: AsyncFunction<[], T>, defaultValue?: 
   }
 }
 
-export function createAsyncComputed<T, E>(fetcher: AsyncFunction<[], T>, defaultValue?: Reactive<T> | T, ...deps: Array<Reactive<T>>): AsyncComputedReturn<T, E> {
+export function createAsyncComputed<T, E, U>(fetcher: AsyncFunction<[], T>, defaultValue?: Reactive<U> | T, option?: CreateEffectOption | Reactive<U>, ...deps: Array<Reactive<U>>): AsyncComputedReturn<T, E> {
   if (isReactor(defaultValue)) {
     deps.push(defaultValue)
     defaultValue = undefined
   }
+  if (isReactor(option) || !isDefined(option)) {
+    if (isDefined(option)) deps.push(option as Reactive<any>)
+    option = {
+      immediate: true,
+      observableInitialValue: true,
+      unsubscription: true
+    }
+  }
+  option = {
+    immediate: true,
+    observableInitialValue: true,
+    unsubscription: true,
+    ...option
+  }
+
   const { data, error, loading, refetch } = createAsync<T, E>(fetcher, defaultValue)
-  createEffect(refetch, { immediate: false }, ...deps)
+  createEffect(refetch, option, ...deps)
 
   return { data, error, loading }
 }
 
-export function createComputed<T>(reactorHandle: () => (T | Reactive<T>), ...deps: Array<Reactive<T>>): ReadOnlyReactor<T> {
+export function createComputed<T, U>(reactorHandle: () => (T | Reactive<T>), option?: CreateComputedOption | Reactive<U>, ...deps: Array<Reactive<U>>): ReadOnlyReactor<T> {
   const dependencies = new Set(deps)
+  if (isReactor(option) || !isDefined(option)) {
+    if (isDefined(option)) dependencies.add(option as Reactive<any>)
+    option = {
+      observableInitialValue: true,
+      unsubscription: true
+    }
+  }
+  option = {
+    observableInitialValue: true,
+    unsubscription: true,
+    ...option
+  }
+
   const initialValue = reactorHandle()
-  if (isReactor(initialValue)) dependencies.add(initialValue as Reactive<T>)
+  if (isReactor(initialValue) && option!.observableInitialValue) dependencies.add(initialValue as Reactive<any>)
 
   const reactor = createReactor(initialValue)
 
@@ -50,7 +78,7 @@ export function createComputed<T>(reactorHandle: () => (T | Reactive<T>), ...dep
     reactor(getValue(reactorHandle()))
   }))
 
-  onUnmounted(() => {
+  if (option!.unsubscription) onUnmounted(() => {
     unsubscribes.forEach((unsubscribe) => unsubscribe())
   })
 
@@ -89,28 +117,37 @@ export function createContext<T>(defaultValue?: T): Context<T> {
   return context
 }
 
-export function createEffect<T>(reactorHandle: () => any, option: CreateEffectOption | Reactive<T>, ...deps: Array<Reactive<T>>): void {
-  const observableOption = isReactor(option)
+export function createEffect<T>(reactorHandle: () => any, option?: CreateEffectOption | Reactive<T>, ...deps: Array<Reactive<T>>): void {
   const dependencies = new Set(deps)
+  if (isReactor(option) || !isDefined(option)) {
+    if (isDefined(option)) dependencies.add(option as Reactive<T>)
+    option = {
+      immediate: true,
+      observableInitialValue: true,
+      unsubscription: true
+    }
+  }
   let first = true
-  if (observableOption) dependencies.add(option as Reactive<T>)
-  if (observableOption || (option as CreateEffectOption).immediate) {
-    let initialValue = reactorHandle()
-    if (isReactor(initialValue)) dependencies.add(initialValue as Reactive<T>)
-    first = false
+  option = {
+    immediate: true,
+    observableInitialValue: true,
+    unsubscription: true,
+    ...option
   }
 
   function subscriber() {
     const value = reactorHandle()
     if (first) {
-      if (isReactor(value)) unsubscribes.push(value.subscribe(subscriber))
+      if (isReactor(value) && (option as CreateComputedOption).observableInitialValue) unsubscribes.push(value.subscribe(subscriber))
       first = false
     }
   }
 
+  if (option.immediate) subscriber()
+
   const unsubscribes = Array.from(dependencies).map((dep) => dep.subscribe(subscriber))
 
-  onUnmounted(() => {
+  if (option!.unsubscription) onUnmounted(() => {
     unsubscribes.forEach((unsubscribe) => unsubscribe())
   })
 }
@@ -141,12 +178,20 @@ export function isReactor(arg: any): arg is Reactive<any> {
 }
 
 export function onMounted(handler: Function) {
+  const first = createPersistentReactor(true)
+
+  if (!first(false)) return
+
   const context = getCurrentContext()
   if (!isDefined(context.mounted)) context.mounted = [handler]
   else context.mounted!.push(handler)
 }
 
 export function onUnmounted(handler: Function) {
+  const first = createPersistentReactor(true)
+
+  if (!first(false)) return
+
   const context = getCurrentContext()
   if (!isDefined(context.unmounted)) context.unmounted = [handler]
   else context.unmounted!.push(handler)
