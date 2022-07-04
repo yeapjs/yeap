@@ -33,8 +33,7 @@ export class DeepObservable<T> {
         if (typeof argArray[0] === "function") this.value = (argArray[0] as Function)(value)
         else this.value = argArray[0]
 
-        this.call(value, this.value)
-
+        if (value !== this.value) this.call(value, this.value)
         return value
       },
       get: (target, p, _) => {
@@ -63,8 +62,8 @@ export class DeepObservable<T> {
   }
 
   call(prev: T, next: T) {
-    this.#handlers.forEach((handle) => handle(prev, next))
-    this.#parent?.call(prev, next)
+    if (!this.#parent) this.#handlers.forEach((handle) => handle(prev, next))
+    else this.#parent.call(prev, next)
   }
 
   freeze() {
