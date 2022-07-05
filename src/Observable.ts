@@ -10,10 +10,12 @@ export class DeepObservable<T> {
 
   [OBSERVABLE_SYMBOL] = true
   #freeze: boolean
+  #once: boolean
   #parent: DeepObservable<T> | null
   #handlers: Array<SubscribeHandler<T>> = []
-  constructor(public value: T, parent: DeepObservable<T> | null = null, freeze = false) {
+  constructor(public value: T, parent: DeepObservable<T> | null = null, freeze = false, once = false) {
     this.#freeze = freeze
+    this.#once = once
     this.#parent = parent
     if (this.#parent) this.#handlers = this.#parent.#handlers
 
@@ -33,17 +35,19 @@ export class DeepObservable<T> {
         if (typeof argArray[0] === "function") this.value = (argArray[0] as Function)(value)
         else this.value = argArray[0]
 
+        if (this.#once) this.#freeze = true
+
         if (value !== this.value) this.call(value, this.value)
         return value
       },
       get: (target, p, _) => {
-        const value = (target() as any)[p]
+        const value = (target() as any)?.[p]
         if (p in this && p !== "value" && ["function", "boolean"].includes(typeof (this as any)[p])) {
           return (this as any)[p]
         } else if (isDefined(value)) {
           if (isReactor(value)) return value
           return new DeepObservable(value, parent ?? this)
-        }
+        } else if (value === null) return null
         return undefined
       },
       set: (target, p, value, _) => {
@@ -67,11 +71,11 @@ export class DeepObservable<T> {
   }
 
   freeze() {
-    return new DeepObservable(this.value, this.#parent ?? this, true)
+    return new DeepObservable(this.value, this.#parent ?? this, true, false)
   }
 
   reader() {
-    const observable = new DeepObservable(this.value, this.#parent ?? this, true)
+    const observable = new DeepObservable(this.value, this.#parent ?? this, true, false)
     this.subscribe((prev, curr) => {
       if (prev === curr) return
 
@@ -81,6 +85,10 @@ export class DeepObservable<T> {
   }
 
   when(truthy: JSX.Element | Function, falsy: JSX.Element | Function) {
+    if (typeof truthy === "function" && !isDefined(falsy)) {
+      return createComputed(() => truthy(this.value), { observableInitialValue: false }, this as any)
+    }
+
     const reactor = createReactor(
       this.value ?
         typeof truthy === "function" ? truthy() : truthy :
