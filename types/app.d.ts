@@ -46,6 +46,7 @@ export type ToReadOnlyReactorObject<T = object> = {
 }
 export interface ReadOnlyReactorMethod<T> {
   subscribe(handler: SubscribeHandler<T>): () => void
+  when(handle: Function<[T], JSX.Element>): ReadOnlyReactor<JSX.Element>
   when(truthy: JSX.Element, falsy: JSX.Element): ReadOnlyReactor<JSX.Element>
 }
 export type ReadOnlyReactor<T> = ToReadOnlyReactorObject<T> & ReadOnlyReactorMethod<T> & {

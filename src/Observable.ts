@@ -85,6 +85,10 @@ export class DeepObservable<T> {
   }
 
   when(truthy: JSX.Element | Function, falsy: JSX.Element | Function) {
+    if (typeof truthy === "function" && !isDefined(falsy)) {
+      return createComputed(() => truthy(this.value), { observableInitialValue: false }, this as any)
+    }
+
     const reactor = createReactor(
       this.value ?
         typeof truthy === "function" ? truthy() : truthy :
