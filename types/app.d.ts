@@ -84,6 +84,8 @@ export function createPersistor<T>(handle: () => T): T
 export function createPersistentReactor<T>(initialValue?: Reactive<T> | T): Reactor<T>
 export function createReactor<T>(initialValue?: Reactive<T> | T): Reactor<T>
 
+export function createRef<T>(initialValue?: Reactive<T> | T): Reactor<T>
+
 export function isReactor(arg: any): arg is Reactive<any>
 
 export function onMounted(handle: Function): void

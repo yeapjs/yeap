@@ -179,6 +179,10 @@ export function createReactor<T>(initialValue?: Reactive<T> | T): Reactor<T> {
   return new DeepObservable(getValue(initialValue), null) as any
 }
 
+export function createRef<T>(initialValue?: Reactive<T> | T): Reactor<T> {
+  return new DeepObservable(getValue(initialValue), null, false, true) as any
+}
+
 export function isReactor(arg: any): arg is Reactive<any> {
   return DeepObservable.isObservable(arg)
 }
