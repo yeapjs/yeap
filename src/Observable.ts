@@ -1,9 +1,7 @@
 import { Reactive, SubscribeHandler } from "../types/app"
 import { createComputed, createReactor, isReactor } from "./app"
+import { FORCE_SYMBOL, OBSERVABLE_SYMBOL } from "./constantes"
 import { getValue, isDefined } from "./utils"
-
-const FORCE_SYMBOL = Symbol("forcedToSetValue")
-const OBSERVABLE_SYMBOL = Symbol("observable")
 
 export class DeepObservable<T> {
   static isObservable(arg: any): arg is Reactive<any> {
@@ -29,14 +27,13 @@ export class DeepObservable<T> {
       apply: (target, thisArg, argArray: [((v: T) => T) | T] | []) => {
         const value = target()
         if (typeof value === "function")
-          return createComputed(() => value.apply(getValue(thisArg), argArray), this as any)
+          return createComputed(() => value.apply(getValue(thisArg), argArray), { unsubscription: false }, this as any)
         if (this.#freeze || argArray.length === 0) return value
 
         if (typeof argArray[0] === "function") this.value = (argArray[0] as Function)(value)
         else this.value = argArray[0]
 
-        this.call(value, this.value)
-
+        if (value !== this.value) this.call(value, this.value)
         return value
       },
       get: (target, p, _) => {
@@ -65,8 +62,8 @@ export class DeepObservable<T> {
   }
 
   call(prev: T, next: T) {
-    this.#handlers.forEach((handle) => handle(prev, next))
-    this.#parent?.call(prev, next)
+    if (!this.#parent) this.#handlers.forEach((handle) => handle(prev, next))
+    else this.#parent.call(prev, next)
   }
 
   freeze() {
