@@ -127,13 +127,13 @@ function hComp(
   children: Array<JSX.Element>
 ) {
   const properties = Object.assign({}, component.defaultProps, props)
+  let reactive: Reactive<any>
 
   const createComponent: ComponentCaller = function createComponent() {
+    if (reactive) return reactive
+
     const context = createComponentContext()
     if ("when" in props!) context.condition = props["when"]
-    setTimeout(() => {
-      mount(context)
-    }, 0)
 
     const allConditions: Array<Reactive<boolean>> = []
     let currentContext = context
@@ -144,22 +144,25 @@ function hComp(
       currentContext = currentContext.parent
     }
 
-    const element = createComputed(() => {
-      // TODO call component in render like (with ¯\(ツ)/¯) createAsync and add condition detection with HTML element parent in context
-
+    reactive = createComputed(() => {
       setCurrentContext(context)
       if (!allConditions.some((reactive) => !reactive())) {
         setContextParent(context)
         context.hookIndex = 0
+        const elements = component(properties, children)
+
         mount(context)
-        return component(properties, children)
+        setCurrentContext(context.parent!)
+        setContextParent(context.parent!)
+
+        return elements
       } else {
         unmount(context)
         return fallback
       }
     }, { unsubscription: false }, ...allConditions)
 
-    return element
+    return reactive
   } as any
 
   createComponent[COMPONENT_SYMBOL] = true
