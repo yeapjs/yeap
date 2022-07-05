@@ -1,4 +1,4 @@
-import { AsyncComputedReturn, AsyncFunction, AsyncReturn, Context, CreateComputedOption, CreateEffectOption, Reactive, Reactor, ReadOnlyReactor } from "../types/app"
+import { AsyncComputedReturn, AsyncFunction, AsyncReturn, Closer, Context, CreateComputedOption, CreateEffectOption, Function, Reactive, Reactor, ReadOnlyReactor } from "../types/app"
 import { DeepObservable } from "./Observable"
 import { ComponentContext, getCurrentContext, getValue, isDefined } from "./utils"
 
@@ -28,7 +28,7 @@ export function createAsync<T, E>(fetcher: AsyncFunction<[], T>, defaultValue?: 
   }
 }
 
-export function createAsyncComputed<T, E, U>(fetcher: AsyncFunction<[], T>, defaultValue?: Reactive<U> | T, option?: CreateEffectOption | Reactive<U>, ...deps: Array<Reactive<U>>): AsyncComputedReturn<T, E> {
+export function createAsyncComputed<T, E, U>(fetcher: AsyncFunction<[], T, Closer>, defaultValue?: Reactive<U> | T, option?: CreateEffectOption | Reactive<U>, ...deps: Array<Reactive<U>>): AsyncComputedReturn<T, E> {
   if (isReactor(defaultValue)) {
     deps.push(defaultValue)
     defaultValue = undefined
@@ -54,8 +54,9 @@ export function createAsyncComputed<T, E, U>(fetcher: AsyncFunction<[], T>, defa
   return { data, error, loading }
 }
 
-export function createComputed<T, U>(reactorHandle: () => (T | Reactive<T>), option?: CreateComputedOption | Reactive<U>, ...deps: Array<Reactive<U>>): ReadOnlyReactor<T> {
+export function createComputed<T, U>(reactorHandle: Function<[], Reactive<T> | T, Closer>, option?: CreateComputedOption | Reactive<U>, ...deps: Array<Reactive<U>>): ReadOnlyReactor<T> {
   const dependencies = new Set(deps)
+  const handle = reactorHandle.bind({ close })
   if (isReactor(option) || !isDefined(option)) {
     if (isDefined(option)) dependencies.add(option as Reactive<any>)
     option = {
@@ -69,18 +70,20 @@ export function createComputed<T, U>(reactorHandle: () => (T | Reactive<T>), opt
     ...option
   }
 
-  const initialValue = reactorHandle()
+  const initialValue = handle()
   if (isReactor(initialValue) && option!.observableInitialValue) dependencies.add(initialValue as Reactive<any>)
 
   const reactor = createReactor(initialValue)
 
   const unsubscribes = Array.from(dependencies).map((dep) => dep.subscribe(() => {
-    reactor(getValue(reactorHandle()))
+    reactor(getValue(handle()))
   }))
 
-  if (option!.unsubscription) onUnmounted(() => {
+  function close() {
     unsubscribes.forEach((unsubscribe) => unsubscribe())
-  })
+  }
+
+  if (option!.unsubscription) onUnmounted(close)
 
   return reactor.reader()
 }
@@ -117,8 +120,9 @@ export function createContext<T>(defaultValue?: T): Context<T> {
   return context
 }
 
-export function createEffect<T>(reactorHandle: () => any, option?: CreateEffectOption | Reactive<T>, ...deps: Array<Reactive<T>>): void {
+export function createEffect<T>(reactorHandle: Function<[], any, Closer>, option?: CreateEffectOption | Reactive<T>, ...deps: Array<Reactive<T>>): void {
   const dependencies = new Set(deps)
+  const handle = reactorHandle.bind({ close })
   if (isReactor(option) || !isDefined(option)) {
     if (isDefined(option)) dependencies.add(option as Reactive<T>)
     option = {
@@ -136,7 +140,7 @@ export function createEffect<T>(reactorHandle: () => any, option?: CreateEffectO
   }
 
   function subscriber() {
-    const value = reactorHandle()
+    const value = handle()
     if (first) {
       if (isReactor(value) && (option as CreateComputedOption).observableInitialValue) unsubscribes.push(value.subscribe(subscriber))
       first = false
@@ -147,9 +151,11 @@ export function createEffect<T>(reactorHandle: () => any, option?: CreateEffectO
 
   const unsubscribes = Array.from(dependencies).map((dep) => dep.subscribe(subscriber))
 
-  if (option!.unsubscription) onUnmounted(() => {
+  function close() {
     unsubscribes.forEach((unsubscribe) => unsubscribe())
-  })
+  }
+
+  if (option!.unsubscription) onUnmounted(close)
 }
 
 export function createPersistor<T>(handle: () => T): T {

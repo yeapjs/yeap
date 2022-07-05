@@ -9,7 +9,9 @@ export interface CreateEffectOption extends CreateComputedOption {
   immediate?: boolean
 }
 
-export type AsyncFunction<A extends Array<any>, O> = (...args: A) => Promise<O>
+export type Function<A extends Array<any> = Array<any>, R = any, T = any> = (this: T, ...args: A) => R
+export type AsyncFunction<A extends Array<any> = Array<any>, R = any, T = any> = Function<A, Promise<R>, T>
+
 export interface AsyncComputedReturn<T, E = any> {
   data: ReadOnlyReactor<T>
   error: ReadOnlyReactor<E | null>
@@ -32,6 +34,10 @@ export interface Context<T> {
   defaultValue?: T
   Consumer: Component<{}, [(v: T) => JSX.Element]>
   Provider: Component<{ value: T }, [Function]>
+}
+
+export interface Closer {
+  close(): void
 }
 
 /// REACTIVE
@@ -61,17 +67,17 @@ export type Reactive<T> = Reactor<T> | ReadOnlyReactor<T>
 /// HOOKS
 export function createAsync<T, E>(fetcher: AsyncFunction<[], T>): AsyncReturn<T, E>
 export function createAsync<T, E>(fetcher: AsyncFunction<[], T>, defaultValue: T): AsyncReturn<T, E>
-export function createAsyncComputed<T, E, U>(fetcher: AsyncFunction<[], T>, ...deps: Array<Reactor<U>>): AsyncComputedReturn<T, E>
-export function createAsyncComputed<T, E, U>(fetcher: AsyncFunction<[], T>, defaultValue: T, ...deps: Array<Reactor<U>>): AsyncComputedReturn<T, E>
-export function createAsyncComputed<T, E, U>(fetcher: AsyncFunction<[], T>, defaultValue: T, option: CreateEffectOption, ...deps: Array<Reactive<U>>): AsyncComputedReturn<T, E>
+export function createAsyncComputed<T, E, U>(fetcher: AsyncFunction<[], T, Closer>, ...deps: Array<Reactor<U>>): AsyncComputedReturn<T, E>
+export function createAsyncComputed<T, E, U>(fetcher: AsyncFunction<[], T, Closer>, defaultValue: T, ...deps: Array<Reactor<U>>): AsyncComputedReturn<T, E>
+export function createAsyncComputed<T, E, U>(fetcher: AsyncFunction<[], T, Closer>, defaultValue: T, option: CreateEffectOption, ...deps: Array<Reactive<U>>): AsyncComputedReturn<T, E>
 
-export function createComputed<T, U>(reactorHandle: () => (T | Reactive<T>), ...deps: Array<Reactive<U>>): ReadOnlyReactor<T>
-export function createComputed<T, U>(reactorHandle: () => (T | Reactive<T>), option: CreateComputedOption, ...deps: Array<Reactive<U>>): ReadOnlyReactor<T>
+export function createComputed<T, U>(reactorHandle: Function<[], Reactive<T> | T, Closer>, ...deps: Array<Reactive<U>>): ReadOnlyReactor<T>
+export function createComputed<T, U>(reactorHandle: Function<[], Reactive<T> | T, Closer>, option: CreateComputedOption, ...deps: Array<Reactive<U>>): ReadOnlyReactor<T>
 
 export function createContext<T>(defaultValue?: T): Context<T>
 
-export function createEffect<T>(reactorHandle: () => any, ...deps: Array<Reactor<T>>): void
-export function createEffect<T>(reactorHandle: () => any, option: CreateEffectOption, ...deps: Array<Reactor<T>>): void
+export function createEffect<T>(reactorHandle: Function<[], any, Closer>, ...deps: Array<Reactor<T>>): void
+export function createEffect<T>(reactorHandle: Function<[], any, Closer>, option: CreateEffectOption, ...deps: Array<Reactor<T>>): void
 
 export function createPersistor<T>(handle: () => T): T
 

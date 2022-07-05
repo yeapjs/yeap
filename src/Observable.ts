@@ -37,13 +37,13 @@ export class DeepObservable<T> {
         return value
       },
       get: (target, p, _) => {
-        const value = (target() as any)[p]
+        const value = (target() as any)?.[p]
         if (p in this && p !== "value" && ["function", "boolean"].includes(typeof (this as any)[p])) {
           return (this as any)[p]
         } else if (isDefined(value)) {
           if (isReactor(value)) return value
           return new DeepObservable(value, parent ?? this)
-        }
+        } else if (value === null) return null
         return undefined
       },
       set: (target, p, value, _) => {
