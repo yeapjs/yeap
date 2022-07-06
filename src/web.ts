@@ -114,7 +114,7 @@ export function h(tag: Component | string, props: Props | null, ...children: Arr
     }
   }
 
-  render(children, element)
+  element.append(...generateList([], toArray(children)))
 
   if ("when" in props! && isReactor(props["when"])) return display.when(element, fallback)
   return display() ? element : fallback

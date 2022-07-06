@@ -76,7 +76,7 @@ export function createComputed<T, U>(reactorHandle: Function<[], Reactive<T> | T
   const reactor = createReactor(initialValue)
 
   const unsubscribes = Array.from(dependencies).map((dep) => dep.subscribe(() => {
-    reactor(getValue(handle()))
+    reactor(getValue(handle())!)
   }))
 
   function close() {

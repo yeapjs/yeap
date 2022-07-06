@@ -1,4 +1,4 @@
-import { Reactive, SubscribeHandler } from "../types/app"
+import { Function, Reactive, SubscribeHandler } from "../types/app"
 import { createComputed, createReactor, isReactor } from "./app"
 import { FORCE_SYMBOL, OBSERVABLE_SYMBOL } from "./constantes"
 import { getValue, isDefined } from "./utils"
@@ -20,6 +20,7 @@ export class DeepObservable<T> {
     if (this.#parent) this.#handlers = this.#parent.#handlers
 
     this.call = this.call.bind(this)
+    this.compute = this.compute.bind(this)
     this.freeze = this.freeze.bind(this)
     this.reader = this.reader.bind(this)
     this.subscribe = this.subscribe.bind(this)
@@ -84,23 +85,15 @@ export class DeepObservable<T> {
     return observable
   }
 
+  compute(handle: Function<[T], JSX.Element>) {
+    return createComputed(() => handle(this.value), this as any)
+  }
+
   when(truthy: JSX.Element | Function, falsy: JSX.Element | Function) {
-    if (typeof truthy === "function" && !isDefined(falsy)) {
-      return createComputed(() => truthy(this.value), { observableInitialValue: false }, this as any)
-    }
-
-    const reactor = createReactor(
+    return createComputed(() => (
       this.value ?
-        typeof truthy === "function" ? truthy() : truthy :
-        typeof falsy === "function" ? falsy() : falsy
-    )
-
-    this.subscribe((prev, curr) => {
-      if (prev === curr) return
-      if (curr) reactor(typeof truthy === "function" ? truthy() : truthy)
-      else reactor(typeof falsy === "function" ? falsy() : falsy)
-    })
-
-    return reactor.reader()
+        typeof truthy === "function" && !isReactor(truthy) ? truthy() : truthy :
+        typeof falsy === "function" && !isReactor(falsy) ? falsy() : falsy
+    ), { observableInitialValue: false }, this as any)
   }
 }
