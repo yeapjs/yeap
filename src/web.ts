@@ -144,6 +144,8 @@ function hComp(
       currentContext = currentContext.parent
     }
 
+    let toMount = true
+
     reactive = createComputed(() => {
       setCurrentContext(context)
       if (!allConditions.some((reactive) => !reactive())) {
@@ -151,13 +153,19 @@ function hComp(
         context.hookIndex = 0
         const elements = component(properties, children)
 
-        mount(context)
+        if (toMount) {
+          mount(context)
+          toMount = false
+        }
         setCurrentContext(context.parent!)
         setContextParent(context.parent!)
 
         return elements
       } else {
-        unmount(context)
+        if (!toMount) {
+          unmount(context)
+          toMount = true
+        }
         return fallback
       }
     }, { unsubscription: false }, ...allConditions)
