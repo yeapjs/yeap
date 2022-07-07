@@ -1,5 +1,5 @@
 import { Function, Reactive, SubscribeHandler } from "../types/app"
-import { createComputed, createReactor, isReactor } from "./app"
+import { createComputed, isReactor } from "./app"
 import { FORCE_SYMBOL, OBSERVABLE_SYMBOL } from "./constantes"
 import { getValue, isDefined } from "./utils"
 
@@ -27,33 +27,44 @@ export class DeepObservable<T> {
     this.when = this.when.bind(this)
 
     return new Proxy(() => this.value, {
-      apply: (target, thisArg, argArray: [((v: T) => T) | T] | []) => {
-        const value = target()
+      apply: (_, thisArg, argArray: [((v: T) => T) | T] | []) => {
+        const value = this.value
         if (typeof value === "function")
           return createComputed(() => value.apply(getValue(thisArg), argArray), { unsubscription: false }, this as any)
         if (this.#freeze || argArray.length === 0) return value
 
-        if (typeof argArray[0] === "function") this.value = (argArray[0] as Function)(value)
-        else this.value = argArray[0]
+        if (typeof argArray[0] === "function" && !isReactor(argArray[0])) this.value = (argArray[0] as Function)(value)
+        else this.value = getValue(argArray[0])
 
         if (this.#once) this.#freeze = true
 
         if (value !== this.value) this.call(value, this.value)
         return value
       },
-      get: (target, p, _) => {
-        const value = (target() as any)?.[p]
+      get: (_, p) => {
+        const value = (this.value as any)?.[p]
         if (p in this && p !== "value" && ["function", "boolean"].includes(typeof (this as any)[p])) {
           return (this as any)[p]
         } else if (isDefined(value)) {
           if (isReactor(value)) return value
-          return new DeepObservable(value, parent ?? this)
+          const reactive = new DeepObservable(value, parent ?? this, this.#freeze)
+          if (!this.#freeze) reactive.subscribe((_, curr) => {
+            if (this.value === curr) return
+
+            (this.value as any)[p] = curr
+            this.call(this.value, this.value)
+          })
+          return reactive
         } else if (value === null) return null
         return undefined
       },
-      set: (target, p, value, _) => {
+      set: (_, p, value) => {
         if (p === FORCE_SYMBOL) this.value = value
-        else (target() as any)[p] = value
+        else if (!this.#freeze) {
+          const prev = (this.value as any)[p];
+          (this.value as any)[p] = value
+          this.call(prev, value)
+        }
         return true
       },
     }) as any
@@ -67,8 +78,7 @@ export class DeepObservable<T> {
   }
 
   call(prev: T, next: T) {
-    if (!this.#parent) this.#handlers.forEach((handle) => handle(prev, next))
-    else this.#parent.call(prev, next)
+    this.#handlers.forEach((handle) => handle(prev, next))
   }
 
   freeze() {
