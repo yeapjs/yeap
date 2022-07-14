@@ -12,6 +12,7 @@ export interface ComponentContext {
   element?: Element
   parent?: ComponentContext
   condition: Reactive<boolean> | boolean
+  htmlConditions: Array<Reactive<boolean>>,
   contexts: Record<symbol, { context?: Context<any> | null, provider: ProvidedContext<any> | null }>
   mounted: Array<Function> | null
   unmounted: Array<Function> | null
@@ -40,6 +41,7 @@ export function createComponentContext(): ComponentContext {
   const context: ComponentContext = {
     parent,
     condition: true,
+    htmlConditions: [],
     contexts: {},
     mounted: null,
     unmounted: null,

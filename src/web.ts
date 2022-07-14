@@ -73,6 +73,7 @@ export function children(callback: () => Array<JSX.Element>) {
 }
 
 export function h(tag: Component | string, props: Props | null, ...children: Array<JSX.Element>) {
+  const context = getCurrentContext()
   if (!isDefined(props)) props = {}
 
   const fallback = toArray(props!["fallback"] ?? [new Text()])
@@ -84,6 +85,8 @@ export function h(tag: Component | string, props: Props | null, ...children: Arr
     if (isReactor(props["when"])) props["when"].subscribe((_: any, curr: any) => display(!!curr))
     display(!!getValue(props["when"]))
   }
+
+  context.htmlConditions.push(display)
 
   const is = props?.is?.toString()
   const element = isSVGTag(tag) ? document.createElementNS("http://www.w3.org/2000/svg", tag) : document.createElement(tag, { is })
@@ -150,6 +153,7 @@ function hComp(
     while (currentContext.parent) {
       if (currentContext.condition === false) return fallback
       if (isReactor(currentContext.condition)) allConditions.push(currentContext.condition)
+      allConditions.push(...currentContext.htmlConditions)
       currentContext = currentContext.parent
     }
 
