@@ -1,6 +1,6 @@
 import { AsyncComputedReturn, AsyncFunction, AsyncReturn, Closer, Context, CreateComputedOption, CreateEffectOption, Function, Reactive, Reactor, ReadOnlyReactor, TransitionReturn } from "../types/app"
 import { DeepObservable } from "./Observable"
-import { ComponentContext, getCurrentContext, getValue, isDefined } from "./utils"
+import { cap, ComponentContext, getCurrentContext, getValue, isDefined } from "./utils"
 
 export function createAsync<T, E>(fetcher: AsyncFunction<[], T>, defaultValue?: T): AsyncReturn<T, E> {
   const data = createReactor<T>(defaultValue)
@@ -158,6 +158,30 @@ export function createEffect<T>(reactorHandle: Function<[], any, Closer>, option
   if (option!.unsubscription) onUnmounted(close)
 }
 
+export function createEventDispatcher(): Function<[name: string, detail: any]> {
+  const context = getCurrentContext()
+
+  // force if the persistent callbacks are set, pass the while loop
+  if (context.hookIndex in context.hooks)
+    return context.hooks[context.hookIndex++]
+
+  let globalContext = context
+  while (globalContext.parent) globalContext = globalContext.parent
+
+  if (globalContext.element) return createPersistentCallback((name: string, detail: any) => {
+    const event = new CustomEvent(name, { detail })
+    globalContext.element!.dispatchEvent(event)
+  })
+
+  return createPersistentCallback((name: string, detail: any) => {
+    const eventName = "on" + cap(name)
+    if (context.props[eventName]) {
+      const event = new CustomEvent(name, { detail })
+      context.props[eventName](event)
+    }
+  })
+}
+
 export function createPersistor<T>(handle: () => T): T {
   const context = getCurrentContext()
   if (context.hookIndex in context.hooks) {
@@ -170,6 +194,10 @@ export function createPersistor<T>(handle: () => T): T {
   context.hookIndex++
 
   return value
+}
+
+export function createPersistentCallback<T extends Function>(callback: T): T {
+  return createPersistor(() => callback)
 }
 
 export function createPersistentReactor<T>(initialValue?: Reactive<T> | T) {

@@ -9,6 +9,7 @@ interface ProvidedContext<T> {
 }
 
 export interface ComponentContext {
+  element?: Element
   parent?: ComponentContext
   condition: Reactive<boolean> | boolean
   contexts: Record<symbol, { context?: Context<any> | null, provider: ProvidedContext<any> | null }>
@@ -16,6 +17,7 @@ export interface ComponentContext {
   unmounted: Array<Function> | null
   hooks: Array<any>
   hookIndex: number
+  props: Record<PropertyKey, any>
 }
 
 function makeMap(str: string): (key: string) => boolean {
@@ -42,7 +44,8 @@ export function createComponentContext(): ComponentContext {
     mounted: null,
     unmounted: null,
     hooks: [],
-    hookIndex: 0
+    hookIndex: 0,
+    props: {}
   }
 
   current = context
@@ -73,6 +76,10 @@ export function stringify(v: unknown): string {
   if (v === null) return "null"
 
   return String(v)
+}
+
+export function cap(str: string): string {
+  return str.charAt(0).toUpperCase() + str.slice(1)
 }
 
 export function getValue<T>(a: Reactive<T> | T | undefined): T | undefined {

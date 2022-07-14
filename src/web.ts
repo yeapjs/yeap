@@ -20,6 +20,7 @@ export function define<T>(name: string, component: Component<CustomAttribute<T>>
     constructor() {
       super()
       this.#context = createComponentContext()
+      this.#context.element = this
       this.#context.parent = undefined
       const parent = shadowed ? this.attachShadow({ mode: shadowed }) : this
 
@@ -140,6 +141,7 @@ function hComp(
     if (reactive) return reactive
 
     const context = createComponentContext()
+    context.props = properties
     if ("when" in props!) context.condition = props["when"]
 
     const allConditions: Array<Reactive<boolean>> = []

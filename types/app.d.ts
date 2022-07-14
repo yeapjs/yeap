@@ -137,9 +137,19 @@ export function createEffect<T>(handle: Function<[], any, Closer>, ...deps: Arra
 export function createEffect<T>(handle: Function<[], any, Closer>, option: CreateEffectOption, ...deps: Array<Reactor<T>>): void
 
 /**
+ * returns a event dispatcher
+ */
+export function createEventDispatcher(): Function<[name: string, detail: any]>
+
+/**
  * allows the information to be retained despite reminders from the component
  */
 export function createPersistor<T>(handle: () => T): T
+
+/**
+ * shortened to `createPersistor(() =>callback)`
+ */
+export function createPersistentCallback<T extends Function>(callback: T): T
 
 /**
  * shortened to `createPersistor(() =>createReactor(initialValue))`
