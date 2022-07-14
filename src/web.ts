@@ -64,6 +64,13 @@ export function define<T>(name: string, component: Component<CustomAttribute<T>>
   customElements.define(name, Component)
 }
 
+export function children(callback: () => Array<JSX.Element>) {
+  return () => generateList(
+    [],
+    callback()
+  )
+}
+
 export function h(tag: Component | string, props: Props | null, ...children: Array<JSX.Element>) {
   if (!isDefined(props)) props = {}
 

@@ -13,6 +13,11 @@ interface DefineCustomElementOption {
 export function define<T>(name: string, component: Component<T & { ref: Element }>, options: DefineCustomElementOption): void
 
 /**
+ * transforms a array into a list of elements
+ */
+export function children(callback: () => Array<JSX.Element>): Array<Element | Text>
+
+/**
  * JSX to HTML element
  */
 export function h(tag: Component | string, props: Props | null, ...children: Array<JSX.Element>): JSX.Element
