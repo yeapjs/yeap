@@ -20,6 +20,7 @@ export interface AsyncComputedReturn<T, E = any> {
 export interface AsyncReturn<T, E = any> extends AsyncComputedReturn<T, E> {
   refetch(): void
 }
+export type TransitionReturn<T> = [ReadOnlyReactor<boolean>, Function<[callback: Function]>]
 
 export type SubscribeHandler<T> = (prev: T, next: T) => void
 
@@ -153,6 +154,11 @@ export function createReactor<T>(initialValue?: Reactive<T> | T): Reactor<T>
  * createRef is like createReactor but it can only be updated once, after that it becomes a ReadOnlyReactor
  */
 export function createRef<T>(initialValue?: Reactive<T> | T): Reactor<T>
+
+/**
+ * create a transition, returns a reactive boolean and a function to start the transition
+ */
+export function createTransition<T>(): TransitionReturn<T>
 
 /**
  * test if the argument is a reactor

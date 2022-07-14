@@ -1,4 +1,4 @@
-import { AsyncComputedReturn, AsyncFunction, AsyncReturn, Closer, Context, CreateComputedOption, CreateEffectOption, Function, Reactive, Reactor, ReadOnlyReactor } from "../types/app"
+import { AsyncComputedReturn, AsyncFunction, AsyncReturn, Closer, Context, CreateComputedOption, CreateEffectOption, Function, Reactive, Reactor, ReadOnlyReactor, TransitionReturn } from "../types/app"
 import { DeepObservable } from "./Observable"
 import { ComponentContext, getCurrentContext, getValue, isDefined } from "./utils"
 
@@ -181,6 +181,21 @@ export function createReactor<T>(initialValue?: Reactive<T> | T): Reactor<T> {
 
 export function createRef<T>(initialValue?: Reactive<T> | T): Reactor<T> {
   return new DeepObservable(getValue(initialValue), null, false, true) as any
+}
+
+export function createTransition<T>(): TransitionReturn<T> {
+  const isPending = createReactor(false)
+  function startTransition(callback: Function) {
+    isPending(true)
+    setTimeout(() => {
+      callback()
+      isPending(false)
+    }, 0)
+  }
+  return [
+    isPending.reader(),
+    startTransition
+  ]
 }
 
 export function isReactor(arg: any): arg is Reactive<any> {
