@@ -107,6 +107,12 @@ export function h(tag: Component | string, props: Props | null, ...children: Arr
 
         if (!!getValue(classList[item])) element.classList.add(item)
       }
+    } else if (prop === "dangerouslySetInnerHTML") {
+      const value = props[prop]?.__html
+      if (!value) continue
+
+      if (isReactor(value)) value.subscribe((_, curr) => element.innerHTML = curr)
+      element.innerHTML = getValue(value)
     } else if (prop === "style") {
       const style = props[prop]
       for (const item in style) {

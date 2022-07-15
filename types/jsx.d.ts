@@ -202,6 +202,7 @@ declare global {
 
     interface YeapAtributes<T> {
       classList?: { [key: PropertyKey]: any | Reactive<any> }
+      dangerouslySetInnerHTML?: { __html: any | Reactive<any> }
       fallback?: JSX.Element
       ref?: (v: T) => any
       when?: any | Reactive<any>
