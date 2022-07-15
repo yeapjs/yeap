@@ -1,13 +1,16 @@
 import { Component, Reactive } from "../types/app"
 import { DefineCustomElementOption, Props } from "../types/web"
 import { createComputed, createReactor, isReactor } from "./app"
-import { COMPONENT_SYMBOL } from "./constantes"
+import { COMPONENT_SYMBOL, ELEMENT_SYMBOL } from "./constantes"
 import { generateList } from "./dom"
 import { ComponentContext, createComponentContext, getValue, GLOBAL_CONTEXT, isDefined, isEvent, isSVGTag, setCurrentContext, setContextParent, stringify, toArray, getCurrentContext } from "./utils"
 
 type CustomAttribute<T> = T & { ref?: HTMLElement }
-export interface ComponentCaller extends Function {
+export type ComponentCaller = Function & {
   [COMPONENT_SYMBOL]: true
+}
+export type ElementCaller = Function & {
+  [ELEMENT_SYMBOL]: true
 }
 
 export function define<T>(name: string, component: Component<CustomAttribute<T>>, { reactiveAttributes, shadowed }: DefineCustomElementOption) {
@@ -73,7 +76,6 @@ export function children(callback: () => Array<JSX.Element>) {
 }
 
 export function h(tag: Component | string, props: Props | null, ...children: Array<JSX.Element>) {
-  const context = getCurrentContext()
   if (!isDefined(props)) props = {}
 
   const fallback = toArray(props!["fallback"] ?? [new Text()])
@@ -85,8 +87,6 @@ export function h(tag: Component | string, props: Props | null, ...children: Arr
     if (isReactor(props["when"])) props["when"].subscribe((_: any, curr: any) => display(!!curr))
     display(!!getValue(props["when"]))
   }
-
-  context.htmlConditions.push(display)
 
   const is = props?.is?.toString()
   const element = isSVGTag(tag) ? document.createElementNS("http://www.w3.org/2000/svg", tag) : document.createElement(tag, { is })
@@ -125,10 +125,18 @@ export function h(tag: Component | string, props: Props | null, ...children: Arr
     }
   }
 
-  element.append(...generateList([], toArray(children)))
+  const createElement: ElementCaller = function createElement() {
+    const context = getCurrentContext()
+    context.htmlConditions.push(display)
+    element.append(...generateList([], toArray(children)))
 
-  if ("when" in props! && isReactor(props["when"])) return display.when(element, fallback)
-  return display() ? element : fallback
+    if ("when" in props! && isReactor(props["when"])) return display.when(element, fallback)
+    return display() ? element : fallback
+  } as any
+
+  createElement[ELEMENT_SYMBOL] = true
+
+  return createElement
 }
 
 function hComp(

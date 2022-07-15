@@ -1,6 +1,6 @@
 import { Reactive } from "../types/app"
 import { isReactor } from "./app"
-import { isComponent, isDefined, stringify, toArray } from "./utils"
+import { isComponent, isDefined, isElement, stringify, toArray } from "./utils"
 
 type HTMLContainer = Array<Element | Text>
 
@@ -14,7 +14,7 @@ export function generateList(container: HTMLContainer, children: Array<JSX.Eleme
     if (child instanceof Element || child instanceof Text) container = [...container, child]
     else if (child instanceof Array) container = [...generateList(container, child)]
     else if (isReactor(child)) container = [...container, ...insertReactor(child)]
-    else if (isComponent(child)) container = [...generateList(container, toArray(child()))]
+    else if (isComponent(child) || isElement(child)) container = [...generateList(container, toArray(child()))]
     else container = [...container, generateDOM(child)]
   }
 
