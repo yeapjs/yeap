@@ -37,5 +37,5 @@ export const Portal: Component<{ mount: Element }> = ({ mount = document.body },
     childs.forEach((child) => child.remove())
   })
 
-  return ""
+  return []
 }

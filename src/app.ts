@@ -98,7 +98,7 @@ export function createContext<T>(defaultValue?: T): Context<T> {
       return children[0](useContext(context))
     },
     Provider({ value }, children) {
-      const componentContext = getCurrentContext()
+      const componentContext = getCurrentContext()?.parent ?? getCurrentContext()
 
       componentContext.contexts[id] = {
         context: componentContext.contexts[id]?.context ?? null,
@@ -108,7 +108,7 @@ export function createContext<T>(defaultValue?: T): Context<T> {
         },
       }
 
-      return children[0]()
+      return children
     },
   }
 

@@ -29,6 +29,7 @@ export class DeepObservable<T> {
     return new Proxy(() => this.value, {
       apply: (_, thisArg, argArray: [((v: T) => T) | T] | []) => {
         const value = this.value
+        if (isReactor(value)) return value
         if (typeof value === "function")
           return createComputed(() => value.apply(getValue(thisArg), argArray), { unsubscription: false }, this as any)
         if (this.#freeze || argArray.length === 0) return value
