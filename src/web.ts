@@ -123,11 +123,18 @@ export function h(tag: Component | string, props: Props | null, ...children: Arr
       element.addEventListener(prop.slice(2).toLowerCase(), props[prop] as EventListenerOrEventListenerObject)
     } else {
       if (isReactor(props[prop])) props[prop].subscribe((_: any, curr: any) => {
+        if (prop in element) {
+          if (isDefined(curr) && curr !== false) (element as any)[prop] = curr === true ? "" : stringify(curr)
+          else (element as any)[prop] = undefined
+        }
         if (isDefined(curr) && curr !== false) element.setAttribute(prop, curr === true ? "" : stringify(curr))
         else element.removeAttribute(prop)
       })
 
-      if (isDefined(getValue(props[prop])) && getValue(props[prop]) !== false) element.setAttribute(prop, getValue(props[prop]) === true ? "" : stringify(getValue(props[prop])))
+      if (isDefined(getValue(props[prop])) && getValue(props[prop]) !== false) {
+        if (prop in element) (element as any)[prop] = getValue(props[prop]) === true ? "" : stringify(getValue(props[prop]))
+        element.setAttribute(prop, getValue(props[prop]) === true ? "" : stringify(getValue(props[prop])))
+      }
     }
   }
 

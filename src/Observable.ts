@@ -39,7 +39,7 @@ export class DeepObservable<T> {
 
         if (this.#once) this.#freeze = true
 
-        if (value !== this.value) this.call(value, this.value)
+        this.call(value, this.value)
         return value
       },
       get: (_, p) => {
