@@ -1,6 +1,6 @@
 import { Reactive } from "../types/app"
 import { isReactor } from "./app"
-import { isComponent, isDefined, isElement, stringify, toArray } from "./utils"
+import { isDefined, isJSXElement, stringify, toArray } from "./utils"
 
 type HTMLContainer = Array<Element | Text>
 
@@ -13,15 +13,15 @@ export function generateList(container: HTMLContainer, children: Array<JSX.Eleme
   for (const child of children) {
     if (child instanceof Element || child instanceof Text) container = [...container, child]
     else if (child instanceof Array) container = [...generateList(container, child)]
-    else if (isReactor(child)) container = [...container, ...insertReactor(child)]
-    else if (isComponent(child) || isElement(child)) container = [...generateList(container, toArray(child()))]
+    else if (isReactor(child)) container = [...container, ...reconcileReactor(child)]
+    else if (isJSXElement(child)) container = [...generateList(container, toArray(child()))]
     else container = [...container, generateDOM(child)]
   }
 
   return container
 }
 
-function insertReactor<T>(reactor: Reactive<T>) {
+function reconcileReactor<T>(reactor: Reactive<T>) {
   const emptyNode = new Text()
   let values = toArray(reactor())
   let elements = generateList([], values)
@@ -36,21 +36,24 @@ function insertReactor<T>(reactor: Reactive<T>) {
       const oldValue = values[i]
       const newValue = newValues[i]
 
-      if (oldValue === newValue) {
+      const oldKey = (oldValue as any)?.key ?? oldValue
+      const newKey = (newValue as any)?.key ?? newValue
+
+      if (oldKey === newKey) {
         newElements = [...newElements, elements[i]]
-      } else if (isDefined(oldValue) && isDefined(newValue)) {
+      } else if (isDefined(oldKey) && isDefined(newKey)) {
         const oldElement = elements[i]
         const newElement = generateList([], [newValue])
 
         oldElement.replaceWith(...newElement)
         oldElement.remove()
         newElements = [...newElements, ...newElement]
-      } else if (!isDefined(oldValue) && isDefined(newValue)) {
+      } else if (!isDefined(oldKey) && isDefined(newKey)) {
         const newElement = generateList([], [newValue])
 
         prevElement.after(...newElement)
         newElements = [...newElements, ...newElement]
-      } else if (isDefined(oldValue) && !isDefined(newValue)) {
+      } else if (isDefined(oldKey) && !isDefined(newKey)) {
         const oldElement = elements[i]
 
         oldElement.remove()

@@ -1,6 +1,7 @@
 import { Context, Reactive } from "../types/app"
 import { isReactor } from "./app"
 import { COMPONENT_SYMBOL, ELEMENT_SYMBOL, SVG_TAGS } from "./constantes"
+import { ComponentCaller, ElementCaller } from "./web"
 
 interface ProvidedContext<T> {
   id: symbol
@@ -66,12 +67,8 @@ export function getCurrentContext(): ComponentContext {
   return current
 }
 
-export function isElement(arg: any): arg is Function {
-  return !!arg?.[ELEMENT_SYMBOL]
-}
-
-export function isComponent(arg: any): arg is Function {
-  return !!arg?.[COMPONENT_SYMBOL]
+export function isJSXElement(arg: any): arg is ElementCaller | ComponentCaller {
+  return !!arg?.[ELEMENT_SYMBOL] || !!arg?.[COMPONENT_SYMBOL]
 }
 
 export function stringify(v: unknown): string {

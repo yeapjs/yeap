@@ -1,4 +1,4 @@
-import { Component, Reactive } from "../types/app"
+import { Component, Function, Reactive } from "../types/app"
 import { DefineCustomElementOption, Props } from "../types/web"
 import { createComputed, createReactor, isReactor } from "./app"
 import { COMPONENT_SYMBOL, ELEMENT_SYMBOL } from "./constantes"
@@ -7,9 +7,11 @@ import { ComponentContext, createComponentContext, getValue, GLOBAL_CONTEXT, isD
 
 type CustomAttribute<T> = T & { ref?: HTMLElement }
 export type ComponentCaller = Function & {
+  key: any
   [COMPONENT_SYMBOL]: true
 }
 export type ElementCaller = Function & {
+  key: any
   [ELEMENT_SYMBOL]: true
 }
 
@@ -92,7 +94,7 @@ export function h(tag: Component | string, props: Props | null, ...children: Arr
   const element = isSVGTag(tag) ? document.createElementNS("http://www.w3.org/2000/svg", tag) : document.createElement(tag, { is })
 
   for (const prop in props) {
-    if (!isDefined(props[prop]) || prop === "is" || prop === "fallback" || prop === "when") continue
+    if (!isDefined(props[prop]) || prop === "key" || prop === "is" || prop === "fallback" || prop === "when") continue
     else if (prop === "ref") {
       props[prop](element)
     } else if (prop === "class") {
@@ -147,6 +149,7 @@ export function h(tag: Component | string, props: Props | null, ...children: Arr
     return display() ? element : fallback
   } as any
 
+  createElement.key = props!["key"]
   createElement[ELEMENT_SYMBOL] = true
 
   return createElement
@@ -207,6 +210,7 @@ function hComp(
     return reactive
   } as any
 
+  createComponent.key = props!["key"]
   createComponent[COMPONENT_SYMBOL] = true
 
   return createComponent
