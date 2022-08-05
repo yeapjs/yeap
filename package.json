@@ -1,6 +1,6 @@
 {
   "name": "yeap",
-  "version": "1.0.0-beta.7",
+  "version": "1.0.0-rc.1",
   "description": "Magicless UI builder",
   "main": "./lib/app.js",
   "types": "./types/app.d.ts",
