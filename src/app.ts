@@ -211,7 +211,7 @@ export function createRef<T>(initialValue?: Reactive<T> | T): Reactor<T> {
   return new DeepObservable(getValue(initialValue), null, false, true) as any
 }
 
-export function createTransition<T>(): TransitionReturn<T> {
+export function createTransition(): TransitionReturn {
   const isPending = createReactor(false)
   function startTransition(callback: Function) {
     isPending(true)

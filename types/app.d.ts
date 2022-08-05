@@ -20,7 +20,7 @@ export interface AsyncComputedReturn<T, E = any> {
 export interface AsyncReturn<T, E = any> extends AsyncComputedReturn<T, E> {
   refetch(): void
 }
-export type TransitionReturn<T> = [ReadOnlyReactor<boolean>, Function<[callback: Function]>]
+export type TransitionReturn = [ReadOnlyReactor<boolean>, Function<[callback: Function]>]
 
 export type SubscribeHandler<T> = (prev: T, next: T) => void
 
@@ -42,8 +42,14 @@ export interface Closer {
 }
 
 /// REACTIVE
+type PrimitivesToObject<T> = T extends string ? String :
+  T extends number ? Number :
+  T extends boolean ? Boolean :
+  T extends bigint ? BigInt :
+  T extends symbol ? Symbol : T
+
 export type ToReadOnlyReactorObject<T = object> = {
-  [K in keyof T]: ReadOnlyReactor<T[K]>
+  [K in keyof T]: T[K] extends Function<infer A, infer R, infer T> ? Function<A, ReadOnlyReactor<R>, T> : ReadOnlyReactor<T[K]>
 }
 export interface ReadOnlyReactorMethod<T> {
   /**
@@ -59,7 +65,7 @@ export interface ReadOnlyReactorMethod<T> {
    */
   when(truthy: JSX.Element, falsy: JSX.Element): ReadOnlyReactor<JSX.Element>
 }
-export type ReadOnlyReactor<T> = ToReadOnlyReactorObject<T> & ReadOnlyReactorMethod<T> & {
+export type ReadOnlyReactor<T> = ToReadOnlyReactorObject<PrimitivesToObject<T>> & ReadOnlyReactorMethod<T> & {
   (): T
 }
 
@@ -74,9 +80,9 @@ export interface ReactorMethod<T> extends ReadOnlyReactorMethod<T> {
   reader(): ReadOnlyReactor<T>
 }
 export type ToReactorObject<T = object> = {
-  [K in keyof T]: Reactor<T[K]>
+  [K in keyof T]: T[K] extends Function<infer A, infer R, infer T> ? Function<A, ReadOnlyReactor<R>, T> : Reactor<T[K]>
 }
-export type Reactor<T> = ToReactorObject<T> & ReactorMethod<T> & {
+export type Reactor<T> = ToReactorObject<PrimitivesToObject<T>> & ReactorMethod<T> & {
   (): T
   (v: T | ((v: T) => T)): T
 }
@@ -168,7 +174,7 @@ export function createRef<T>(initialValue?: Reactive<T> | T): Reactor<T>
 /**
  * create a transition, returns a reactive boolean and a function to start the transition
  */
-export function createTransition<T>(): TransitionReturn<T>
+export function createTransition(): TransitionReturn
 
 /**
  * test if the argument is a reactor
