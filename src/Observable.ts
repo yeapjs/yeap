@@ -1,7 +1,7 @@
 import { Function, Reactive, SubscribeHandler } from "../types/app"
 import { createComputed, isReactor } from "./app"
 import { FORCE_SYMBOL, OBSERVABLE_SYMBOL } from "./constantes"
-import { getValue, isDefined } from "./utils"
+import { getValue, isDefined, isJSXElement } from "./utils"
 
 export class DeepObservable<T> {
   static isObservable(arg: any): arg is Reactive<any> {
@@ -103,8 +103,8 @@ export class DeepObservable<T> {
   when(truthy: JSX.Element | Function, falsy: JSX.Element | Function) {
     return createComputed(() => (
       this.value ?
-        typeof truthy === "function" && !isReactor(truthy) ? truthy() : truthy :
-        typeof falsy === "function" && !isReactor(falsy) ? falsy() : falsy
+        typeof truthy === "function" && !isReactor(truthy) && !isJSXElement(truthy) ? truthy() : truthy :
+        typeof falsy === "function" && !isReactor(falsy) && !isJSXElement(falsy) ? falsy() : falsy
     ), { observableInitialValue: false }, this as any)
   }
 }
