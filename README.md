@@ -162,7 +162,7 @@ function App () {
 render(<App />, document.getElementById("root"))
 ```
 
-But for a condition if/else you can use the method `.when`, it takes two arguments, the truthy value and the falsy value.
+But for a condition if/else you can use the method `.when`, it takes two arguments, the truthy value and the falsy value (truthy and falsy value can be a function).
 
 ```jsx
 import { createReactor } from "yeap/app"
@@ -173,7 +173,7 @@ function App () {
 
   return (
     <div>
-      <button onClick={() => show((show) =>!show)}>{show.when("To Hide", "To Show")}</button>
+      <button onClick={() => show((show) =>!show)}>{show.when(() =>"To Hide", "To Show")}</button>
     </div>
   )
 }
@@ -394,6 +394,8 @@ render(<App />, document.getElementById("root"))
 
 In SolidJS you can create a component like that, but you can't destructure the props because you lose the reactivity, but in Yeap you can.
 
+Yeap have also 3 built-in components, `Fragment`, `Dynamic`, `Portal` and one function for async components, `lazy`.
+
 ### Web Component
 
 Yeap has a function to create web component, `define` in `yeap/web`, it's like the `customElements.define` of the web component API, it's take a name, a function and  options.
@@ -418,3 +420,7 @@ define("my-counter", MyCounter, {
   shadowed: "closed" // "closed" | "open" | false (default)
 })
 ```
+
+The function in `define` is a yeap component, it takes the props and the children, and you can use the `reactiveAttributes` option to make some attributes reactive, and the `shadowed` option to make the component shadowed.
+
+It's possible to use `YourComponent.defaultProps` to set the default props of the component.
