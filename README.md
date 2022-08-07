@@ -311,6 +311,9 @@ function App () {
   )
 }
 
+/**
+ * @param {CustomEvent} param0
+ */
 function handleCount ({detail: count}) {
   console.log(count)
 }
@@ -357,6 +360,39 @@ function Counter () {
 
 render(<App />, document.getElementById("root"))
 ```
+
+### Component
+
+You can create a component with a function, but you have only one difference between a react funtional component and a yeap component, you have 2 arguments, the props and the children.
+
+```jsx
+import { createReactor, createComponent } from "yeap/app"
+import { render } from "yeap/web"
+
+function Counter({ start }, children) {
+  const count = createReactor(start)
+
+  return (
+    <div>
+      <p>{count}</p>
+      <button onClick={() => count((count) =>count + 1)}>+</button>
+      {children}
+    </div>
+  )
+}
+
+function App () {
+  return (
+    <Counter start={0}>
+      Hello World!
+    </Counter>
+  )
+}
+
+render(<App />, document.getElementById("root"))
+```
+
+In SolidJS you can create a component like that, but you can't destructure the props because you lose the reactivity, but in Yeap you can.
 
 ### Web Component
 
