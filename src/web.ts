@@ -42,6 +42,7 @@ export function define<T>(name: string, component: Component<CustomAttribute<T>>
       this.props.ref = this
       parent.append(...generateList(
         [],
+        parent as Element,
         toArray(
           component(
             this.props as CustomAttribute<T>,
@@ -73,6 +74,7 @@ export function define<T>(name: string, component: Component<CustomAttribute<T>>
 export function children(callback: () => Array<JSX.Element>) {
   return () => generateList(
     [],
+    document.createElement("div"),
     callback()
   )
 }
@@ -143,7 +145,7 @@ export function h(tag: Component | string, props: Props | null, ...children: Arr
   const createElement: ElementCaller = function createElement() {
     const context = getCurrentContext()
     context.htmlConditions.push(display)
-    element.append(...generateList([], toArray(children)))
+    element.append(...generateList([], element, toArray(children)))
 
     if ("when" in props! && isReactor(props["when"])) return display.when(element, fallback)
     return display() ? element : fallback
@@ -224,7 +226,7 @@ function unmount(context: ComponentContext) {
 }
 
 export function render(children: Array<JSX.Element>, container: HTMLElement | SVGElement) {
-  container.append(...generateList([], toArray(children)))
+  container.append(...generateList([], container, toArray(children)))
 
   if (isDefined(GLOBAL_CONTEXT.mounted)) GLOBAL_CONTEXT.mounted!.forEach((handle) => handle())
   GLOBAL_CONTEXT.mounted = null
