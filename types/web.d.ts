@@ -3,14 +3,14 @@ import { Component, Reactive } from "./app"
 type Props = Record<string, EventListenerOrEventListenerObject | Reactive<any> | any>
 
 interface DefineCustomElementOption {
-  reactiveAttributes: string[]
-  shadowed: "closed" | "open" | false
+  reactiveAttributes?: string[]
+  shadowed?: "closed" | "open" | false
 }
 
 /**
  * transforms a functional component into a web component
  */
-export function define<T>(name: string, component: Component<T & { ref: Element }>, options: DefineCustomElementOption): void
+export function define<T>(name: string, component: Component<T & { ref: Element }>, options?: DefineCustomElementOption): void
 
 /**
  * transforms a array into a list of elements

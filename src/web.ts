@@ -15,10 +15,11 @@ export type ElementCaller = Function & {
   [ELEMENT_SYMBOL]: true
 }
 
-export function define<T>(name: string, component: Component<CustomAttribute<T>>, { reactiveAttributes, shadowed }: DefineCustomElementOption) {
+export function define<T>(name: string, component: Component<CustomAttribute<T>>, { reactiveAttributes, shadowed }: DefineCustomElementOption = {}) {
   class Component extends HTMLElement {
     private props: CustomAttribute<Props> = {}
     #context: ComponentContext
+    #parent: this | ShadowRoot
 
     static get observedAttributes() { return reactiveAttributes ?? [] }
 
@@ -27,7 +28,7 @@ export function define<T>(name: string, component: Component<CustomAttribute<T>>
       this.#context = createComponentContext()
       this.#context.element = this
       this.#context.parent = undefined
-      const parent = shadowed ? this.attachShadow({ mode: shadowed }) : this
+      this.#parent = shadowed ? this.attachShadow({ mode: shadowed }) : this
 
       for (const reactiveAttribute of reactiveAttributes ?? []) {
         if (component.defaultProps && reactiveAttribute in component.defaultProps) this.props[reactiveAttribute] = createReactor((component.defaultProps as any)[reactiveAttribute] ?? null)
@@ -40,9 +41,12 @@ export function define<T>(name: string, component: Component<CustomAttribute<T>>
       }
 
       this.props.ref = this
-      parent.append(...generateList(
+    }
+
+    connectedCallback() {
+      this.#parent.append(...generateList(
         [],
-        parent as Element,
+        this.#parent as Element,
         toArray(
           component(
             this.props as CustomAttribute<T>,
@@ -50,9 +54,6 @@ export function define<T>(name: string, component: Component<CustomAttribute<T>>
           )
         )
       ))
-    }
-
-    connectedCallback() {
       if (isDefined(this.#context.mounted)) this.#context.mounted!.forEach((handle) => handle())
       this.#context.mounted = null
     }
