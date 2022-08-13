@@ -29,9 +29,11 @@ export function define<T>(name: string, component: Component<CustomAttribute<T>>
       this.#context.element = this
       this.#context.parent = undefined
       this.#parent = shadowed ? this.attachShadow({ mode: shadowed }) : this
+    }
 
+    connectedCallback() {
       for (const reactiveAttribute of reactiveAttributes ?? []) {
-        if (component.defaultProps && reactiveAttribute in component.defaultProps) this.props[reactiveAttribute] = createReactor((component.defaultProps as any)[reactiveAttribute] ?? null)
+        this.props[reactiveAttribute] = createReactor((component.defaultProps as any)?.[reactiveAttribute] ?? null)
       }
 
       for (let i = 0; i < this.attributes.length; i++) {
@@ -41,9 +43,7 @@ export function define<T>(name: string, component: Component<CustomAttribute<T>>
       }
 
       this.props.ref = this
-    }
 
-    connectedCallback() {
       this.#parent.append(...generateList(
         [],
         this.#parent as Element,
@@ -65,6 +65,8 @@ export function define<T>(name: string, component: Component<CustomAttribute<T>>
 
     attributeChangedCallback(propName: string, prev: string, curr: string) {
       if (prev === curr) return
+      if (!(propName in this.props)) this.props[propName] = createReactor()
+
       this.props[propName](curr)
     }
   }
