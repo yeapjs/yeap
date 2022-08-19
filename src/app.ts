@@ -34,7 +34,7 @@ export function createAsyncComputed<T, E, U>(fetcher: AsyncFunction<[], T, Close
     defaultValue = undefined
   }
   if (isReactor(option) || !isDefined(option)) {
-    if (isDefined(option)) deps.push(option as Reactive<any>)
+    if (isDefined(option)) deps.push(option as any)
     option = {
       immediate: true,
       observableInitialValue: true,
@@ -58,7 +58,7 @@ export function createComputed<T, U>(reactorHandle: Function<[], Reactive<T> | T
   const dependencies = new Set(deps)
   const handle = reactorHandle.bind({ close })
   if (isReactor(option) || !isDefined(option)) {
-    if (isDefined(option)) dependencies.add(option as Reactive<any>)
+    if (isDefined(option)) dependencies.add(option as any)
     option = {
       observableInitialValue: true,
       unsubscription: true
@@ -71,7 +71,7 @@ export function createComputed<T, U>(reactorHandle: Function<[], Reactive<T> | T
   }
 
   const initialValue = handle()
-  if (isReactor(initialValue) && option!.observableInitialValue) dependencies.add(initialValue as Reactive<any>)
+  if (isReactor(initialValue) && option!.observableInitialValue) dependencies.add(initialValue as any)
 
   const reactor = createReactor(initialValue)
 
@@ -204,7 +204,7 @@ export function createPersistentReactor<T>(initialValue?: Reactive<T> | T) {
   return createPersistor(() => createReactor(initialValue))
 }
 export function createReactor<T>(initialValue?: Reactive<T> | T): Reactor<T> {
-  return new DeepObservable(getValue(initialValue), null) as any
+  return new DeepObservable(getValue(initialValue)) as any
 }
 
 export function createRef<T>(initialValue?: Reactive<T> | T): Reactor<T> {
