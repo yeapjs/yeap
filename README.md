@@ -14,6 +14,18 @@ React has side effects, when you want to create a component, and you update it, 
 
 Yeap and Solid are in the idea the same, but the main difference is in the compilation, Solid compile with its own compiler, unlike Yeap decide to use the default jsx compiler. 
 
+## Installation
+
+```bash
+npm install yeap 
+# or 
+yarn add yeap 
+#or 
+pnpm add yeap
+```
+
+[Templates](https://github.com/yeapjs/templates) and a [Preset for Vite](https://github.com/yeapjs/vite-preset) are available.
+
 <hr>
 
 ## How to use
@@ -411,7 +423,7 @@ render(<App />, document.getElementById("root"))
 
 ```jsx
 import { createAsync } from "yeap/app"
-import { Fragment } from "yeap/components"
+import { Fragment } from "yeap/components" // if you use the yeap-vite-preset you can't import Fragment directly because it's already imported with the yeap-vite-preset (same for h in yeap/web)
 import { render } from "yeap/web"
 
 function App () {
