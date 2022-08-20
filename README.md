@@ -255,6 +255,8 @@ render(<App />, document.getElementById("root"))
 
 When can use `createComputed` or `.compute`. It's not an obligation, but `.compute` it's make to be used in the jsx directly.
 
+`createComputed` and `createEffect` can be take options before the dependencies.
+
 ### Condition
 
 In yeap you can use condition in the jsx, but you can't use `if`, `else`, `&&` or `||` because it's break the reactivity system, you can use `createComputed` or `.compute` to create a condition.
@@ -592,3 +594,5 @@ define("my-counter", MyCounter, {
 The function in `define` is a yeap component, it takes the props and the children, and you can use the `reactiveAttributes` option to make some attributes reactive, and the `shadowed` option to make the component shadowed.
 
 It's possible to use `YourComponent.defaultProps` to set the default props of the component.
+
+The component can be take 2 arguments, the attributes and the child nodes. When an attribute is in the `reactiveAttributes` array, it became a reactor.
