@@ -21,7 +21,7 @@ Yeap and Solid are in the idea the same, but the main difference is in the compi
 Yeap use the jsx, and the reactivity system.
 The reactivity system is based on the function `createReactor`.
 
-`createReactor` return a reactor, it's in one variable a getter and a setter, and it's a function that you want to call to update the value, for update call it and pass the new value, it will return the old value.
+`createReactor` return a reactor, it's the base of [the reactivity system](#reactivity-system).
 
 ```jsx
 import { createReactor } from "yeap/app"
@@ -41,7 +41,115 @@ function App () {
 render(<App />, document.getElementById("root"))
 ```
 
-In the same way, you can use `createRef`, it's a function that return a reactor like `createReactor`, but it can be updated only one time (default value isn't an update), after it become a `ReadOnlyReactor`.
+### Reactivity system
+
+`createReactor` is the main function of the reactivity system, it return a reactor. A reactor is a function. When you call it, it return the current value of the reactor. (it's the getter)
+
+```js
+import { createReactor } from "yeap/app"
+
+const a = createReactor(0)
+console.log(a()) // 0
+```
+
+And when you want to update the value, it's easy, you just call the reactor with the new value, it will return the old value and save the new value. (it's the setter)
+
+```js
+import { createReactor } from "yeap/app"
+
+const a = createReactor(0)
+console.log(a(1)) // 0
+console.log(a()) // 1
+```
+
+It's possible to use the setter with a function, it will take the old value in parameter and return the new value.
+
+```js
+import { createReactor } from "yeap/app"
+
+const a = createReactor(0)
+console.log(a((old) => old + 1)) // 0
+console.log(a()) // 1
+```
+
+On top of this, a reactor a lot of other methods like `subscribe`, `freeze` or `reader`.
+
+The `.subscribe` method is used to subscribe to the reactor, it's a take one parameter, and it's a function that will be called when the reactor is updated. The function will receive the old value and the new value.
+
+```js
+import { createReactor } from "yeap/app"
+
+const a = createReactor(0)
+
+a.subscribe((prev, next) => {
+  console.log(
+    "a changed", 
+    prev, // 0
+    next // 1
+  )
+})
+a(1)
+```
+
+The method `.subscribe` return a function that you can use to unsubscribe.
+
+```js
+import { createReactor } from "yeap/app"
+
+const a = createReactor(0)
+const unsubscribe = a.subscribe((prev, next) => {
+  console.log("a changed", prev, next) // never called
+})
+unsubscribe()
+a(1)
+```
+
+Note: `.subscribe` is used in internal of `yeap/web` for observe the changes of the reactivity system and update the dom in consequence.
+
+`.freeze` and `.reader` are used to create a ReadOnlyReactor, but the difference between both is the value of the ReadOnlyReactor.
+
+With `.freeze`, the value isn't updated over time.
+
+```js
+import { createReactor } from "yeap/app"
+
+const a = createReactor(0)
+const b = a.freeze()
+
+a(1)
+console.log(a()) // 1
+console.log(b()) // 0
+```
+
+but with `.reader`, the value is updated over time.
+
+```js
+import { createReactor } from "yeap/app"
+
+const a = createReactor(0)
+const b = a.reader()
+
+a(1)
+console.log(a()) // 
+console.log(b()) // 1
+```
+
+#### ReadOnlyReactor
+
+In the same way, you have `createRef`, it's a function that return a reactor like `createReactor`, but it can be updated only one time (default value isn't an update), after it become a `ReadOnlyReactor`.
+
+Example:
+
+```js
+import { createRef } from "yeap/app"
+
+const a = createRef(0)
+console.log(a(1)) // 0
+console.log(a(2)) // 1
+console.log(a()) // 1
+```
+
+Example of use:
 
 ```jsx
 import { createRef } from "yeap/app"
@@ -229,7 +337,7 @@ function App () {
 render(<App />, document.getElementById("root"))
 ```
 
-It's possible, but it's not the best way to do it, you can use the method `.map` (or other method on a array) of the reactor, in internal it will use `createComputed`.
+It's possible, but it's not the best way to do it, you can use the method `.map` (or other method on a array according to usage).
 
 ```jsx
 import { createReactor } from "yeap/app"
@@ -244,6 +352,54 @@ function App () {
         {list.map((i) => <li>{i} ** 2 = {i*i}</li>) /*it keep the reactivity*/}
       </ul>
       <button onClick={() => list((list) =>[...list, list.length])}>+ item</button>
+    </div>
+  )
+}
+
+render(<App />, document.getElementById("root"))
+```
+
+But, why it works?
+
+#### More about reactivity
+
+If you write in vanilla js that:
+
+```js
+const list = [0, 1, 2, 3, 4]
+const doubleList = list.map((i) => i * 2)
+```
+
+`doubleList` has the value `[0, 2, 4, 6, 8]`, but if you push a new item in the list, the value of doubleList stays the same.
+
+With the reactivity, when you want to get a property you can get normally, it just change the value of the property by a reactor and it automatically update when the reactor parent is updated.
+
+With a reactor, the previous example gives:
+
+```js
+const list = createReactor([0, 1, 2, 3, 4])
+const doubleList = list.map((i) => i * 2)
+```
+
+Now, `doubleList()` has the value `[0, 2, 4, 6, 8]`, and if you push a new item in the list, the value of doubleList is updated.
+
+Warning: 
+ - if you use a reactor in a array, you can't use the methods `.push`, `.pop` or other methods that change the value directly, because it's not possible to observe the changes of the array.
+ - the value of property became a reactor, but the return value of a method is not a reactor but a ReadOnlyReactor.
+
+Example:
+
+```jsx
+import { createReactor } from "yeap/app"
+import { render } from "yeap/web"
+
+function App () {
+  const inputValue = createReactor("")
+
+  return (
+    <div>
+      <input value={inputValue} placeholder="Type something here" onInput={(e) => inputValue(e.currentTarget.value)}>
+      the input has a length of {inputValue.length}
     </div>
   )
 }
@@ -280,7 +436,7 @@ This is how you can use async/await in yeap, you can use `createAsync` to create
 
 But if you want to refresh the data when a reactor change, you have `createAsyncComputed`, it works like that:
 
-```jsx
+```js
 const {data, error, loading, refetch} = createAsync(asyncCallback, defaultData)
 
 createComputed(refetch, deps) // or createEffect(refetch, deps)
