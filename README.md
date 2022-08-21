@@ -574,8 +574,10 @@ Yeap has a function to create web component, `define` in `yeap/web`, it's like t
 import { createReactor } from "yeap/app"
 import { define } from "yeap/web"
 
-function MyCounter () {
+function MyCounter ({ ref: element }) {
   const count = createReactor(0)
+
+  console.log(element)
 
   return (
     <div>
@@ -595,4 +597,4 @@ The function in `define` is a yeap component, it takes the props and the childre
 
 It's possible to use `YourComponent.defaultProps` to set the default props of the component.
 
-The component can be take 2 arguments, the attributes and the child nodes. When an attribute is in the `reactiveAttributes` array, it became a reactor.
+The component can be take 2 arguments, the attributes and the child nodes. When an attribute is in the `reactiveAttributes` array, it became a reactor. In the attributes, you can find `ref`, is the html element.
