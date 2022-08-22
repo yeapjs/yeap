@@ -421,6 +421,8 @@ function App () {
 render(<App />, document.getElementById("root"))
 ```
 
+In addition to that, you have on the jsx attribute `key` that works like the `key` attribute in React.
+
 ### Async/Await
 
 ```jsx
