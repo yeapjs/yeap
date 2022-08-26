@@ -1,5 +1,5 @@
 import { Function, Reactive, ReadOnlyReactor, SubscribeHandler } from "../types/app"
-import { createComputed, isReactor } from "./app"
+import { createComputed, isReactor, isReadOnlyReactor } from "./app"
 import { FORCE_SYMBOL, OBSERVABLE_SYMBOL, READONLY_OBSERVABLE_SYMBOL } from "./constantes"
 import { getValue, isDefined, isJSXElement } from "./utils"
 
@@ -70,12 +70,15 @@ export class DeepObservable<T>  {
           return (this as any)[p]
         } else if (isDefined(value)) {
           if (isReactor(value)) return value
-          const reactive = new DeepObservable(value, typeof value === "function" ? this : null, this.#freeze)
+
+          const descriptor = Object.getOwnPropertyDescriptor(this.value, p)
+          const freeze = this.#freeze || typeof this.value !== "object" || !(descriptor?.writable ?? descriptor?.set)
+          const reactive = new DeepObservable(value, typeof value === "function" ? this : null, freeze)
 
           this.subscribe((_, curr: any) => {
             reactive[FORCE_SYMBOL] = curr?.[p]
           })
-          if (!this.#freeze) reactive.subscribe((prev, curr) => {
+          if (!isReadOnlyReactor(reactive)) reactive.subscribe((prev, curr) => {
             (this.value as any)[p] = curr
           })
 
