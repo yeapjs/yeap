@@ -179,7 +179,8 @@ export function createTransition(): TransitionReturn
 /**
  * test if the argument is a reactor
  */
-export function isReactor(arg: any): arg is Reactive<any>
+export function isReactor(arg: any): arg is Reactive<unknown>
+export function isReadOnlyReactor(arg: any): arg is ReadOnlyReactor<unknown>
 
 /**
  * registers a function that will be called when the component is rendered 

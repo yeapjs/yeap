@@ -1,6 +1,6 @@
-import { Function, Reactive, SubscribeHandler } from "../types/app"
+import { Function, Reactive, ReadOnlyReactor, SubscribeHandler } from "../types/app"
 import { createComputed, isReactor } from "./app"
-import { FORCE_SYMBOL, OBSERVABLE_SYMBOL } from "./constantes"
+import { FORCE_SYMBOL, OBSERVABLE_SYMBOL, READONLY_OBSERVABLE_SYMBOL } from "./constantes"
 import { getValue, isDefined, isJSXElement } from "./utils"
 
 export class DeepObservable<T>  {
@@ -8,6 +8,13 @@ export class DeepObservable<T>  {
   [FORCE_SYMBOL]: any = undefined
   static isObservable(arg: any): arg is Reactive<any> {
     return !!arg?.[OBSERVABLE_SYMBOL]
+  }
+  static isReadOnly(arg: any): arg is ReadOnlyReactor<any> {
+    return !!arg?.[READONLY_OBSERVABLE_SYMBOL]
+  }
+
+  get [READONLY_OBSERVABLE_SYMBOL]() {
+    return this.#freeze
   }
 
   #freeze: boolean
@@ -39,7 +46,13 @@ export class DeepObservable<T>  {
 
           return reactive.reader()
         }
-        if (this.#freeze || argArray.length === 0) return value
+
+        if (this.#freeze) {
+          if (argArray.length > 0) throw new TypeError("Cannot assign to read only reactor");
+          return value
+        }
+
+        if (argArray.length === 0) return value
 
         if (typeof argArray[0] === "function" && !isReactor(argArray[0])) this.value = (argArray[0] as Function)(value)
         else this.value = getValue(argArray[0])

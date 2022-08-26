@@ -229,6 +229,9 @@ export function createTransition(): TransitionReturn {
 export function isReactor(arg: any): arg is Reactive<any> {
   return DeepObservable.isObservable(arg)
 }
+export function isReadOnlyReactor(arg: any): arg is ReadOnlyReactor<any> {
+  return DeepObservable.isReadOnly(arg)
+}
 
 export function onMounted(handler: Function) {
   const first = createPersistentReactor(true)
