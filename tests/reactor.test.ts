@@ -26,6 +26,10 @@ describe("createReactor", () => {
     expect(isReadOnlyReactor(reactor.a)).toBeFalsy()
     expect(isReadOnlyReactor(reactor.b)).toBeTruthy()
     expect(reactor.a()).toBe(3)
+
+    reactor.a = 4 as any
+    expect(reactor.a()).toBe(4)
+    expect(() => reactor.b = 5 as any).toThrow()
   })
 
   test("the 'subscribe' method", () => {
