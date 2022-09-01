@@ -19,6 +19,7 @@ export interface ComponentContext {
   hooks: Array<any>
   hookIndex: number
   props: Record<PropertyKey, any>
+  modifiers?: Map<string, Function>
 }
 
 function makeMap(str: string): (key: string) => boolean {
@@ -33,6 +34,7 @@ function makeMap(str: string): (key: string) => boolean {
 let current: ComponentContext
 let parent: ComponentContext
 export const GLOBAL_CONTEXT = createComponentContext()
+GLOBAL_CONTEXT.modifiers = new Map()
 setContextParent(GLOBAL_CONTEXT)
 
 export const isSVGTag = makeMap(SVG_TAGS)

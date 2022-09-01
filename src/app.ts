@@ -1,6 +1,6 @@
 import { AsyncComputedReturn, AsyncFunction, AsyncReturn, Closer, Context, CreateComputedOption, CreateEffectOption, Function, Reactive, Reactor, ReadOnlyReactor, TransitionReturn } from "../types/app"
 import { DeepObservable } from "./Observable"
-import { cap, ComponentContext, getCurrentContext, getValue, isDefined } from "./utils"
+import { cap, ComponentContext, getCurrentContext, getValue, GLOBAL_CONTEXT, isDefined } from "./utils"
 
 export function createAsync<T, E>(fetcher: AsyncFunction<[], T>, defaultValue?: T): AsyncReturn<T, E> {
   const data = createReactor<T>(defaultValue)
@@ -182,6 +182,10 @@ export function createEventDispatcher(): Function<[name: string, detail: any]> {
   })
 }
 
+export function createEventModifier(name: string, callback: Function<[Event]>) {
+  GLOBAL_CONTEXT.modifiers!.set(name, callback)
+}
+
 export function createPersistor<T>(handle: () => T): T {
   const context = getCurrentContext()
   if (context.hookIndex in context.hooks) {
@@ -263,3 +267,14 @@ export function useContext<T>(context: Context<T>): T {
 
   return context.defaultValue!
 }
+
+// init default event modifier
+window.addEventListener("DOMContentLoaded", () => {
+  createEventModifier("prevent", (e) => {
+    e.preventDefault()
+  })
+
+  createEventModifier("stop", (e) => {
+    e.stopPropagation()
+  })
+})

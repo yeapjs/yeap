@@ -3,6 +3,7 @@ import { DefineCustomElementOption, Props } from "../types/web"
 import { createComputed, createReactor, isReactor } from "./app"
 import { COMPONENT_SYMBOL, ELEMENT_SYMBOL } from "./constantes"
 import { generateList } from "./dom"
+import { ModifierError } from "./errors"
 import { ComponentContext, createComponentContext, getValue, GLOBAL_CONTEXT, isDefined, isEvent, isSVGTag, setCurrentContext, setContextParent, stringify, toArray, getCurrentContext } from "./utils"
 
 type CustomAttribute<T> = T & { ref?: HTMLElement }
@@ -127,7 +128,14 @@ export function h(tag: Component | string, props: Props | null, ...children: Arr
         element.style.setProperty(item, getValue<string>(style[item])!)
       }
     } else if (isEvent(prop)) {
-      element.addEventListener(prop.slice(2).toLowerCase(), props[prop] as EventListenerOrEventListenerObject)
+      const [eventName, ...modifiers] = prop.slice(2).toLowerCase().split(":")
+      element.addEventListener(eventName, (e) => {
+        for (const modifier of modifiers) {
+          if (!GLOBAL_CONTEXT.modifiers?.has(modifier)) throw new ModifierError(`the event modifier ${modifier} does not exist`)
+          GLOBAL_CONTEXT.modifiers?.get(modifier)!(e)
+        }
+        props![prop](e)
+      })
     } else {
       if (isReactor(props[prop])) props[prop].subscribe((_: any, curr: any) => {
         if (prop in element) {
