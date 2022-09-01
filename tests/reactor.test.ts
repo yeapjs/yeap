@@ -29,6 +29,7 @@ describe("createReactor", () => {
 
     reactor.a = 4 as any
     expect(reactor.a()).toBe(4)
+    // @ts-ignore
     expect(() => reactor.b = 5 as any).toThrow()
   })
 
@@ -59,6 +60,7 @@ describe("createReactor", () => {
     expect(readMock).toBeCalledTimes(1)
     expect(freezeMock).toBeCalledTimes(0)
 
+    // @ts-ignore
     expect(() => readOnlyReactor("baz")).toThrow()
   })
 
