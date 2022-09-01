@@ -163,7 +163,7 @@ export function h(tag: Component | string, props: Props | null, ...children: Arr
 function hComp(
   component: Component,
   props: Props | null,
-  fallback: JSX.Element,
+  fallback: any,
   children: Array<JSX.Element>
 ) {
   const properties = Object.assign({}, component.defaultProps, props)

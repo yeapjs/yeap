@@ -21,7 +21,7 @@ export function generateList(container: HTMLContainer, parent: Element, children
   return container
 }
 
-function reconcileReactor<T>(parent: Element, reactor: Reactive<T>) {
+function reconcileReactor<T extends JSX.Element>(parent: Element, reactor: Reactive<T>) {
   let values = toArray(reactor())
   let elements = generateList([], parent, values)
 

@@ -13,7 +13,7 @@ export const Fragment: Component<{}> = (_, children) => {
   return children
 }
 
-export function lazy(callback: (...args: Array<any>) => Promise<any>): Component<{ fallback: JSX.Element }> {
+export function lazy(callback: (...args: Array<any>) => Promise<any>): Component<{ fallback: any }> {
   return ({ fallback, ...props }, children) => {
     const reactor = createReactor(false)
     let content: any

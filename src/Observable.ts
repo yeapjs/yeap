@@ -128,15 +128,15 @@ export class DeepObservable<T>  {
     return observable
   }
 
-  compute(handle: Function<[T], JSX.Element>) {
-    return createComputed(() => handle(this.value), this as any)
+  compute<U>(handle: Function<[T], U>) {
+    return createComputed(() => handle(this.value), { observableInitialValue: false }, this as any)
   }
 
-  when(truthy: JSX.Element | Function, falsy: JSX.Element | Function) {
-    return createComputed(() => (
-      this.value ?
-        typeof truthy === "function" && !isReactor(truthy) && !isJSXElement(truthy) ? truthy() : truthy :
-        typeof falsy === "function" && !isReactor(falsy) && !isJSXElement(falsy) ? falsy() : falsy
-    ), { observableInitialValue: false }, this as any)
+  when<U, F>(truthy: U | Function<[], U>, falsy: F | Function<[], F>): ReadOnlyReactor<U | F> {
+    return this.compute((v) => (
+      v ?
+        typeof truthy === "function" && !isReactor(truthy) && !isJSXElement(truthy) ? (truthy as Function)() : truthy :
+        typeof falsy === "function" && !isReactor(falsy) && !isJSXElement(falsy) ? (falsy as Function)() : falsy
+    ))
   }
 }

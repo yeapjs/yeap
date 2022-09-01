@@ -85,8 +85,7 @@ export function cap(str: string): string {
 }
 
 export function getValue<T>(a: Reactive<T> | T | undefined): T | undefined {
-  if (isReactor(a)) return (a as Reactive<T>)()
-  return a as T
+  return isReactor(a) ? a() : a
 }
 
 export function toArray<T>(value: T | Array<T>): Array<T> {

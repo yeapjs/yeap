@@ -25,7 +25,7 @@ export type TransitionReturn = [ReadOnlyReactor<boolean>, Function<[callback: Fu
 export type SubscribeHandler<T> = (prev: T, next: T) => void
 
 export type ComponentProps<T> = T & { fallback?: JSX.Element, when?: any | Reactor<any> }
-export interface Component<T = object, C extends Array<any> = Array<JSX.Element>> {
+export interface Component<T = object, C extends Array<JSX.Element> = Array<JSX.Element>> {
   (props: ComponentProps<T>, children: C): JSX.Element
   defaultProps?: T
 }
@@ -59,11 +59,11 @@ export interface ReadOnlyReactorMethod<T> {
   /**
    * takes a function and returns the result, used as createComputed but only for the current reactor
    */
-  compute(handle: Function<[T], JSX.Element>): ReadOnlyReactor<JSX.Element>
+  compute<U>(handle: Function<[T], U>): ReadOnlyReactor<U>
   /**
    * returns the value based on the reactor value, works like if else
    */
-  when(truthy: JSX.Element, falsy: JSX.Element): ReadOnlyReactor<JSX.Element>
+  when<U, F>(truthy: U | Function<[], U>, falsy: F | Function<[], F>): ReadOnlyReactor<U | F>
 }
 export type ReadOnlyReactor<T> = ToReadOnlyReactorObject<PrimitivesToObject<T>> & ReadOnlyReactorMethod<T> & {
   (): T

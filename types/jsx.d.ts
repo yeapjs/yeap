@@ -7,9 +7,14 @@ declare global {
       | HTMLElement
       | SVGElement
       | Text
+      | ChildNode
       | Array<Element>
       | Component<any>
-      | any
+      | Function
+      | string
+      | number
+      | bigint
+      | boolean
 
     type ReactivableHTMLAttributes<T> = {
       [K in keyof HTMLAttributes<T>]: (K extends keyof DOMAttributes<T> ? HTMLAttributes<T>[K] : Reactive<HTMLAttributes<T>[K]> | HTMLAttributes<T>[K]) | null
@@ -122,10 +127,10 @@ declare global {
       sup: ReactivableHTMLAttributes<HTMLElement>
       table: ReactivableHTMLAttributes<HTMLTableElement>
       tbody: ReactivableHTMLAttributes<HTMLTableSectionElement>
-      td: ReactivableHTMLAttributes<HTMLTableDataCellElement>
+      td: ReactivableHTMLAttributes<HTMLTableCellElement>
       textarea: ReactivableHTMLAttributes<HTMLTextAreaElement>
       tfoot: ReactivableHTMLAttributes<HTMLTableSectionElement>
-      th: ReactivableHTMLAttributes<HTMLTableHeaderCellElement>
+      th: ReactivableHTMLAttributes<HTMLTableCellElement>
       thead: ReactivableHTMLAttributes<HTMLTableSectionElement>
       time: ReactivableHTMLAttributes<HTMLElement>
       title: ReactivableHTMLAttributes<HTMLTitleElement>
@@ -306,8 +311,8 @@ declare global {
       onClickCapture?: EventHandler<T, MouseEvent>
       onContextMenu?: EventHandler<T, MouseEvent>
       onContextMenuCapture?: EventHandler<T, MouseEvent>
-      onDoubleClick?: EventHandler<T, MouseEvent>
-      onDoubleClickCapture?: EventHandler<T, MouseEvent>
+      onDblClick?: EventHandler<T, MouseEvent>
+      onDblClickCapture?: EventHandler<T, MouseEvent>
       onDrag?: EventHandler<T, DragEvent>
       onDragCapture?: EventHandler<T, DragEvent>
       onDragEnd?: EventHandler<T, DragEvent>
@@ -494,7 +499,6 @@ declare global {
       target?: string
       title?: string
       type?: string
-      useMap?: string
       value?: string | string[] | number
       width?: number | string
       wmode?: string
