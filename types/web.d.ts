@@ -25,4 +25,4 @@ export function h(tag: Component | string, props: Props | null, ...children: Arr
 /**
  * render JSX in a HTML element
  */
-export function render(children: Array<JSX.Element>, container: Element): void
+export function render(children: JSX.Element, container: Element): void

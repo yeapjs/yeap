@@ -143,7 +143,13 @@ export function h(tag: Component | string, props: Props | null, ...children: Arr
           const modifier = GLOBAL_CONTEXT.modifiers?.get(modifierName)
           if (typeof modifier === "function") modifier(e)
         }
-        props![prop](e)
+
+        if (typeof props![prop] === "function") props![prop](e)
+        else {
+          const [fn, ...args] = props![prop]
+
+          fn(args)
+        }
       }, option)
     } else if (isDirective(prop)) {
       const [directiveName, ...rest] = prop.slice(4).toLowerCase().split(":")
@@ -252,7 +258,7 @@ function unmount(context: ComponentContext) {
   if (isDefined(context.unmounted)) context.unmounted!.forEach((handle) => handle())
 }
 
-export function render(children: Array<JSX.Element>, container: HTMLElement | SVGElement) {
+export function render(children: JSX.Element, container: HTMLElement | SVGElement) {
   container.append(...generateList([], container, toArray(children)))
 
   if (isDefined(GLOBAL_CONTEXT.mounted)) GLOBAL_CONTEXT.mounted!.forEach((handle) => handle())
