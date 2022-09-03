@@ -273,24 +273,28 @@ export function useContext<T>(context: Context<T>): T {
 }
 
 // init default event modifier
-window.addEventListener("DOMContentLoaded", () => {
-  createEventModifier("prevent", (e) => {
-    e.preventDefault()
-  })
+createDirective<Reactor<string>, HTMLInputElement | HTMLTextAreaElement>("model", (el, reactor) => {
+  el.value = reactor()
+  console.log("aaa")
+  el.addEventListener("input", (e) => reactor(el.value))
+})
 
-  createEventModifier("stop", (e) => {
-    e.stopPropagation()
-  })
+createEventModifier("prevent", (e) => {
+  e.preventDefault()
+})
 
-  createEventModifier("capture", {
-    capture: true
-  })
+createEventModifier("stop", (e) => {
+  e.stopPropagation()
+})
 
-  createEventModifier("once", {
-    once: true
-  })
+createEventModifier("capture", {
+  capture: true
+})
 
-  createEventModifier("passive", {
-    passive: true
-  })
+createEventModifier("once", {
+  once: true
+})
+
+createEventModifier("passive", {
+  passive: true
 })
