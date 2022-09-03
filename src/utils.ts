@@ -19,7 +19,7 @@ export interface ComponentContext {
   hooks: Array<any>
   hookIndex: number
   props: Record<PropertyKey, any>
-  modifiers?: Map<string, Function>
+  modifiers?: Map<string, Function | AddEventListenerOptions>
 }
 
 function makeMap(str: string): (key: string) => boolean {

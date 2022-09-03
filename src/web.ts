@@ -129,13 +129,24 @@ export function h(tag: Component | string, props: Props | null, ...children: Arr
       }
     } else if (isEvent(prop)) {
       const [eventName, ...modifiers] = prop.slice(2).toLowerCase().split(":")
+
+      let option = {}
+      for (const modifierName of modifiers) {
+        if (!GLOBAL_CONTEXT.modifiers?.has(modifierName)) throw new ModifierError(`the event modifier ${modifierName} does not exist`)
+
+        const modifier = GLOBAL_CONTEXT.modifiers?.get(modifierName)
+        if (typeof modifier === "object") option = { ...option, ...modifier }
+      }
+
       element.addEventListener(eventName, (e) => {
-        for (const modifier of modifiers) {
-          if (!GLOBAL_CONTEXT.modifiers?.has(modifier)) throw new ModifierError(`the event modifier ${modifier} does not exist`)
-          GLOBAL_CONTEXT.modifiers?.get(modifier)!(e)
+        for (const modifierName of modifiers) {
+          if (!GLOBAL_CONTEXT.modifiers?.has(modifierName)) throw new ModifierError(`the event modifier ${modifierName} does not exist`)
+
+          const modifier = GLOBAL_CONTEXT.modifiers?.get(modifierName)
+          if (typeof modifier === "function") modifier(e)
         }
         props![prop](e)
-      })
+      }, option)
     } else {
       if (isReactor(props[prop])) props[prop].subscribe((_: any, curr: any) => {
         if (prop in element) {

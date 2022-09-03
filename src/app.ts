@@ -182,7 +182,7 @@ export function createEventDispatcher(): Function<[name: string, detail: any]> {
   })
 }
 
-export function createEventModifier(name: string, callback: Function<[Event]>) {
+export function createEventModifier(name: string, callback: Function<[Event]> | AddEventListenerOptions) {
   GLOBAL_CONTEXT.modifiers!.set(name, callback)
 }
 
@@ -276,5 +276,17 @@ window.addEventListener("DOMContentLoaded", () => {
 
   createEventModifier("stop", (e) => {
     e.stopPropagation()
+  })
+
+  createEventModifier("capture", {
+    capture: true
+  })
+
+  createEventModifier("once", {
+    once: true
+  })
+
+  createEventModifier("passive", {
+    passive: true
   })
 })
