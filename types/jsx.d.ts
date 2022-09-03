@@ -1,4 +1,4 @@
-import { Component, Reactive, Reactor } from "./app"
+import { Component, Function, Reactive, Reactor } from "./app"
 
 declare global {
   // JSX type definitions for Yeap
@@ -220,9 +220,7 @@ declare global {
       view: ReactivableSVGAttributes<SVGElement>
     }
 
-    interface EventHandler<T, E extends Event> {
-      (e: E & { currentTarget: T }): void
-    }
+    type EventHandler<T, E extends Event, A extends Array<any> = Array<any>> = ((e: E & { currentTarget: T }) => void) | [Function<A>, ...A]
 
     type YeapAtributes<T> = {
       classList?: { [key: PropertyKey]: any | Reactive<any> }
