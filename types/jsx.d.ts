@@ -1,4 +1,4 @@
-import { Component, Reactive } from "./app"
+import { Component, Reactive, Reactor } from "./app"
 
 declare global {
   // JSX type definitions for Yeap
@@ -26,16 +26,21 @@ declare global {
 
     type EventsAttributes<T> = {
       [K in keyof DOMAttributes<T> as `${K}${K extends keyof YeapAtributes<T> ? "" : `:${keyof EventModifiers}`}`]: DOMAttributes<T>[K]
+    } & DOMAttributes<T>
+
+    interface Directives {
+      model: Reactor<unknown>
     }
 
+    // TODO try to use the type of property for make onEvent:stop for specific event 
     interface EventModifiers {
-      prevent: Event,
-      stop: Event,
+      prevent: any,
+      stop: any,
 
       // Option Event Modifiers
-      capture: object,
-      once: object,
-      passive: object
+      capture: any,
+      once: any,
+      passive: any
     }
 
     interface IntrinsicElements {
@@ -219,13 +224,14 @@ declare global {
       (e: E & { currentTarget: T }): void
     }
 
-    interface YeapAtributes<T> {
+    type YeapAtributes<T> = {
       classList?: { [key: PropertyKey]: any | Reactive<any> }
       dangerouslySetInnerHTML?: { __html: any | Reactive<any> }
       fallback?: JSX.Element
       ref?: (v: T) => any
       when?: any | Reactive<any>
-    }
+      // Directives
+    } & { [K in keyof Directives as `use:${K}`]?: Directives[K] }
 
     interface DOMAttributes<T> extends YeapAtributes<T> {
       // Clipboard Events
