@@ -19,6 +19,7 @@ export interface ComponentContext {
   hooks: Array<any>
   hookIndex: number
   props: Record<PropertyKey, any>
+  directives?: Map<string, Function>
   modifiers?: Map<string, Function | AddEventListenerOptions>
 }
 
@@ -34,6 +35,7 @@ function makeMap(str: string): (key: string) => boolean {
 let current: ComponentContext
 let parent: ComponentContext
 export const GLOBAL_CONTEXT = createComponentContext()
+GLOBAL_CONTEXT.directives = new Map()
 GLOBAL_CONTEXT.modifiers = new Map()
 setContextParent(GLOBAL_CONTEXT)
 
@@ -100,4 +102,8 @@ export function isDefined(v: any): boolean {
 
 export function isEvent(v: string): boolean {
   return v.startsWith("on")
+}
+
+export function isDirective(v: string): boolean {
+  return v.startsWith("use:")
 }

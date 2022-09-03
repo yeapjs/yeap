@@ -3,8 +3,8 @@ import { DefineCustomElementOption, Props } from "../types/web"
 import { createComputed, createReactor, isReactor } from "./app"
 import { COMPONENT_SYMBOL, ELEMENT_SYMBOL } from "./constantes"
 import { generateList } from "./dom"
-import { ModifierError } from "./errors"
-import { ComponentContext, createComponentContext, getValue, GLOBAL_CONTEXT, isDefined, isEvent, isSVGTag, setCurrentContext, setContextParent, stringify, toArray, getCurrentContext } from "./utils"
+import { DirectiveError, ModifierError } from "./errors"
+import { ComponentContext, createComponentContext, getValue, GLOBAL_CONTEXT, isDefined, isEvent, isSVGTag, setCurrentContext, setContextParent, stringify, toArray, getCurrentContext, isDirective } from "./utils"
 
 type CustomAttribute<T> = T & { ref?: HTMLElement }
 export type ComponentCaller = Function & {
@@ -140,13 +140,18 @@ export function h(tag: Component | string, props: Props | null, ...children: Arr
 
       element.addEventListener(eventName, (e) => {
         for (const modifierName of modifiers) {
-          if (!GLOBAL_CONTEXT.modifiers?.has(modifierName)) throw new ModifierError(`the event modifier ${modifierName} does not exist`)
-
           const modifier = GLOBAL_CONTEXT.modifiers?.get(modifierName)
           if (typeof modifier === "function") modifier(e)
         }
         props![prop](e)
       }, option)
+    } else if (isDirective(prop)) {
+      const [directiveName, ...rest] = prop.slice(4).toLowerCase().split(":")
+      if (rest.length > 0) throw new DirectiveError(`syntax error, "use:" can be take only one directive`)
+      if (!GLOBAL_CONTEXT.directives?.has(directiveName)) throw new ModifierError(`the directive ${directiveName} does not exist`)
+
+      const directive = GLOBAL_CONTEXT.directives?.get(directiveName)!
+      directive(element, props[prop])
     } else {
       if (isReactor(props[prop])) props[prop].subscribe((_: any, curr: any) => {
         if (prop in element) {

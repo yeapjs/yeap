@@ -120,6 +120,10 @@ export function createContext<T>(defaultValue?: T): Context<T> {
   return context
 }
 
+export function createDirective<T, E extends HTMLElement = HTMLElement>(name: string, callback: Function<[E, T]>) {
+  GLOBAL_CONTEXT.directives!.set(name, callback)
+}
+
 export function createEffect<T>(reactorHandle: Function<[], any, Closer>, option?: CreateEffectOption | Reactive<T>, ...deps: Array<Reactive<T>>): void {
   const dependencies = new Set(deps)
   const handle = reactorHandle.bind({ close })
