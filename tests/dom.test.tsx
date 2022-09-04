@@ -7,6 +7,7 @@ import {
   onMounted,
   onUnmounted,
 } from "../src/app"
+import { DirectiveError, ModifierError } from "../src/errors"
 import { h, render } from "../src/web"
 
 /** @jsx h */
@@ -21,6 +22,16 @@ describe("directive", () => {
 
     expect(mock).toBeCalled()
     expect(mock).toBeCalledWith(div(), 0)
+  })
+
+  test("error", () => {
+    expect(() => <div use:hello={0} />).not.toThrow()
+    expect(() => <div use:hello2={0} />).toThrow(
+      new DirectiveError("the directive hello2 does not exist")
+    )
+    expect(() => <div {...{ "use:hello2:p": 0 }} />).toThrow(
+      new DirectiveError('syntax error "use:" can be take only one directive')
+    )
   })
 })
 
@@ -161,6 +172,11 @@ describe("dom/jsx", () => {
       expect(handleClick).toBeCalled()
       expect(e).not.toBeNull()
       expect(e!.defaultPrevented).toBeTruthy()
+    })
+
+    test("error", () => {
+      expect(() => <div onClick:stop={() => {}} />).not.toThrow()
+      expect(() => <div onClick:no-once={() => {}} />).toThrow(ModifierError)
     })
   })
 

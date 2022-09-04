@@ -153,8 +153,8 @@ export function h(tag: Component | string, props: Props | null, ...children: Arr
       }, option)
     } else if (isDirective(prop)) {
       const [directiveName, ...rest] = prop.slice(4).toLowerCase().split(":")
-      if (rest.length > 0) throw new DirectiveError(`syntax error, "use:" can be take only one directive`)
-      if (!GLOBAL_CONTEXT.directives?.has(directiveName)) throw new ModifierError(`the directive ${directiveName} does not exist`)
+      if (rest.length > 0) throw new DirectiveError('syntax error "use:" can be take only one directive')
+      if (!GLOBAL_CONTEXT.directives?.has(directiveName)) throw new DirectiveError(`the directive ${directiveName} does not exist`)
 
       const directive = GLOBAL_CONTEXT.directives?.get(directiveName)!
       directive(element, props[prop])
