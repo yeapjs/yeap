@@ -133,6 +133,8 @@ export function createComputed<T, U>(handle: Function<[], Reactive<T> | T, Close
 
 export function createContext<T>(defaultValue?: T): Context<T>
 
+export function createDirective<T, E extends HTMLElement = HTMLElement>(name: string, callback: Function<[E, T]>): void
+
 /**
  * observes all dependencies and calls the function again when a dependency has been updated, returns a reactor
  */
@@ -146,6 +148,11 @@ export function createEffect<T>(handle: Function<[], any, Closer>, option: Creat
  * returns a event dispatcher
  */
 export function createEventDispatcher(): Function<[name: string, detail: any]>
+
+/**
+ * create an event modifer, it will update the event, to call it `onEvent:event-modifier`
+ */
+export function createEventModifier(name: string, callback: Function<[Event]> | AddEventListenerOptions): void
 
 /**
  * allows the information to be retained despite reminders from the component
