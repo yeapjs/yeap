@@ -33,6 +33,7 @@
   ],
   "scripts": {
     "test": "vitest",
+    "coverage": "vitest --coverage",
     "dev": "tsc --watch",
     "build": "tsc",
     "prepack": "npm run build"
@@ -56,6 +57,7 @@
   },
   "homepage": "https://github.com/yeapjs/yeap#readme",
   "devDependencies": {
+    "@vitest/coverage-c8": "^0.22.1",
     "happy-dom": "^6.0.4",
     "prettier": "^2.5.1",
     "tslib": "^2.3.1",

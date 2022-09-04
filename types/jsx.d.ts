@@ -1,4 +1,4 @@
-import { Component, Reactive } from "./app"
+import { Component, Function, Reactive, Reactor } from "./app"
 
 declare global {
   // JSX type definitions for Yeap
@@ -17,11 +17,30 @@ declare global {
       | boolean
 
     type ReactivableHTMLAttributes<T> = {
-      [K in keyof HTMLAttributes<T>]: (K extends keyof DOMAttributes<T> ? HTMLAttributes<T>[K] : Reactive<HTMLAttributes<T>[K]> | HTMLAttributes<T>[K]) | null
+      [K in keyof HTMLAttributes<T>]: (K extends keyof EventsAttributes<T> ? HTMLAttributes<T>[K] : Reactive<HTMLAttributes<T>[K]> | HTMLAttributes<T>[K]) | null
     }
 
     type ReactivableSVGAttributes<T> = {
-      [K in keyof SVGAttributes<T>]: (K extends keyof DOMAttributes<T> ? SVGAttributes<T>[K] : Reactive<SVGAttributes<T>[K]> | SVGAttributes<T>[K]) | null
+      [K in keyof SVGAttributes<T>]: (K extends keyof EventsAttributes<T> ? SVGAttributes<T>[K] : Reactive<SVGAttributes<T>[K]> | SVGAttributes<T>[K]) | null
+    }
+
+    type EventsAttributes<T> = {
+      [K in keyof DOMAttributes<T> as `${K}${K extends keyof YeapAtributes<T> ? "" : `:${keyof EventModifiers}`}`]: DOMAttributes<T>[K]
+    } & DOMAttributes<T>
+
+    interface Directives {
+      model: Reactor<unknown>
+    }
+
+    // TODO try to use the type of property for make onEvent:stop for specific event 
+    interface EventModifiers {
+      prevent: any,
+      stop: any,
+
+      // Option Event Modifiers
+      capture: any,
+      once: any,
+      passive: any
     }
 
     interface IntrinsicElements {
@@ -201,183 +220,116 @@ declare global {
       view: ReactivableSVGAttributes<SVGElement>
     }
 
-    interface EventHandler<T, E extends Event> {
-      (e: E & { currentTarget: T }): void
-    }
+    type EventHandler<T, E extends Event, A extends Array<any> = Array<any>> = ((e: E & { currentTarget: T }) => void) | [Function<A>, ...A]
 
-    interface YeapAtributes<T> {
+    type YeapAtributes<T> = {
       classList?: { [key: PropertyKey]: any | Reactive<any> }
       dangerouslySetInnerHTML?: { __html: any | Reactive<any> }
       fallback?: JSX.Element
       ref?: (v: T) => any
       when?: any | Reactive<any>
-    }
+      // Directives
+    } & { [K in keyof Directives as `use:${K}`]?: Directives[K] }
 
     interface DOMAttributes<T> extends YeapAtributes<T> {
       // Clipboard Events
       onCopy?: EventHandler<T, ClipboardEvent>
-      onCopyCapture?: EventHandler<T, ClipboardEvent>
       onCut?: EventHandler<T, ClipboardEvent>
-      onCutCapture?: EventHandler<T, ClipboardEvent>
       onPaste?: EventHandler<T, ClipboardEvent>
-      onPasteCapture?: EventHandler<T, ClipboardEvent>
 
       // Composition Events
       onCompositionEnd?: EventHandler<T, CompositionEvent>
-      onCompositionEndCapture?: EventHandler<T, CompositionEvent>
       onCompositionStart?: EventHandler<T, CompositionEvent>
-      onCompositionStartCapture?: EventHandler<T, CompositionEvent>
       onCompositionUpdate?: EventHandler<T, CompositionEvent>
-      onCompositionUpdateCapture?: EventHandler<T, CompositionEvent>
 
       // Focus Events
       onFocus?: EventHandler<T, FocusEvent>
-      onFocusCapture?: EventHandler<T, FocusEvent>
       onBlur?: EventHandler<T, FocusEvent>
-      onBlurCapture?: EventHandler<T, FocusEvent>
 
       // Form Events
       onChange?: EventHandler<T, Event>
-      onChangeCapture?: EventHandler<T, Event>
       onInput?: EventHandler<T, Event>
-      onInputCapture?: EventHandler<T, Event>
       onReset?: EventHandler<T, Event>
-      onResetCapture?: EventHandler<T, Event>
       onSubmit?: EventHandler<T, Event>
-      onSubmitCapture?: EventHandler<T, Event>
 
       // Image Events
       onLoad?: EventHandler<T, Event>
-      onLoadCapture?: EventHandler<T, Event>
       onError?: EventHandler<T, Event> // also a Media Event
-      onErrorCapture?: EventHandler<T, Event> // also a Media Event
 
       // Keyboard Events
       onKeyDown?: EventHandler<T, KeyboardEvent>
-      onKeyDownCapture?: EventHandler<T, KeyboardEvent>
       onKeyPress?: EventHandler<T, KeyboardEvent>
-      onKeyPressCapture?: EventHandler<T, KeyboardEvent>
       onKeyUp?: EventHandler<T, KeyboardEvent>
-      onKeyUpCapture?: EventHandler<T, KeyboardEvent>
 
       // Media Events
       onAbort?: EventHandler<T, Event>
-      onAbortCapture?: EventHandler<T, Event>
       onCanPlay?: EventHandler<T, Event>
-      onCanPlayCapture?: EventHandler<T, Event>
       onCanPlayThrough?: EventHandler<T, Event>
-      onCanPlayThroughCapture?: EventHandler<T, Event>
       onDurationChange?: EventHandler<T, Event>
-      onDurationChangeCapture?: EventHandler<T, Event>
       onEmptied?: EventHandler<T, Event>
-      onEmptiedCapture?: EventHandler<T, Event>
       onEncrypted?: EventHandler<T, Event>
-      onEncryptedCapture?: EventHandler<T, Event>
       onEnded?: EventHandler<T, Event>
-      onEndedCapture?: EventHandler<T, Event>
       onLoadedData?: EventHandler<T, Event>
-      onLoadedDataCapture?: EventHandler<T, Event>
       onLoadedMetadata?: EventHandler<T, Event>
-      onLoadedMetadataCapture?: EventHandler<T, Event>
       onLoadStart?: EventHandler<T, Event>
-      onLoadStartCapture?: EventHandler<T, Event>
       onPause?: EventHandler<T, Event>
-      onPauseCapture?: EventHandler<T, Event>
       onPlay?: EventHandler<T, Event>
-      onPlayCapture?: EventHandler<T, Event>
       onPlaying?: EventHandler<T, Event>
-      onPlayingCapture?: EventHandler<T, Event>
       onProgress?: EventHandler<T, Event>
-      onProgressCapture?: EventHandler<T, Event>
       onRateChange?: EventHandler<T, Event>
-      onRateChangeCapture?: EventHandler<T, Event>
       onSeeked?: EventHandler<T, Event>
-      onSeekedCapture?: EventHandler<T, Event>
       onSeeking?: EventHandler<T, Event>
-      onSeekingCapture?: EventHandler<T, Event>
       onStalled?: EventHandler<T, Event>
-      onStalledCapture?: EventHandler<T, Event>
       onSuspend?: EventHandler<T, Event>
-      onSuspendCapture?: EventHandler<T, Event>
       onTimeUpdate?: EventHandler<T, Event>
-      onTimeUpdateCapture?: EventHandler<T, Event>
       onVolumeChange?: EventHandler<T, Event>
-      onVolumeChangeCapture?: EventHandler<T, Event>
       onWaiting?: EventHandler<T, Event>
-      onWaitingCapture?: EventHandler<T, Event>
 
       // MouseEvents
       onClick?: EventHandler<T, MouseEvent>
-      onClickCapture?: EventHandler<T, MouseEvent>
       onContextMenu?: EventHandler<T, MouseEvent>
-      onContextMenuCapture?: EventHandler<T, MouseEvent>
       onDblClick?: EventHandler<T, MouseEvent>
-      onDblClickCapture?: EventHandler<T, MouseEvent>
       onDrag?: EventHandler<T, DragEvent>
-      onDragCapture?: EventHandler<T, DragEvent>
       onDragEnd?: EventHandler<T, DragEvent>
-      onDragEndCapture?: EventHandler<T, DragEvent>
       onDragEnter?: EventHandler<T, DragEvent>
-      onDragEnterCapture?: EventHandler<T, DragEvent>
       onDragExit?: EventHandler<T, DragEvent>
-      onDragExitCapture?: EventHandler<T, DragEvent>
       onDragLeave?: EventHandler<T, DragEvent>
-      onDragLeaveCapture?: EventHandler<T, DragEvent>
       onDragOver?: EventHandler<T, DragEvent>
-      onDragOverCapture?: EventHandler<T, DragEvent>
       onDragStart?: EventHandler<T, DragEvent>
-      onDragStartCapture?: EventHandler<T, DragEvent>
       onDrop?: EventHandler<T, DragEvent>
-      onDropCapture?: EventHandler<T, DragEvent>
       onMouseDown?: EventHandler<T, MouseEvent>
-      onMouseDownCapture?: EventHandler<T, MouseEvent>
       onMouseEnter?: EventHandler<T, MouseEvent>
       onMouseLeave?: EventHandler<T, MouseEvent>
       onMouseMove?: EventHandler<T, MouseEvent>
-      onMouseMoveCapture?: EventHandler<T, MouseEvent>
       onMouseOut?: EventHandler<T, MouseEvent>
-      onMouseOutCapture?: EventHandler<T, MouseEvent>
       onMouseOver?: EventHandler<T, MouseEvent>
-      onMouseOverCapture?: EventHandler<T, MouseEvent>
       onMouseUp?: EventHandler<T, MouseEvent>
-      onMouseUpCapture?: EventHandler<T, MouseEvent>
 
       // Selection Events
       onSelect?: EventHandler<T, Event>
-      onSelectCapture?: EventHandler<T, Event>
 
       // Touch Events
       onTouchCancel?: EventHandler<T, TouchEvent>
-      onTouchCancelCapture?: EventHandler<T, TouchEvent>
       onTouchEnd?: EventHandler<T, TouchEvent>
-      onTouchEndCapture?: EventHandler<T, TouchEvent>
       onTouchMove?: EventHandler<T, TouchEvent>
-      onTouchMoveCapture?: EventHandler<T, TouchEvent>
       onTouchStart?: EventHandler<T, TouchEvent>
-      onTouchStartCapture?: EventHandler<T, TouchEvent>
 
       // UI Events
       onScroll?: EventHandler<T, UIEvent>
-      onScrollCapture?: EventHandler<T, UIEvent>
 
       // Wheel Events
       onWheel?: EventHandler<T, WheelEvent>
-      onWheelCapture?: EventHandler<T, WheelEvent>
 
       // Animation Events
       onAnimationStart?: EventHandler<T, AnimationEvent>
-      onAnimationStartCapture?: EventHandler<T, AnimationEvent>
       onAnimationEnd?: EventHandler<T, AnimationEvent>
-      onAnimationEndCapture?: EventHandler<T, AnimationEvent>
       onAnimationIteration?: EventHandler<T, AnimationEvent>
-      onAnimationIterationCapture?: EventHandler<T, AnimationEvent>
 
       // Transition Events
       onTransitionEnd?: EventHandler<T, TransitionEvent>
-      onTransitionEndCapture?: EventHandler<T, TransitionEvent>
     }
 
-    interface HTMLAttributes<T> extends DOMAttributes<T> {
+    interface HTMLAttributes<T> extends EventsAttributes<T> {
       // Standard HTML Attributes
       accept?: string
       acceptCharset?: string

@@ -1,6 +1,6 @@
 import { AsyncComputedReturn, AsyncFunction, AsyncReturn, Closer, Context, CreateComputedOption, CreateEffectOption, Function, Reactive, Reactor, ReadOnlyReactor, TransitionReturn } from "../types/app"
 import { DeepObservable } from "./Observable"
-import { cap, ComponentContext, getCurrentContext, getValue, isDefined } from "./utils"
+import { cap, ComponentContext, getCurrentContext, getValue, GLOBAL_CONTEXT, isDefined } from "./utils"
 
 export function createAsync<T, E>(fetcher: AsyncFunction<[], T>, defaultValue?: T): AsyncReturn<T, E> {
   const data = createReactor<T>(defaultValue)
@@ -120,6 +120,10 @@ export function createContext<T>(defaultValue?: T): Context<T> {
   return context
 }
 
+export function createDirective<T, E extends HTMLElement = HTMLElement>(name: string, callback: Function<[E, T]>) {
+  GLOBAL_CONTEXT.directives!.set(name, callback)
+}
+
 export function createEffect<T>(reactorHandle: Function<[], any, Closer>, option?: CreateEffectOption | Reactive<T>, ...deps: Array<Reactive<T>>): void {
   const dependencies = new Set(deps)
   const handle = reactorHandle.bind({ close })
@@ -180,6 +184,10 @@ export function createEventDispatcher(): Function<[name: string, detail: any]> {
       context.props[eventName](event)
     }
   })
+}
+
+export function createEventModifier(name: string, callback: Function<[Event]> | AddEventListenerOptions) {
+  GLOBAL_CONTEXT.modifiers!.set(name, callback)
 }
 
 export function createPersistor<T>(handle: () => T): T {
@@ -263,3 +271,29 @@ export function useContext<T>(context: Context<T>): T {
 
   return context.defaultValue!
 }
+
+// init default event modifier
+createDirective<Reactor<string>, HTMLInputElement | HTMLTextAreaElement>("model", (el, reactor) => {
+  el.value = reactor()
+  el.addEventListener("input", (e) => reactor(el.value))
+})
+
+createEventModifier("prevent", (e) => {
+  e.preventDefault()
+})
+
+createEventModifier("stop", (e) => {
+  e.stopPropagation()
+})
+
+createEventModifier("capture", {
+  capture: true
+})
+
+createEventModifier("once", {
+  once: true
+})
+
+createEventModifier("passive", {
+  passive: true
+})
