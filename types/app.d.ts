@@ -27,6 +27,7 @@ export type SubscribeHandler<T> = (prev: T, next: T) => void
 export type ComponentProps<T> = T & { fallback?: JSX.Element, when?: any | Reactor<any> }
 export interface Component<T = object, C extends Array<JSX.Element> = Array<JSX.Element>> {
   (props: ComponentProps<T>, children: C): JSX.Element
+  attributeTypes?: Record<string, NumberConstructor | BooleanConstructor | BigIntConstructor | Function<[HTMLElement, unknown]>>
   defaultProps?: T
 }
 

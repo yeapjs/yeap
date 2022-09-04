@@ -1,4 +1,4 @@
-import { Component, Function, Reactive } from "../types/app"
+import { Component, Function, Reactive, Reactor } from "../types/app"
 import { DefineCustomElementOption, Props } from "../types/web"
 import { createComputed, createReactor, isReactor } from "./app"
 import { COMPONENT_SYMBOL, ELEMENT_SYMBOL } from "./constantes"
@@ -18,9 +18,10 @@ export type ElementCaller = Function & {
 
 export function define<T>(name: string, component: Component<CustomAttribute<T>>, { reactiveAttributes, shadowed }: DefineCustomElementOption = {}) {
   class Component extends HTMLElement {
-    private props: CustomAttribute<Props> = {}
+    private props: CustomAttribute<any> = {}
     #context: ComponentContext
     #parent: this | ShadowRoot
+    #reactiveProps: Record<string, Reactor<string | undefined>>
 
     static get observedAttributes() { return reactiveAttributes ?? [] }
 
@@ -30,17 +31,40 @@ export function define<T>(name: string, component: Component<CustomAttribute<T>>
       this.#context.element = this
       this.#context.parent = undefined
       this.#parent = shadowed ? this.attachShadow({ mode: shadowed }) : this
+      this.#reactiveProps = {}
     }
 
     connectedCallback() {
       for (const reactiveAttribute of reactiveAttributes ?? []) {
-        this.props[reactiveAttribute] = createReactor((component.defaultProps as any)?.[reactiveAttribute] ?? null)
+        this.#reactiveProps[reactiveAttribute] = createReactor<string>((component.defaultProps as any)?.[reactiveAttribute] ?? undefined)
       }
 
       for (let i = 0; i < this.attributes.length; i++) {
         const name = this.attributes[i].nodeName
-        if (reactiveAttributes && reactiveAttributes.includes(name)) continue
-        else this.props[name] = this.attributes[i].nodeValue
+        const value = this.attributes[i].nodeValue
+        if (component.attributeTypes && reactiveAttributes && reactiveAttributes.includes(name)) {
+          if (name in component.attributeTypes) this.props[name] = this.#reactiveProps[name].compute((value) => {
+            if ([Number, BigInt].includes(component.attributeTypes![name] as any)) return component.attributeTypes![name](value)
+            else if (component.attributeTypes![name] === Boolean) return this.hasAttribute(name)
+            return component.attributeTypes![name](this, value)
+          })
+          else this.props[name] = this.#reactiveProps[name].reader()
+        } else if (component.attributeTypes && name in component.attributeTypes) {
+          if ([Number, BigInt].includes(component.attributeTypes[name] as any)) this.props[name] = component.attributeTypes[name](value)
+          else if (component.attributeTypes[name] === Boolean) this.props[name] = true
+          else this.props[name] = component.attributeTypes[name](this, value)
+        } else this.props[name] = value
+      }
+
+      for (const name in this.#reactiveProps) {
+        if (name in this.props) continue
+
+        if (component.attributeTypes && name in component.attributeTypes) this.props[name] = this.#reactiveProps[name].compute((value) => {
+          if ([Number, BigInt].includes(component.attributeTypes![name] as any)) return component.attributeTypes![name](value)
+          else if (component.attributeTypes![name] === Boolean) return this.hasAttribute(name)
+          return component.attributeTypes![name](this, value)
+        })
+        else this.props[name] = this.#reactiveProps[name].reader()
       }
 
       this.props.ref = this
@@ -50,7 +74,7 @@ export function define<T>(name: string, component: Component<CustomAttribute<T>>
         this.#parent as Element,
         toArray(
           component(
-            this.props as CustomAttribute<T>,
+            this.props,
             Array.from(this.childNodes)
           )
         )
@@ -66,9 +90,8 @@ export function define<T>(name: string, component: Component<CustomAttribute<T>>
 
     attributeChangedCallback(propName: string, prev: string, curr: string) {
       if (prev === curr) return
-      if (!(propName in this.props)) this.props[propName] = createReactor()
 
-      this.props[propName](curr)
+      this.#reactiveProps[propName](curr)
     }
   }
 

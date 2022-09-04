@@ -55,7 +55,7 @@ export class DeepObservable<T>  {
         if (argArray.length === 0) return value
 
         if (typeof argArray[0] === "function" && !isReactor(argArray[0])) this.value = (argArray[0] as Function)(value)
-        else this.value = getValue(argArray[0])
+        else this.value = getValue(argArray[0])!
 
         if (this.#once) this.#freeze = true
 
