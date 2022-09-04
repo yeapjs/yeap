@@ -1,5 +1,6 @@
 import { describe, test, expect, vi, beforeEach } from "vitest"
 import {
+  createDirective,
   createPersistor,
   createReactor,
   createRef,
@@ -9,6 +10,19 @@ import {
 import { h, render } from "../src/web"
 
 /** @jsx h */
+
+describe("directive", () => {
+  test("createDirective", () => {
+    const mock = vi.fn()
+    createDirective("hello", mock)
+
+    expect(mock).not.toBeCalled()
+    const div = <div use:hello={0} />
+
+    expect(mock).toBeCalled()
+    expect(mock).toBeCalledWith(div(), 0)
+  })
+})
 
 describe("lifecycle", () => {
   let body
@@ -124,6 +138,29 @@ describe("dom/jsx", () => {
       expect(handleClick).not.toBeCalled()
       div().click()
       expect(handleClick).toBeCalled()
+    })
+
+    test("event with an array", () => {
+      const handleClick = vi.fn()
+      const div = <div onClick={[handleClick, 4]} />
+
+      expect(handleClick).not.toBeCalled()
+      div().click()
+      expect(handleClick).toBeCalled()
+      expect(handleClick).toBeCalledWith([4])
+    })
+
+    test("event modifiers", () => {
+      let e: MouseEvent | null = null
+      const handleClick = vi.fn((ev: MouseEvent) => (e = ev))
+      const div = <div onClick:prevent={handleClick} />
+
+      expect(handleClick).not.toBeCalled()
+      expect(e).toBeNull()
+      div().click()
+      expect(handleClick).toBeCalled()
+      expect(e).not.toBeNull()
+      expect(e!.defaultPrevented).toBeTruthy()
     })
   })
 

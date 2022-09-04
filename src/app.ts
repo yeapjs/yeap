@@ -275,7 +275,6 @@ export function useContext<T>(context: Context<T>): T {
 // init default event modifier
 createDirective<Reactor<string>, HTMLInputElement | HTMLTextAreaElement>("model", (el, reactor) => {
   el.value = reactor()
-  console.log("aaa")
   el.addEventListener("input", (e) => reactor(el.value))
 })
 
