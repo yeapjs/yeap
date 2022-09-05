@@ -198,13 +198,19 @@ export function h(tag: Component | string, props: Props | null, ...children: Arr
     }
   }
 
+  let result: any = null
+
   const createElement: ElementCaller = function createElement() {
+    if (result) return result
+
     const context = getCurrentContext()
     context.htmlConditions.push(display)
     element.append(...generateList([], element, toArray(children)))
 
-    if ("when" in props! && isReactor(props["when"])) return display.when(element, fallback)
-    return display() ? element : fallback
+    if ("when" in props! && isReactor(props["when"])) result = display.when(element, fallback)
+    result = display() ? element : fallback
+
+    return result
   } as any
 
   createElement.key = props!["key"]
