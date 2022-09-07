@@ -211,11 +211,15 @@ export function createPersistentCallback<T extends Function>(callback: T): T {
 export function createPersistentReactor<T>(initialValue?: Reactive<T> | T) {
   return createPersistor(() => createReactor(initialValue))
 }
-export function createReactor<T>(initialValue?: Reactive<T> | T): Reactor<T> {
+export function createReactor<T>(initialValue?: Reactive<T> | Function<[], T> | T): Reactor<T> {
+  if (typeof initialValue === "function") initialValue = (initialValue as Function)()
+
   return new DeepObservable(getValue(initialValue)) as any
 }
 
-export function createRef<T>(initialValue?: Reactive<T> | T): Reactor<T> {
+export function createRef<T>(initialValue?: Reactive<T> | Function<[], T> | T): Reactor<T> {
+  if (typeof initialValue === "function") initialValue = (initialValue as Function)()
+
   return new DeepObservable(getValue(initialValue), null, false, true) as any
 }
 

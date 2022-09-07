@@ -134,6 +134,10 @@ export function createComputed<T, U>(handle: Function<[], Reactive<T> | T, Close
 
 export function createContext<T>(defaultValue?: T): Context<T>
 
+
+/**
+ * create a directive, it can be modify the element, to call it `use:directive-name`
+ */
 export function createDirective<T, E extends HTMLElement = HTMLElement>(name: string, callback: Function<[E, T]>): void
 
 /**
@@ -172,12 +176,12 @@ export function createPersistentReactor<T>(initialValue?: Reactive<T> | T): Reac
 /**
  * create a reactor, it is a function, it can be updated `reactor(newValue)`, returns the previous value and it can be read `reactor()`, returns the current value. It can be observed
  */
-export function createReactor<T>(initialValue?: Reactive<T> | T): Reactor<T>
+export function createReactor<T>(initialValue?: Reactive<T> | Function<[], T> | T): Reactor<T>
 
 /**
  * createRef is like createReactor but it can only be updated once, after that it becomes a ReadOnlyReactor
  */
-export function createRef<T>(initialValue?: Reactive<T> | T): Reactor<T>
+export function createRef<T>(initialValue?: Reactive<T> | Function<[], T> | T): Reactor<T>
 
 /**
  * create a transition, returns a reactive boolean and a function to start the transition
