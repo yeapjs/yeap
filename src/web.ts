@@ -271,7 +271,7 @@ function hComp(
       }
     }, { unsubscription: false }, ...allConditions)
 
-    return reactive
+    return allConditions.length === 0 ? reactive() : reactive
   } as any
 
   createComponent.key = props!["key"]
