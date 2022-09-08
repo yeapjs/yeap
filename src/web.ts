@@ -208,7 +208,7 @@ export function h(tag: Component | string, props: Props | null, ...children: Arr
     element.append(...generateList([], element, toArray(children)))
 
     if ("when" in props! && isReactor(props["when"])) result = display.when(element, fallback)
-    result = display() ? element : fallback
+    else result = display() ? element : fallback
 
     return result
   } as any
