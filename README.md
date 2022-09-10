@@ -493,6 +493,14 @@ function handleCount ({detail: count}) {
 render(<App onCount={handleCount}/>, document.getElementById("root"))
 ```
 
+An event can be recieve an array on the format `[function, ...args]`
+
+### Event Modifiers and Directives
+
+In yeap you have `createDirective` and `createEventModifier`. Directives are made to update html elements and event modifiers as their name indicates, it is to modify the `event` object.
+
+`event:event-modifier` is the syntax for event modifiers and `use:directive` for the directives.
+
 ### Context
 
 Works exactly like in React.
@@ -570,7 +578,7 @@ Yeap have also 3 built-in components, `Fragment`, `Dynamic`, `Portal` and one fu
 
 ### Web Component
 
-Yeap has a function to create web component, `define` in `yeap/web`, it's like the `customElements.define` of the web component API, it's take a name, a function and  options.
+Yeap has a function to create web component, `define` in `yeap/web`, it's like the `customElements.define` of the web component API, it's take a name, a function and options.
 
 ```jsx
 import { createReactor } from "yeap/app"
@@ -598,5 +606,7 @@ define("my-counter", MyCounter, {
 The function in `define` is a yeap component, it takes the props and the children, and you can use the `reactiveAttributes` option to make some attributes reactive, and the `shadowed` option to make the component shadowed.
 
 It's possible to use `YourComponent.defaultProps` to set the default props of the component.
+
+It's also possible to use `YourComponent.attributeTypes` to cast the attributes' value into `Number`, `BigInt` or `Boolean` (for boolean it check if you have the attribute), see the issue #12 for more detail.
 
 The component can be take 2 arguments, the attributes and the child nodes. When an attribute is in the `reactiveAttributes` array, it became a reactor. In the attributes, you can find `ref`, is the html element.
