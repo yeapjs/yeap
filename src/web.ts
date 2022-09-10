@@ -182,8 +182,9 @@ export function h(tag: Component | string, props: Props | null, ...children: Arr
       const directive = GLOBAL_CONTEXT.directives?.get(directiveName)!
       directive(element, props[prop])
     } else {
+      let writable = true
       if (isReactor(props[prop])) props[prop].subscribe((_: any, curr: any) => {
-        if (prop in element) {
+        if (prop in element && writable) {
           if (isDefined(curr) && curr !== false) (element as any)[prop] = curr === true ? "" : stringify(curr)
           else (element as any)[prop] = undefined
         }
@@ -192,7 +193,11 @@ export function h(tag: Component | string, props: Props | null, ...children: Arr
       })
 
       if (isDefined(getValue(props[prop])) && getValue(props[prop]) !== false) {
-        if (prop in element) (element as any)[prop] = getValue(props[prop]) === true ? "" : stringify(getValue(props[prop]))
+        if (prop in element) try {
+          (element as any)[prop] = getValue(props[prop]) === true ? "" : stringify(getValue(props[prop]))
+        } catch (error) {
+          writable = false
+        }
         element.setAttribute(prop, getValue(props[prop]) === true ? "" : stringify(getValue(props[prop])))
       }
     }
