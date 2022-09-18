@@ -122,7 +122,7 @@ export function h(tag: Component | string, props: Props | null, ...children: Arr
   const is = props?.is?.toString()
   const element = isSVGTag(tag) ? document.createElementNS("http://www.w3.org/2000/svg", tag) : document.createElement(tag, { is })
 
-  for (let prop in props) {
+  for (const prop in props) {
     if (!isDefined(props[prop]) || prop === "key" || prop === "is" || prop === "fallback" || prop === "when") continue
     else if (prop === "ref") {
       props[prop](element)
@@ -183,13 +183,13 @@ export function h(tag: Component | string, props: Props | null, ...children: Arr
       directive(element, props[prop])
     } else {
       let writable = true
-      if (isSVGTag(tag) && !isSVGCamelCaseAttr(prop)) prop = kebabCase(prop)
+      const attributeName = isSVGTag(tag) && !isSVGCamelCaseAttr(prop) ? kebabCase(prop) : prop
       if (isReactor(props[prop])) props[prop].subscribe((_: any, curr: any) => {
         if (prop in element && writable) {
           if (isDefined(curr) && curr !== false) (element as any)[prop] = curr === true ? "" : stringify(curr)
           else (element as any)[prop] = undefined
         }
-        if (isDefined(curr) && curr !== false) element.setAttribute(prop, curr === true ? "" : stringify(curr))
+        if (isDefined(curr) && curr !== false) element.setAttribute(attributeName, curr === true ? "" : stringify(curr))
         else element.removeAttribute(prop)
       })
 
@@ -199,7 +199,7 @@ export function h(tag: Component | string, props: Props | null, ...children: Arr
         } catch (error) {
           writable = false
         }
-        element.setAttribute(prop, getValue(props[prop]) === true ? "" : stringify(getValue(props[prop])))
+        element.setAttribute(attributeName, getValue(props[prop]) === true ? "" : stringify(getValue(props[prop])))
       }
     }
   }
