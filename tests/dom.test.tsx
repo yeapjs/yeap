@@ -104,9 +104,12 @@ describe("dom/jsx", () => {
     })
 
     test("class attribute", () => {
-      const div = <div class="test" />
+      const div = <div class="test test2" />
+      const div2 = <div className="test" />
 
-      expect(div().className).toBe("test")
+      expect(div().className).toBe("test test2")
+      expect(div2().className).toBe("test")
+      expect(div2().getAttribute("className")).toBe(null)
     })
 
     test("classList attribute", () => {

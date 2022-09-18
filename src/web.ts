@@ -4,7 +4,7 @@ import { createComputed, createReactor, isReactor } from "./app"
 import { COMPONENT_SYMBOL, ELEMENT_SYMBOL } from "./constantes"
 import { generateList } from "./dom"
 import { DirectiveError, ModifierError } from "./errors"
-import { ComponentContext, createComponentContext, getValue, GLOBAL_CONTEXT, isDefined, isEvent, isSVGTag, setCurrentContext, setContextParent, stringify, toArray, getCurrentContext, isDirective } from "./utils"
+import { ComponentContext, createComponentContext, getValue, GLOBAL_CONTEXT, isDefined, isEvent, isSVGTag, setCurrentContext, setContextParent, stringify, toArray, getCurrentContext, isDirective, isSVGCamelCaseAttr, kebabCase } from "./utils"
 
 type CustomAttribute<T> = T & { ref?: HTMLElement }
 export type ComponentCaller = Function & {
@@ -122,12 +122,12 @@ export function h(tag: Component | string, props: Props | null, ...children: Arr
   const is = props?.is?.toString()
   const element = isSVGTag(tag) ? document.createElementNS("http://www.w3.org/2000/svg", tag) : document.createElement(tag, { is })
 
-  for (const prop in props) {
+  for (let prop in props) {
     if (!isDefined(props[prop]) || prop === "key" || prop === "is" || prop === "fallback" || prop === "when") continue
     else if (prop === "ref") {
       props[prop](element)
-    } else if (prop === "class") {
-      element.classList.add(props[prop].split(" "))
+    } else if (prop === "class" || prop === "className") {
+      element.classList.add(...props[prop].split(" "))
     } else if (prop === "classList") {
       const classList = props[prop]
       for (const item in classList) {
@@ -183,6 +183,7 @@ export function h(tag: Component | string, props: Props | null, ...children: Arr
       directive(element, props[prop])
     } else {
       let writable = true
+      if (isSVGTag(tag) && !isSVGCamelCaseAttr(prop)) prop = kebabCase(prop)
       if (isReactor(props[prop])) props[prop].subscribe((_: any, curr: any) => {
         if (prop in element && writable) {
           if (isDefined(curr) && curr !== false) (element as any)[prop] = curr === true ? "" : stringify(curr)

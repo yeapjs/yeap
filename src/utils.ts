@@ -1,6 +1,6 @@
 import { Context, Reactive } from "../types/app"
 import { isReactor } from "./app"
-import { COMPONENT_SYMBOL, ELEMENT_SYMBOL, SVG_TAGS } from "./constantes"
+import { COMPONENT_SYMBOL, ELEMENT_SYMBOL, SVG_CAMELCASE_ATTR, SVG_TAGS } from "./constantes"
 import { ComponentCaller, ElementCaller } from "./web"
 
 interface ProvidedContext<T> {
@@ -40,6 +40,13 @@ GLOBAL_CONTEXT.modifiers = new Map()
 setContextParent(GLOBAL_CONTEXT)
 
 export const isSVGTag = makeMap(SVG_TAGS)
+export const isSVGCamelCaseAttr = makeMap(SVG_CAMELCASE_ATTR)
+export function kebabCase(str: string) {
+  return str
+    .match(/[A-Z]{2,}(?=[A-Z][a-z]+[0-9]*|\b)|[A-Z]?[a-z]+[0-9]*|[A-Z]|[0-9]+/g)!
+    .join('-')
+    .toLowerCase()
+}
 
 export function createComponentContext(): ComponentContext {
   const context: ComponentContext = {
