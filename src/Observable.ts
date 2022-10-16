@@ -1,6 +1,7 @@
 import { Function, Reactive, ReadOnlyReactor, SubscribeHandler } from "../types/app"
 import { createComputed, isReactor, isReadOnlyReactor } from "./app"
 import { FORCE_SYMBOL, OBSERVABLE_SYMBOL, READONLY_OBSERVABLE_SYMBOL } from "./constantes"
+import { cancelRuntimeCallback, requestRuntimeCallback } from "./runtimeLoop";
 import { getValue, isDefined, isJSXElement } from "./utils"
 
 export class DeepObservable<T>  {
@@ -115,10 +116,10 @@ export class DeepObservable<T>  {
 
   call(prev: T, next: T) {
     if (!this.#timer) this.#prev = prev
-    else cancelIdleCallback(this.#timer)
+    else cancelRuntimeCallback(this.#timer)
 
-    this.#timer = requestIdleCallback(() => {
-      cancelIdleCallback(this.#timer!)
+    this.#timer = requestRuntimeCallback(() => {
+      cancelRuntimeCallback(this.#timer!)
       this.#timer = undefined
 
       this.#handlers.forEach((handle) => handle(this.#prev ?? prev, next))
