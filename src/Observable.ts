@@ -20,6 +20,9 @@ export class DeepObservable<T>  {
   #freeze: boolean
   #once: boolean
   #handlers: Array<SubscribeHandler<T>> = []
+
+  #timer?: number
+  #prev?: T
   constructor(public value: T, parent?: DeepObservable<any> | null, freeze = false, once = false) {
     this.#freeze = freeze
     this.#once = once
@@ -111,7 +114,15 @@ export class DeepObservable<T>  {
   }
 
   call(prev: T, next: T) {
-    this.#handlers.forEach((handle) => handle(prev, next))
+    if (!this.#timer) this.#prev = prev
+    else cancelIdleCallback(this.#timer)
+
+    this.#timer = requestIdleCallback(() => {
+      cancelIdleCallback(this.#timer!)
+      this.#timer = undefined
+
+      this.#handlers.forEach((handle) => handle(this.#prev ?? prev, next))
+    })
   }
 
   freeze() {
