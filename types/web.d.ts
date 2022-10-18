@@ -1,4 +1,4 @@
-import { Component, Reactive } from "./app"
+import { Component, Function, Reactive } from "./app"
 
 type Props = Record<string, EventListenerOrEventListenerObject | Reactive<any> | any>
 
@@ -20,7 +20,16 @@ export function children(callback: () => Array<JSX.Element>): Array<Element | Te
 /**
  * JSX to HTML element
  */
-export function h(tag: Component | string, props: Props | null, ...children: Array<JSX.Element>): JSX.Element
+export function h<T extends keyof JSX.IntrinsicElements, P = JSX.IntrinsicElements[T]>(tag: T, props: JSX.IntrinsicElements[T] | null, ...children: Array<JSX.Element>): () =>
+  P extends JSX.ReactivableHTMLAttributes<infer H>
+  ? H : P extends JSX.ReactivableSVGAttributes<infer S>
+  ? S : never
+export function h(tag: string, props: Props | null, ...children: Array<JSX.Element>): () => HTMLElement
+export function h<C extends Component | Function>(
+  tag: C,
+  props: (C extends Component<infer P> ? P : C extends Function<[infer A]> ? A : {}) | null,
+  ...children: Array<JSX.Element>
+): () => (HTMLElement | (() => HTMLElement))
 
 /**
  * render JSX in a HTML element
