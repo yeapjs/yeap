@@ -7,8 +7,14 @@ function loop() {
     callback()
   })
 
-  if (callbacks.size) idleId = requestIdleCallback(loop)
+  if (callbacks.size) idleId = window.requestIdleCallback(loop)
   else idleId = null
+}
+
+export function next() {
+  return new Promise((res) => {
+    requestRuntimeCallback(res)
+  })
 }
 
 export function requestRuntimeCallback(callback: Function): number {
@@ -19,10 +25,11 @@ export function requestRuntimeCallback(callback: Function): number {
     cancelRuntimeCallback(id)
   })
 
-  if (!idleId) idleId = requestIdleCallback(loop)
+  if (!idleId) idleId = window.requestIdleCallback(loop)
 
   return id
 }
+
 export function cancelRuntimeCallback(handle: number) {
   callbacks.delete(handle)
 }

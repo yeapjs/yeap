@@ -1,4 +1,5 @@
 import { describe, test, expect, vi, beforeEach } from "vitest"
+
 import {
   createDirective,
   createPersistor,
@@ -8,7 +9,9 @@ import {
   onUnmounted,
 } from "../src/app"
 import { DirectiveError, ModifierError } from "../src/errors"
+import { next } from "../src/runtimeLoop"
 import { h, render } from "../src/web"
+import "./polyfill"
 
 /** @jsx h */
 
@@ -41,7 +44,7 @@ describe("lifecycle", () => {
     body = document.createElement("body")
   })
 
-  test("onMounted in a component", () => {
+  test("onMounted in a component", async () => {
     const reactor = createReactor(true)
     const mock = vi.fn()
 
@@ -55,11 +58,13 @@ describe("lifecycle", () => {
     render(<App when={reactor} />, body)
     expect(mock).toBeCalled()
     reactor(false)
+    await next()
     reactor(true)
+    await next()
     expect(mock).toBeCalledTimes(2)
   })
 
-  test("onUnmounted in a component", () => {
+  test("onUnmounted in a component", async () => {
     const reactor = createReactor(true)
     const mock = vi.fn()
 
@@ -73,6 +78,7 @@ describe("lifecycle", () => {
     render(<App when={reactor} />, body)
     expect(mock).toBeCalledTimes(0)
     reactor(false)
+    await next()
     expect(mock).toBeCalled()
   })
 
@@ -112,12 +118,13 @@ describe("dom/jsx", () => {
       expect(div2().getAttribute("className")).toBe(null)
     })
 
-    test("classList attribute", () => {
+    test("classList attribute", async () => {
       const test = createReactor(true)
       const div = <div classList={{ test }} />
 
       expect(div().className).toBe("test")
       test(false)
+      await next()
       expect(div().className).toBe("")
     })
 
@@ -127,21 +134,23 @@ describe("dom/jsx", () => {
       expect(div().querySelector("p")).not.toBeNull()
     })
 
-    test("style attribute", () => {
+    test("style attribute", async () => {
       const color = createReactor("red")
       const div = <div style={{ color }} />
 
       expect(div().style.color).toBe("red")
       color("blue")
+      await next()
       expect(div().style.color).toBe("blue")
     })
 
-    test("random attributes", () => {
+    test("random attributes", async () => {
       const color = createReactor("red")
       const div = <div id={color} />
 
       expect(div().id).toBe("red")
       color("blue")
+      await next()
       expect(div().id).toBe("blue")
     })
 
@@ -196,7 +205,7 @@ describe("dom/jsx", () => {
   })
   // ref class classList dangerouslySetInnerHTML style
 
-  test("when and fallback attributes", () => {
+  test("when and fallback attributes", async () => {
     const reactor = createReactor(true)
 
     function App() {
@@ -213,6 +222,7 @@ describe("dom/jsx", () => {
     expect(body.querySelector("p")).not.toBeNull()
     expect(body.querySelector("span")).toBeNull()
     reactor(false)
+    await next()
     expect(body.querySelector("p")).toBeNull()
     expect(body.querySelector("span")).not.toBeNull()
   })

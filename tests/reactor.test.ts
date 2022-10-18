@@ -1,6 +1,8 @@
 import { describe, test, expect, vi } from "vitest"
 
 import { createComputed, createEffect, createReactor, createRef, isReadOnlyReactor } from "../src/app"
+import { next } from "../src/runtimeLoop"
+import "./polyfill"
 
 test("if createRef bacame a ReadOnlyReactor after update", () => {
   const ref = createRef(0)
@@ -33,7 +35,7 @@ describe("createReactor", () => {
     expect(() => reactor.b = 5 as any).toThrow()
   })
 
-  test("the 'subscribe' method", () => {
+  test("the 'subscribe' method", async () => {
     const reactor = createReactor("foo")
     const readOnlyReactor = reactor.reader()
     const freezeReactor = reactor.freeze()
@@ -54,6 +56,7 @@ describe("createReactor", () => {
     expect(isReadOnlyReactor(freezeReactor)).toBeTruthy()
 
     reactor("bar")
+    await next()
 
     expect(subMock).toBeCalledTimes(1)
     expect(subMock).toBeCalledWith("foo", "bar")
@@ -64,7 +67,7 @@ describe("createReactor", () => {
     expect(() => readOnlyReactor("baz")).toThrow()
   })
 
-  test("the 'when' and 'compute' methods", () => {
+  test("the 'when' and 'compute' methods", async () => {
     const reactor = createReactor("foo")
     const computeReactor = reactor.compute((x) => x + x)
 
@@ -75,18 +78,20 @@ describe("createReactor", () => {
     expect(whenReactor()).toBe("Hello")
 
     reactor("bar")
+    await next()
 
     expect(computeReactor()).toBe("barbar")
     expect(whenReactor()).toBe("Hello")
 
     boolReactor(false)
+    await next()
 
     expect(whenReactor()).toBe("Good bye")
   })
 })
 
 describe("createComputed", () => {
-  test("without option", () => {
+  test("without option", async () => {
     const reactor = createReactor(0)
     const mock = vi.fn(() => reactor() + 1)
 
@@ -97,6 +102,7 @@ describe("createComputed", () => {
     expect(mock).toBeCalledTimes(1)
 
     reactor(1)
+    await next()
 
     expect(compute()).toBe(2)
     expect(mock).toBeCalledTimes(2)
@@ -112,7 +118,7 @@ describe("createEffect", () => {
     expect(mock).toBeCalledTimes(1)
   })
 
-  test("option.immediate", () => {
+  test("option.immediate", async () => {
     const reactor = createReactor(0)
     const mock = vi.fn()
 
@@ -122,6 +128,7 @@ describe("createEffect", () => {
 
     expect(mock).toBeCalledTimes(0)
     reactor(1)
+    await next()
     expect(mock).toBeCalledTimes(1)
   })
 })
