@@ -1,3 +1,5 @@
+// @ts-ignore
+import React from "react"
 import { describe, test, expect, vi, beforeEach } from "vitest"
 
 import {
@@ -11,6 +13,7 @@ import {
 import { DirectiveError, ModifierError } from "../src/errors"
 import { next } from "../src/runtimeLoop"
 import { h, render } from "../src/web"
+import { HElement } from "../types/web"
 import "./polyfill"
 
 /** @jsx h */
@@ -21,17 +24,21 @@ describe("directive", () => {
     createDirective("hello", mock)
 
     expect(mock).not.toBeCalled()
-    const div = <div use:hello={0} />
+    // @ts-ignore
+    const div = (<div use:hello={0} />) as HElement<HTMLDivElement>
 
     expect(mock).toBeCalled()
     expect(mock).toBeCalledWith(div(), 0)
   })
 
   test("error", () => {
+    // @ts-ignore
     expect(() => <div use:hello={0} />).not.toThrow()
+    // @ts-ignore
     expect(() => <div use:hello2={0} />).toThrow(
       new DirectiveError("the directive hello2 does not exist")
     )
+    // @ts-ignore
     expect(() => <div {...{ "use:hello2:p": 0 }} />).toThrow(
       new DirectiveError('syntax error "use:" can be take only one directive')
     )
@@ -110,8 +117,8 @@ describe("dom/jsx", () => {
     })
 
     test("class attribute", () => {
-      const div = <div class="test test2" />
-      const div2 = <div className="test" />
+      const div = (<div class="test test2" />) as HElement<HTMLDivElement>
+      const div2 = (<div className="test" />) as HElement<HTMLDivElement>
 
       expect(div().className).toBe("test test2")
       expect(div2().className).toBe("test")
@@ -120,7 +127,7 @@ describe("dom/jsx", () => {
 
     test("classList attribute", async () => {
       const test = createReactor(true)
-      const div = <div classList={{ test }} />
+      const div = (<div classList={{ test }} />) as HElement<HTMLDivElement>
 
       expect(div().className).toBe("test")
       test(false)
@@ -129,14 +136,16 @@ describe("dom/jsx", () => {
     })
 
     test("dangerouslySetInnerHTML attribute", () => {
-      const div = <div dangerouslySetInnerHTML={{ __html: "<p></p>" }} />
+      const div = (
+        <div dangerouslySetInnerHTML={{ __html: "<p></p>" }} />
+      ) as HElement<HTMLDivElement>
 
       expect(div().querySelector("p")).not.toBeNull()
     })
 
     test("style attribute", async () => {
       const color = createReactor("red")
-      const div = <div style={{ color }} />
+      const div = (<div style={{ color }} />) as HElement<HTMLDivElement>
 
       expect(div().style.color).toBe("red")
       color("blue")
@@ -146,7 +155,7 @@ describe("dom/jsx", () => {
 
     test("random attributes", async () => {
       const color = createReactor("red")
-      const div = <div id={color} />
+      const div = (<div id={color} />) as HElement<HTMLDivElement>
 
       expect(div().id).toBe("red")
       color("blue")
@@ -156,7 +165,7 @@ describe("dom/jsx", () => {
 
     test("event", () => {
       const handleClick = vi.fn()
-      const div = <div onClick={handleClick} />
+      const div = (<div onClick={handleClick} />) as HElement<HTMLDivElement>
 
       expect(handleClick).not.toBeCalled()
       div().click()
@@ -165,7 +174,9 @@ describe("dom/jsx", () => {
 
     test("event with an array", () => {
       const handleClick = vi.fn()
-      const div = <div onClick={[handleClick, 4]} />
+      const div = (
+        <div onClick={[handleClick, 4]} />
+      ) as HElement<HTMLDivElement>
 
       expect(handleClick).not.toBeCalled()
       div().click()
@@ -176,7 +187,9 @@ describe("dom/jsx", () => {
     test("event modifiers", () => {
       let e: MouseEvent | null = null
       const handleClick = vi.fn((ev: MouseEvent) => (e = ev))
-      const div = <div onClick:prevent={handleClick} />
+      const div = (
+        <div onClick:prevent={handleClick} />
+      ) as HElement<HTMLDivElement>
 
       expect(handleClick).not.toBeCalled()
       expect(e).toBeNull()
@@ -198,7 +211,7 @@ describe("dom/jsx", () => {
   })
 
   test("h", () => {
-    const div = <div />
+    const div = (<div />) as HElement<HTMLDivElement>
 
     expect(div).toBeTypeOf("function")
     expect(div()).toBeInstanceOf(HTMLDivElement)

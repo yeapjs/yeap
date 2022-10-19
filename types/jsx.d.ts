@@ -1,4 +1,4 @@
-import { Component, Function, Reactive, Reactor } from "./app"
+import { Component, Function, Reactive, Reactor, ToReadOnlyReactorObject } from "./app"
 
 declare global {
   // JSX type definitions for Yeap
@@ -445,7 +445,7 @@ declare global {
       srcSet?: string
       start?: number
       step?: number | string
-      style?: Partial<CSSStyleDeclaration>
+      style?: Partial<CSSStyleDeclaration> | ToReadOnlyReactorObject<Partial<CSSStyleDeclaration>>
       summary?: string
       tabIndex?: number
       target?: string
