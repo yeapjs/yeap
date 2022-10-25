@@ -32,6 +32,8 @@ function makeMap(str: string): (key: string) => boolean {
   return val => !!map[val.toLocaleLowerCase()]
 }
 
+let recordReactor: Set<Reactive<any>> | null = null
+
 let current: ComponentContext
 let parent: ComponentContext
 export const GLOBAL_CONTEXT = createComponentContext()
@@ -47,6 +49,20 @@ export function kebabCase(str: string) {
     .match(/[A-Z]{2,}(?=[A-Z][a-z]+[0-9]*|\b)|[A-Z]?[a-z]+[0-9]*|[A-Z]|[0-9]+/g)!
     .join('-')
     .toLowerCase()
+}
+
+export function resetRecordReactor() {
+  recordReactor = new Set()
+}
+
+export function addRecordReactor(item: Reactive<any>) {
+  recordReactor?.add(item)
+}
+
+export function getRecordReactor() {
+  let lastRecord = recordReactor
+  recordReactor = null
+  return lastRecord
 }
 
 export function createComponentContext(): ComponentContext {

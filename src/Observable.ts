@@ -2,7 +2,7 @@ import { Function, Reactive, ReadOnlyReactor, SubscribeHandler } from "../types/
 import { createComputed, isReactor, isReadOnlyReactor } from "./app"
 import { FORCE_SYMBOL, OBSERVABLE_SYMBOL, READONLY_OBSERVABLE_SYMBOL } from "./constantes"
 import { cancelRuntimeCallback, requestRuntimeCallback } from "./runtimeLoop";
-import { getValue, isArrayMethod, isDefined, isJSXElement } from "./utils"
+import { addRecordReactor, getValue, isArrayMethod, isDefined, isJSXElement } from "./utils"
 
 export class DeepObservable<T>  {
   [OBSERVABLE_SYMBOL] = true;
@@ -39,6 +39,8 @@ export class DeepObservable<T>  {
 
     return new Proxy(() => this.value, {
       apply: (_, thisArg, argArray: [((v: T) => T) | T] | []) => {
+        addRecordReactor(this as any)
+
         const value = this.value
         if (isReactor(value)) return value
         if (typeof value === "function") {
