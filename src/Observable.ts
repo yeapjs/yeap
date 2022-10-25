@@ -2,7 +2,7 @@ import { Function, Reactive, ReadOnlyReactor, SubscribeHandler } from "../types/
 import { createComputed, isReactor, isReadOnlyReactor } from "./app"
 import { FORCE_SYMBOL, OBSERVABLE_SYMBOL, READONLY_OBSERVABLE_SYMBOL } from "./constantes"
 import { cancelRuntimeCallback, requestRuntimeCallback } from "./runtimeLoop";
-import { getValue, isDefined, isJSXElement } from "./utils"
+import { getValue, isArrayMethod, isDefined, isJSXElement } from "./utils"
 
 export class DeepObservable<T>  {
   [OBSERVABLE_SYMBOL] = true;
@@ -70,9 +70,11 @@ export class DeepObservable<T>  {
         if (p in properties) return properties[p]
 
         const value = (this.value as any)?.[p]
-        if (p in this && p !== "value" && ["function", "boolean"].includes(typeof (this as any)[p])) {
+        if (p in this && p !== "value" && ((["function", "boolean"].includes(typeof (this as any)[p]) && !isArrayMethod(p as string)) || (Array.isArray(this.value) && isArrayMethod(p as string)))) {
           return (this as any)[p]
-        } else if (isDefined(value)) {
+        }
+
+        if (isDefined(value)) {
           if (isReactor(value)) return value
 
           const descriptor = Object.getOwnPropertyDescriptor(this.value, p)
@@ -82,8 +84,11 @@ export class DeepObservable<T>  {
           this.subscribe((_, curr: any) => {
             reactive[FORCE_SYMBOL] = curr?.[p]
           })
-          if (!isReadOnlyReactor(reactive)) reactive.subscribe((prev, curr) => {
-            (this.value as any)[p] = curr
+          if (!isReadOnlyReactor(reactive)) reactive.subscribe((_, curr) => {
+            if (isDefined(this.value)) {
+              if (isDefined(curr)) (this.value as any)[p] = curr
+              else delete (this.value as any)[p]
+            }
           })
 
           properties[p] = reactive
@@ -103,6 +108,14 @@ export class DeepObservable<T>  {
           if (p in properties) properties[p](value)
         }
         return true
+      },
+      deleteProperty: (_, p) => {
+        if (delete (this.value as any)?.[p]) {
+          properties[p].#freeze = true
+          delete properties[p]
+          return true
+        }
+        return false
       },
     }) as any
   }
@@ -144,11 +157,47 @@ export class DeepObservable<T>  {
     return createComputed(() => handle(this.value), { observableInitialValue: false }, this as any)
   }
 
-  when<U, F>(truthy: U | Function<[], U>, falsy: F | Function<[], F>): ReadOnlyReactor<U | F> {
-    return this.compute((v) => (
-      v ?
+  when<U, F>(condition: Function<[T], boolean>, truthy: U | Function<[], U>, falsy?: F | Function<[], F>): ReadOnlyReactor<any> {
+    if (!isDefined(falsy)) {
+      falsy = truthy as any
+      truthy = condition as any
+      condition = (v: T) => !!v
+    }
+
+    return this.compute((v) => {
+      return condition(v) ?
         typeof truthy === "function" && !isReactor(truthy) && !isJSXElement(truthy) ? (truthy as Function)() : truthy :
         typeof falsy === "function" && !isReactor(falsy) && !isJSXElement(falsy) ? (falsy as Function)() : falsy
-    ))
+    })
+  }
+
+  /// Array Method for iterate on an array without lost the reactivity on the item
+  iter<I extends T extends Array<infer I> ? I : never, U>(this: Reactive<Array<I>>, callbackfn: (value: Reactive<I>, index: number) => U) {
+    return this.map((_, i) => callbackfn((this as any)[i], i))
+  }
+
+  /// Array Method Overwrite for allow the reactivity
+  push<I extends T extends Array<infer I> ? I : never>(this: Reactive<Array<I>>, ...items: Array<I>): number {
+    this((arr) => [...arr, ...items])
+    return this.length
+  }
+  pop<I extends T extends Array<infer I> ? I : never>(this: Reactive<Array<I>>): Reactive<I> | undefined {
+    let l = this.length()
+    if (!l) return undefined
+
+    const last = this[l - 1]
+    this((arr) => arr.slice(0, l - 1))
+    return last as any
+  }
+
+  unshift<I extends T extends Array<infer I> ? I : never>(this: Reactive<Array<I>>, ...items: Array<I>): number {
+    // console.log(items, this())
+    this((arr) => [...items, ...arr])
+    return this.length
+  }
+  shift<I extends T extends Array<infer I> ? I : never>(this: Reactive<Array<I>>): Reactive<I> | undefined {
+    const first = this[0]
+    this((arr) => arr.slice(1))
+    return first as any
   }
 }

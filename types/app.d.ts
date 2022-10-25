@@ -43,15 +43,29 @@ export interface Closer {
 }
 
 /// REACTIVE
+interface ArrayReactorMethod<I> {
+  /// Array Method for iterate on an rray without lost the reactivity on the item
+  iter<U>(callbackfn: (value: Reactive<I>, index: number) => U): Array<U>
+
+  /// Array Method Overwrite for allow the reactivity
+  push(...items: Array<I>): number
+  pop(): I | undefined
+
+  unshift(...items: Array<I>): number
+  shift(): I | undefined
+}
+
 type PrimitivesToObject<T> = T extends string ? String :
   T extends number ? Number :
   T extends boolean ? Boolean :
   T extends bigint ? BigInt :
-  T extends symbol ? Symbol : T
+  T extends symbol ? Symbol :
+  T extends Array<infer I> ? Array<I> & ArrayReactorMethod<I> : T
 
 export type ToReadOnlyReactorObject<T = object> = {
   [K in keyof T]: T[K] extends Function<infer A, infer R, infer T> ? Function<A, ReadOnlyReactor<R>, T> : ReadOnlyReactor<T[K]>
 }
+
 export interface ReadOnlyReactorMethod<T> {
   /**
    * observe when the reactor is updated
@@ -65,7 +79,9 @@ export interface ReadOnlyReactorMethod<T> {
    * returns the value based on the reactor value, works like if else
    */
   when<U, F>(truthy: U | Function<[], U>, falsy: F | Function<[], F>): ReadOnlyReactor<U | F>
+  when<U, F>(condition: Function<[T], boolean>, truthy: U | Function<[], U>, falsy: F | Function<[], F>): ReadOnlyReactor<U | F>
 }
+
 export type ReadOnlyReactor<T> = ToReadOnlyReactorObject<PrimitivesToObject<T>> & ReadOnlyReactorMethod<T> & {
   (): T
 }
@@ -80,6 +96,7 @@ export interface ReactorMethod<T> extends ReadOnlyReactorMethod<T> {
    */
   reader(): ReadOnlyReactor<T>
 }
+
 export type ToReactorObject<T = object> = {
   [K in keyof T]: T[K] extends Function<infer A, infer R, infer T> ? Function<A, ReadOnlyReactor<R>, T> : Reactor<T[K]>
 }
