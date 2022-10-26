@@ -1,4 +1,5 @@
 import { AsyncComputedReturn, AsyncFunction, AsyncReturn, Closer, Context, CreateComputedOption, CreateEffectOption, Function, Reactive, Reactor, ReadOnlyReactor, TransitionReturn } from "../types/app"
+import { NULL } from "./constantes"
 import { DeepObservable } from "./Observable"
 import { batch, cap, ComponentContext, getCurrentContext, getRecordReactor, getValue, GLOBAL_CONTEXT, isDefined, resetRecordReactor } from "./utils"
 
@@ -56,8 +57,8 @@ export function createAsyncComputed<T, E, U>(fetcher: AsyncFunction<[], T, Close
 
 export function createComputed<T, U>(reactorHandle: Function<[], Reactive<T> | T, Closer>, option?: CreateComputedOption | Reactive<U>, ...deps: Array<Reactive<U>>): ReadOnlyReactor<T> {
   const dependencies = new Set(deps)
+  const updates = new Map<Reactive<U>, { prev: U | NULL, curr: U | NULL }>()
   const handle = reactorHandle.bind({ close })
-  let timer: number | null = null
   if (isReactor(option) || !isDefined(option)) {
     if (isDefined(option)) dependencies.add(option as any)
     option = {
@@ -79,9 +80,24 @@ export function createComputed<T, U>(reactorHandle: Function<[], Reactive<T> | T
   const reactor = createReactor(initialValue)
 
   const callback = batch(() => {
-    reactor(getValue(handle())!)
+    let update = false
+    for (const v of updates.values()) {
+      if (v.prev == NULL) continue
+      update = update || v.prev !== v.curr
+      v.prev = NULL
+    }
+
+    if (update) reactor(getValue(handle())!)
   })
-  const unsubscribes = Array.from(dependencies).map((dep) => dep.subscribe(callback))
+  const unsubscribes = Array.from(dependencies).map((dep) => {
+    const value: { prev: U | NULL, curr: U | NULL } = { prev: NULL, curr: NULL }
+    updates.set(dep, value)
+    return dep.subscribe((prev, curr) => {
+      if (value.prev == NULL) value.prev = prev
+      value.curr = curr
+      callback()
+    })
+  })
 
   function close() {
     unsubscribes.forEach((unsubscribe) => unsubscribe())
@@ -130,6 +146,7 @@ export function createDirective<T, E extends HTMLElement = HTMLElement>(name: st
 
 export function createEffect<T>(reactorHandle: Function<[], any, Closer>, option?: CreateEffectOption | Reactive<T>, ...deps: Array<Reactive<T>>): void {
   const dependencies = new Set(deps)
+  const updates = new Map<Reactive<T>, { prev: T | NULL, curr: T | NULL }>()
   const handle = reactorHandle.bind({ close })
   if (isReactor(option) || !isDefined(option)) {
     if (isDefined(option)) dependencies.add(option as Reactive<T>)
@@ -148,19 +165,38 @@ export function createEffect<T>(reactorHandle: Function<[], any, Closer>, option
   }
 
   function subscriber() {
-    const value = handle()
     if (first) {
+      const value = handle()
       if (isReactor(value) && (option as CreateComputedOption).observableInitialValue) unsubscribes.push(value.subscribe(subscriber))
       first = false
+      return
     }
+
+    let update = false
+    for (const v of updates.values()) {
+      if (v.prev == NULL) continue
+      update = update || v.prev !== v.curr
+      v.prev = NULL
+    }
+
+    if (update) handle()
   }
 
   if (option.immediate) subscriber()
 
   const callback = batch(subscriber)
-  const unsubscribes = Array.from(dependencies).map((dep) => dep.subscribe(callback))
+  const unsubscribes = Array.from(dependencies).map((dep) => {
+    const value: { prev: T | NULL, curr: T | NULL } = { prev: NULL, curr: NULL }
+    updates.set(dep, value)
+    return dep.subscribe((prev, curr) => {
+      if (value.prev == NULL) value.prev = prev
+      value.curr = curr
+      callback()
+    })
+  })
 
   function close() {
+    updates.clear()
     unsubscribes.forEach((unsubscribe) => unsubscribe())
   }
 
