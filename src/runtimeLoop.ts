@@ -1,11 +1,12 @@
-const callbacks = new Map()
+const callbacks = new Map<number, Function>()
 let idleId: number | null = null
 let i = 0
 
-function loop() {
-  callbacks.forEach((callback) => {
+function loop(deadline: IdleDeadline) {
+  for (const callback of callbacks.values()) {
+    if (deadline.timeRemaining() < 1) break
     callback()
-  })
+  }
 
   if (callbacks.size) idleId = window.requestIdleCallback(loop)
   else idleId = null
