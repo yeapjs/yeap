@@ -33,8 +33,6 @@ function reconcileReactor<T extends JSX.Element>(parent: Element, reactor: React
 
     if (prev === curr) return
 
-    console.log("aaa")
-
     const newValues = toArray(curr)
     const length = Math.max(newValues.length, values.length)
 

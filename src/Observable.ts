@@ -185,7 +185,6 @@ export class DeepObservable<T>  {
   }
 
   unshift<I extends T extends Array<infer I> ? I : never>(this: Reactive<Array<I>>, ...items: Array<I>): number {
-    // console.log(items, this())
     this((arr) => [...items, ...arr])
     return this.length
   }
