@@ -45,7 +45,7 @@ export interface Closer {
 /// REACTIVE
 interface ArrayReactorMethod<I> {
   /// Array Method for iterate on an rray without lost the reactivity on the item
-  iter<U>(callbackfn: (value: Reactive<I>, index: number) => U): Array<U>
+  mapReactor<U>(callbackfn: (value: Reactive<I>, index: number) => U): Array<U>
 
   /// Array Method Overwrite for allow the reactivity
   push(...items: Array<I>): number
@@ -122,7 +122,7 @@ export function createAsync<T, E>(fetcher: AsyncFunction<[], T>, defaultValue: T
  * createComputed(refetch, deps) // or createEffect(refetch, deps)
  * ```
  */
-export function createAsyncComputed<T, E, U>(fetcher: AsyncFunction<[], T, Closer>, ...deps: Array<Reactor<U>>): AsyncComputedReturn<T, E>
+export function createAsyncComputed<T, E, U>(fetcher: AsyncFunction<[], T, Closer>, ...deps: Array<Reactive<U>>): AsyncComputedReturn<T, E>
 /**
  * shortened to
  * ```js
@@ -130,7 +130,7 @@ export function createAsyncComputed<T, E, U>(fetcher: AsyncFunction<[], T, Close
  * createComputed(refetch, deps) // or createEffect(refetch, deps)
  * ```
  */
-export function createAsyncComputed<T, E, U>(fetcher: AsyncFunction<[], T, Closer>, defaultValue: T, ...deps: Array<Reactor<U>>): AsyncComputedReturn<T, E>
+export function createAsyncComputed<T, E, U>(fetcher: AsyncFunction<[], T, Closer>, defaultValue: T, ...deps: Array<Reactive<U>>): AsyncComputedReturn<T, E>
 /**
  * shortened to
  * ```js
@@ -160,11 +160,11 @@ export function createDirective<T, E extends HTMLElement = HTMLElement>(name: st
 /**
  * observes all dependencies and calls the function again when a dependency has been updated, returns a reactor
  */
-export function createEffect<T>(handle: Function<[], any, Closer>, ...deps: Array<Reactor<T>>): void
+export function createEffect<T>(handle: Function<[], any, Closer>, ...deps: Array<Reactive<T>>): void
 /**
  * observes all dependencies and calls the function again when a dependency has been updated, returns a reactor, it takes options
  */
-export function createEffect<T>(handle: Function<[], any, Closer>, option: CreateEffectOption, ...deps: Array<Reactor<T>>): void
+export function createEffect<T>(handle: Function<[], any, Closer>, option: CreateEffectOption, ...deps: Array<Reactive<T>>): void
 
 /**
  * returns a event dispatcher

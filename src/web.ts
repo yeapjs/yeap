@@ -115,8 +115,17 @@ export function h(tag: Component | string, props: Props | null, ...children: Arr
 
   const display = createReactor(true)
   if ("when" in props!) {
-    if (isReactor(props["when"])) props["when"].subscribe((_: any, curr: any) => display(!!curr))
-    display(!!getValue(props["when"]))
+    if (isReactor(props["when"])) {
+      props["when"].subscribe((_: any, curr: any) => display(!!curr))
+      display(!!props["when"]())
+    }
+    else if (typeof props["when"] === "function") {
+      const when = createComputed(props["when"])
+      when.subscribe((_: any, curr: any) =>
+        display(!!curr)
+      )
+      display(!!when())
+    } else display(!!props["when"])
   }
 
   const is = props?.is?.toString()
@@ -213,7 +222,7 @@ export function h(tag: Component | string, props: Props | null, ...children: Arr
     context.htmlConditions.push(display)
     element.append(...generateList([], element, toArray(children)))
 
-    if ("when" in props! && isReactor(props["when"])) result = display.when(element, fallback)
+    if ("when" in props! && (isReactor(props["when"]) || typeof props["when"] === "function")) result = display.when(element, fallback)
     else result = display() ? element : fallback
 
     return result

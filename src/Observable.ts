@@ -1,7 +1,6 @@
 import { Function, Reactive, ReadOnlyReactor, SubscribeHandler } from "../types/app"
 import { createComputed, isReactor, isReadOnlyReactor } from "./app"
 import { FORCE_SYMBOL, OBSERVABLE_SYMBOL, READONLY_OBSERVABLE_SYMBOL } from "./constantes"
-import { cancelRuntimeCallback, requestRuntimeCallback } from "./runtimeLoop";
 import { addRecordReactor, getValue, isArrayMethod, isDefined, isJSXElement } from "./utils"
 
 export class DeepObservable<T>  {
@@ -21,9 +20,6 @@ export class DeepObservable<T>  {
   #freeze: boolean
   #once: boolean
   #handlers: Array<SubscribeHandler<T>> = []
-
-  #timer?: number
-  #prev?: T
   constructor(public value: T, parent?: DeepObservable<any> | null, freeze = false, once = false) {
     this.#freeze = freeze
     this.#once = once
@@ -130,15 +126,11 @@ export class DeepObservable<T>  {
   }
 
   call(prev: T, next: T) {
-    if (!this.#timer) this.#prev = prev
-    else cancelRuntimeCallback(this.#timer)
+    this.#handlers.forEach((handle) => handle(prev, next))
+  }
 
-    this.#timer = requestRuntimeCallback(() => {
-      cancelRuntimeCallback(this.#timer!)
-      this.#timer = undefined
-
-      this.#handlers.forEach((handle) => handle(this.#prev ?? prev, next))
-    })
+  copy() {
+    return new DeepObservable(this.value, null, false, false)
   }
 
   freeze() {
@@ -174,7 +166,7 @@ export class DeepObservable<T>  {
   }
 
   /// Array Method for iterate on an array without lost the reactivity on the item
-  iter<I extends T extends Array<infer I> ? I : never, U>(this: Reactive<Array<I>>, callbackfn: (value: Reactive<I>, index: number) => U) {
+  mapReactor<I extends T extends Array<infer I> ? I : never, U>(this: Reactive<Array<I>>, callbackfn: (value: Reactive<I>, index: number) => U) {
     return this.map((_, i) => callbackfn((this as any)[i], i))
   }
 

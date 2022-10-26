@@ -41,7 +41,7 @@ GLOBAL_CONTEXT.directives = new Map()
 GLOBAL_CONTEXT.modifiers = new Map()
 setContextParent(GLOBAL_CONTEXT)
 
-export const isArrayMethod = (p: any) => typeof p === "string" && "iter,push,pop,unshift,shift".includes(p)
+export const isArrayMethod = (p: any) => typeof p === "string" && "mapReactor,push,pop,unshift,shift".includes(p)
 export const isSVGTag = makeMap(SVG_TAGS)
 export const isSVGCamelCaseAttr = makeMap(SVG_CAMELCASE_ATTR)
 export function kebabCase(str: string) {
