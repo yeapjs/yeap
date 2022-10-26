@@ -1,6 +1,7 @@
-import { Context, Reactive } from "../types/app"
+import { Context, Function, Reactive } from "../types/app"
 import { isReactor } from "./app"
 import { COMPONENT_SYMBOL, ELEMENT_SYMBOL, SVG_CAMELCASE_ATTR, SVG_TAGS } from "./constantes"
+import { cancelRuntimeCallback, requestRuntimeCallback } from "./runtimeLoop"
 import { ComponentCaller, ElementCaller } from "./web"
 
 interface ProvidedContext<T> {
@@ -130,4 +131,18 @@ export function isEvent(v: string): boolean {
 
 export function isDirective(v: string): boolean {
   return v.startsWith("use:")
+}
+
+export function batch<A extends Array<any>>(cb: Function): Function<A> {
+  let timer: number | null = null
+  return (...args: A) => {
+    if (timer) cancelRuntimeCallback(timer)
+
+    timer = requestRuntimeCallback(() => {
+      cancelRuntimeCallback(timer!)
+      timer = null
+
+      cb(...args)
+    })
+  }
 }

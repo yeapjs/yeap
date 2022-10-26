@@ -1,6 +1,6 @@
 import { Reactive } from "../types/app"
 import { isReactor } from "./app"
-import { isDefined, isJSXElement, stringify, toArray } from "./utils"
+import { batch, isDefined, isJSXElement, stringify, toArray } from "./utils"
 
 type HTMLContainer = Array<Element | Text>
 
@@ -25,8 +25,16 @@ function reconcileReactor<T extends JSX.Element>(parent: Element, reactor: React
   let values = toArray(reactor())
   let elements = generateList([], parent, values)
 
-  reactor.subscribe((prev, curr) => {
+  let prevValue: T | null = null
+
+  const callback = batch((prev, curr) => {
+    prev = prevValue ?? prev
+    prevValue = null
+
     if (prev === curr) return
+
+    console.log("aaa")
+
     const newValues = toArray(curr)
     const length = Math.max(newValues.length, values.length)
 
@@ -64,6 +72,12 @@ function reconcileReactor<T extends JSX.Element>(parent: Element, reactor: React
     }
     elements = newElements
     values = newValues
+  })
+
+  reactor.subscribe((prev, curr) => {
+    if (!prevValue) prevValue = prev
+
+    callback(prev, curr)
   })
 
   return elements

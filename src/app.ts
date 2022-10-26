@@ -1,6 +1,6 @@
 import { AsyncComputedReturn, AsyncFunction, AsyncReturn, Closer, Context, CreateComputedOption, CreateEffectOption, Function, Reactive, Reactor, ReadOnlyReactor, TransitionReturn } from "../types/app"
 import { DeepObservable } from "./Observable"
-import { cap, ComponentContext, getCurrentContext, getRecordReactor, getValue, GLOBAL_CONTEXT, isDefined, resetRecordReactor } from "./utils"
+import { batch, cap, ComponentContext, getCurrentContext, getRecordReactor, getValue, GLOBAL_CONTEXT, isDefined, resetRecordReactor } from "./utils"
 
 export function createAsync<T, E>(fetcher: AsyncFunction<[], T>, defaultValue?: T): AsyncReturn<T, E> {
   const data = createReactor<T>(defaultValue)
@@ -57,6 +57,7 @@ export function createAsyncComputed<T, E, U>(fetcher: AsyncFunction<[], T, Close
 export function createComputed<T, U>(reactorHandle: Function<[], Reactive<T> | T, Closer>, option?: CreateComputedOption | Reactive<U>, ...deps: Array<Reactive<U>>): ReadOnlyReactor<T> {
   const dependencies = new Set(deps)
   const handle = reactorHandle.bind({ close })
+  let timer: number | null = null
   if (isReactor(option) || !isDefined(option)) {
     if (isDefined(option)) dependencies.add(option as any)
     option = {
@@ -77,9 +78,10 @@ export function createComputed<T, U>(reactorHandle: Function<[], Reactive<T> | T
 
   const reactor = createReactor(initialValue)
 
-  const unsubscribes = Array.from(dependencies).map((dep) => dep.subscribe(() => {
+  const callback = batch(() => {
     reactor(getValue(handle())!)
-  }))
+  })
+  const unsubscribes = Array.from(dependencies).map((dep) => dep.subscribe(callback))
 
   function close() {
     unsubscribes.forEach((unsubscribe) => unsubscribe())
@@ -155,7 +157,8 @@ export function createEffect<T>(reactorHandle: Function<[], any, Closer>, option
 
   if (option.immediate) subscriber()
 
-  const unsubscribes = Array.from(dependencies).map((dep) => dep.subscribe(subscriber))
+  const callback = batch(subscriber)
+  const unsubscribes = Array.from(dependencies).map((dep) => dep.subscribe(callback))
 
   function close() {
     unsubscribes.forEach((unsubscribe) => unsubscribe())
