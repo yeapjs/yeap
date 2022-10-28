@@ -1,6 +1,7 @@
 import { AsyncComputedReturn, AsyncFunction, AsyncReturn, Closer, Context, CreateComputedOption, CreateEffectOption, Function, Reactive, Reactor, ReadOnlyReactor, TransitionReturn } from "../types/app"
 import { NULL } from "./constantes"
 import { DeepObservable } from "./Observable"
+import { next } from "./runtimeLoop"
 import { batch, cap, ComponentContext, getCurrentContext, getRecordReactor, getValue, GLOBAL_CONTEXT, isDefined, resetRecordReactor } from "./utils"
 
 export function createAsync<T, E>(fetcher: AsyncFunction<[], T>, defaultValue?: T): AsyncReturn<T, E> {
@@ -38,18 +39,18 @@ export function createAsyncComputed<T, E, U>(fetcher: AsyncFunction<[], T, Close
     if (isDefined(option)) deps.push(option as any)
     option = {
       immediate: true,
-      observableInitialValue: true,
+      observableInitialValue: false,
       unsubscription: true
     }
   }
   option = {
     immediate: true,
-    observableInitialValue: true,
+    observableInitialValue: false,
     unsubscription: true,
     ...option
   }
 
-  const { data, error, loading, refetch } = createAsync<T, E>(fetcher, defaultValue)
+  const { data, error, loading, refetch } = createAsync<T, E>(fetcher, defaultValue as T)
   createEffect(refetch, option, ...deps)
 
   return { data, error, loading }
@@ -62,20 +63,20 @@ export function createComputed<T, U>(reactorHandle: Function<[], Reactive<T> | T
   if (isReactor(option) || !isDefined(option)) {
     if (isDefined(option)) dependencies.add(option as any)
     option = {
-      observableInitialValue: true,
+      observableInitialValue: false,
       unsubscription: true
     }
   }
-  option = {
-    observableInitialValue: true,
+  const optionWithDefault = {
+    observableInitialValue: false,
     unsubscription: true,
     ...option
   }
 
   resetRecordReactor()
   const initialValue = handle()
-  getRecordReactor()?.forEach((v) => dependencies.add(v))
-  if (isReactor(initialValue) && option!.observableInitialValue) dependencies.add(initialValue as any)
+  getRecordReactor()?.forEach((v) => dependencies.add(v as Reactive<U>))
+  if (isReactor(initialValue) && optionWithDefault.observableInitialValue) dependencies.add(initialValue as any)
 
   const reactor = createReactor(initialValue)
 
@@ -100,10 +101,11 @@ export function createComputed<T, U>(reactorHandle: Function<[], Reactive<T> | T
   })
 
   function close() {
+    updates.clear()
     unsubscribes.forEach((unsubscribe) => unsubscribe())
   }
 
-  if (option!.unsubscription) onUnmounted(close)
+  if (optionWithDefault.unsubscription) onUnmounted(close)
 
   return reactor.reader()
 }
@@ -152,14 +154,14 @@ export function createEffect<T>(reactorHandle: Function<[], any, Closer>, option
     if (isDefined(option)) dependencies.add(option as Reactive<T>)
     option = {
       immediate: true,
-      observableInitialValue: true,
+      observableInitialValue: false,
       unsubscription: true
     }
   }
   let first = true
-  option = {
+  const optionWithDefault = {
     immediate: true,
-    observableInitialValue: true,
+    observableInitialValue: false,
     unsubscription: true,
     ...option
   }
@@ -167,7 +169,7 @@ export function createEffect<T>(reactorHandle: Function<[], any, Closer>, option
   function subscriber() {
     if (first) {
       const value = handle()
-      if (isReactor(value) && (option as CreateComputedOption).observableInitialValue) unsubscribes.push(value.subscribe(subscriber))
+      if (isReactor(value) && optionWithDefault.observableInitialValue) unsubscribes.push(value.subscribe(subscriber))
       first = false
       return
     }
@@ -182,7 +184,7 @@ export function createEffect<T>(reactorHandle: Function<[], any, Closer>, option
     if (update) handle()
   }
 
-  if (option.immediate) subscriber()
+  if (optionWithDefault.immediate) subscriber()
 
   const callback = batch(subscriber)
   const unsubscribes = Array.from(dependencies).map((dep) => {
@@ -200,7 +202,7 @@ export function createEffect<T>(reactorHandle: Function<[], any, Closer>, option
     unsubscribes.forEach((unsubscribe) => unsubscribe())
   }
 
-  if (option!.unsubscription) onUnmounted(close)
+  if (optionWithDefault.unsubscription) onUnmounted(close)
 }
 
 export function createEventDispatcher(): Function<[name: string, detail: any]> {
@@ -268,10 +270,10 @@ export function createTransition(): TransitionReturn {
   const isPending = createReactor(false)
   function startTransition(callback: Function) {
     isPending(true)
-    setTimeout(() => {
+    next().then(() => {
       callback()
       isPending(false)
-    }, 0)
+    })
   }
   return [
     isPending.reader(),
