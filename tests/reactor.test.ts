@@ -2,6 +2,7 @@ import { describe, test, expect, vi } from "vitest"
 
 import { createComputed, createEffect, createReactor, createRef, isReadOnlyReactor } from "../src/app"
 import { next } from "../src/runtimeLoop"
+import { h } from "../src/web"
 import "./polyfill"
 
 test("if createRef bacame a ReadOnlyReactor after update", () => {
@@ -88,6 +89,33 @@ describe("createReactor", () => {
 
     expect(whenReactor()).toBe("Good bye")
   })
+
+  test("array with a reactor", () => {
+    const reactor = createReactor([0, 1])
+
+    expect(reactor()).toStrictEqual([0, 1])
+    expect(reactor[0]).toBeTypeOf("function")
+    expect(reactor[0]()).toStrictEqual(0)
+  })
+
+  test("recursive reactivite on existing property with the value null or undefined", () => {
+    const reactor = createReactor({ a: null, b: undefined })
+    const reactor2 = createReactor(null)
+
+    expect(reactor2).toBeTypeOf("function")
+    expect(reactor.a).toBeTypeOf("function")
+    expect(reactor.b).toBeTypeOf("function")
+    expect(reactor2()).toBe(null)
+    expect(reactor.a()).toBe(null)
+    expect(reactor.b()).toBe(undefined)
+  })
+
+  test("return undefined for unknown value", () => {
+    const reactor = createReactor({})
+
+    // @ts-ignore
+    expect(reactor.a).toBe(undefined)
+  })
 })
 
 describe("createComputed", () => {
@@ -106,6 +134,70 @@ describe("createComputed", () => {
 
     expect(compute()).toBe(2)
     expect(mock).toBeCalledTimes(2)
+  })
+
+  test("without dependencies arguments", async () => {
+    const reactor = createReactor(0)
+    const mock = vi.fn(() => reactor() + 1)
+
+    const compute = createComputed(mock)
+
+    expect(compute()).toBe(1)
+    expect(mock).toBeCalledTimes(1)
+
+    reactor(1)
+    await next()
+
+    expect(compute()).toBe(2)
+    expect(mock).toBeCalledTimes(2)
+  })
+
+  test("option.observableInitialValue", async () => {
+    const reactor = createReactor(0)
+    const mock = vi.fn(() => reactor)
+
+    const compute = createComputed(mock, { observableInitialValue: true })
+
+    expect(compute()).toBe(0)
+    expect(mock).toBeCalledTimes(1)
+
+    reactor(1)
+    await next()
+
+    expect(compute()).toBe(1)
+    expect(mock).toBeCalledTimes(2)
+  })
+
+  test("option.unsubscription", async () => {
+    const when = createReactor(true)
+
+    const reactor = createReactor(0)
+    const mock = vi.fn(() => reactor() + 1)
+    const mock2 = vi.fn(() => reactor() + 1)
+
+    function App() {
+      createComputed(mock, { unsubscription: true })
+      createComputed(mock2, { unsubscription: false })
+
+      return h("div", null)
+    }
+    h(App, { when })()
+
+    expect(mock).toBeCalledTimes(1)
+    expect(mock2).toBeCalledTimes(1)
+
+    reactor(1)
+    await next()
+
+    expect(mock).toBeCalledTimes(2)
+    expect(mock2).toBeCalledTimes(2)
+
+    when(false)
+    reactor(2)
+    await next()
+
+    expect(mock).toBeCalledTimes(2)
+    expect(mock2).toBeCalledTimes(3)
   })
 })
 describe("createEffect", () => {

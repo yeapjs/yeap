@@ -60,7 +60,9 @@ type PrimitivesToObject<T> = T extends string ? String :
   T extends boolean ? Boolean :
   T extends bigint ? BigInt :
   T extends symbol ? Symbol :
-  T extends Array<infer I> ? Array<I> & ArrayReactorMethod<I> : T
+  T extends Array<infer I> ? Array<I> & ArrayReactorMethod<I> :
+  T extends null ? object :
+  T extends undefined ? object : T
 
 export type ToReadOnlyReactorObject<T = object> = {
   [K in keyof T]: T[K] extends Function<infer A, infer R, infer T> ? Function<A, ReadOnlyReactor<R>, T> : ReadOnlyReactor<T[K]>
@@ -97,7 +99,7 @@ export interface ReactorMethod<T> extends ReadOnlyReactorMethod<T> {
   reader(): ReadOnlyReactor<T>
 }
 
-export type ToReactorObject<T = object> = {
+export type ToReactorObject<T> = {
   [K in keyof T]: T[K] extends Function<infer A, infer R, infer T> ? Function<A, ReadOnlyReactor<R>, T> : Reactor<T[K]>
 }
 export type Reactor<T> = ToReactorObject<PrimitivesToObject<T>> & ReactorMethod<T> & {

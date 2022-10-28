@@ -33,9 +33,9 @@ export class DeepObservable<T>  {
 
     const properties: Record<PropertyKey, any> = {}
 
-    return new Proxy(() => this.value, {
+    const proxy = new Proxy(() => this.value, {
       apply: (_, thisArg, argArray: [((v: T) => T) | T] | []) => {
-        addRecordReactor(this as any)
+        addRecordReactor(proxy as any)
 
         const value = this.value
         if (isReactor(value)) return value
@@ -72,28 +72,29 @@ export class DeepObservable<T>  {
           return (this as any)[p]
         }
 
-        if (isDefined(value)) {
-          if (isReactor(value)) return value
+        if (!isDefined(this.value)) throw new TypeError(`Cannot read properties of ${this.value} (reading '${p.toString()}')`)
 
-          const descriptor = Object.getOwnPropertyDescriptor(this.value, p)
-          const freeze = this.#freeze || typeof this.value !== "object" || !(descriptor?.writable ?? descriptor?.set)
-          const reactive = new DeepObservable(value, typeof value === "function" ? this : null, freeze)
+        if (isReactor(value)) return value
 
-          this.subscribe((_, curr: any) => {
-            reactive[FORCE_SYMBOL] = curr?.[p]
-          })
-          if (!isReadOnlyReactor(reactive)) reactive.subscribe((_, curr) => {
-            if (isDefined(this.value)) {
-              if (isDefined(curr)) (this.value as any)[p] = curr
-              else delete (this.value as any)[p]
-            }
-          })
+        if (!Object.hasOwn(this.value as any, p)) return value
 
-          properties[p] = reactive
+        const descriptor = Object.getOwnPropertyDescriptor(this.value, p)
+        const freeze = this.#freeze || typeof this.value !== "object" || !(descriptor?.writable ?? descriptor?.set)
+        const reactive = new DeepObservable(value, typeof value === "function" ? this : null, freeze)
 
-          return reactive
-        } else if (value === null) return null
-        return undefined
+        this.subscribe((_, curr: any) => {
+          reactive[FORCE_SYMBOL] = curr?.[p]
+        })
+        if (!isReadOnlyReactor(reactive)) reactive.subscribe((_, curr) => {
+          if (isDefined(this.value)) {
+            if (isDefined(curr)) (this.value as any)[p] = curr
+            else delete (this.value as any)[p]
+          }
+        })
+
+        properties[p] = reactive
+
+        return reactive
       },
       set: (_, p, value) => {
         if (p === FORCE_SYMBOL) {
@@ -115,7 +116,9 @@ export class DeepObservable<T>  {
         }
         return false
       },
-    }) as any
+    })
+
+    return proxy as any
   }
 
   subscribe(handler: SubscribeHandler<T>) {
