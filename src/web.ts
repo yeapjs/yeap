@@ -180,7 +180,7 @@ export function h(tag: Component | string, props: Props | null, ...children: Arr
         else {
           const [fn, ...args] = props![prop]
 
-          fn(args)
+          fn(...args)
         }
       }, option)
     } else if (isDirective(prop)) {

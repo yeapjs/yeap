@@ -181,7 +181,7 @@ describe("dom/jsx", () => {
       expect(handleClick).not.toBeCalled()
       div().click()
       expect(handleClick).toBeCalled()
-      expect(handleClick).toBeCalledWith([4])
+      expect(handleClick).toBeCalledWith(4)
     })
 
     test("event modifiers", () => {
