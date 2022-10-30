@@ -1,6 +1,7 @@
 import { Context, Function, Reactive } from "../types/app"
 import { isReactor } from "./app"
 import { COMPONENT_SYMBOL, ELEMENT_SYMBOL, SVG_CAMELCASE_ATTR, SVG_TAGS } from "./constantes"
+import { Recorder } from "./Recorder"
 import { cancelRuntimeCallback, requestRuntimeCallback } from "./runtimeLoop"
 import { ComponentCaller, ElementCaller } from "./web"
 
@@ -33,7 +34,7 @@ function makeMap(str: string): (key: string) => boolean {
   return val => !!map[val.toLocaleLowerCase()]
 }
 
-let recordReactor: Set<Reactive<any>> | null = null
+export const recordReactor: Recorder<Reactive<any>> = new Recorder()
 
 let current: ComponentContext
 let parent: ComponentContext
@@ -50,20 +51,6 @@ export function kebabCase(str: string) {
     .match(/[A-Z]{2,}(?=[A-Z][a-z]+[0-9]*|\b)|[A-Z]?[a-z]+[0-9]*|[A-Z]|[0-9]+/g)!
     .join('-')
     .toLowerCase()
-}
-
-export function resetRecordReactor() {
-  recordReactor = new Set()
-}
-
-export function addRecordReactor(item: Reactive<any>) {
-  recordReactor?.add(item)
-}
-
-export function getRecordReactor() {
-  let lastRecord = recordReactor
-  recordReactor = null
-  return lastRecord
 }
 
 export function createComponentContext(): ComponentContext {

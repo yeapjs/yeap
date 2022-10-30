@@ -2,7 +2,8 @@ import { AsyncComputedReturn, AsyncFunction, AsyncReturn, Closer, Context, Creat
 import { NULL } from "./constantes"
 import { DeepObservable } from "./Observable"
 import { next } from "./runtimeLoop"
-import { batch, cap, ComponentContext, getCurrentContext, getRecordReactor, getValue, GLOBAL_CONTEXT, isDefined, resetRecordReactor } from "./helpers"
+import { batch, cap, ComponentContext, getCurrentContext, getValue, GLOBAL_CONTEXT, isDefined } from "./helpers"
+import { record } from "./utils"
 
 export function createAsync<T, E>(fetcher: AsyncFunction<[], T>, defaultValue?: T): AsyncReturn<T, E> {
   const data = createReactor<T>(defaultValue)
@@ -73,9 +74,8 @@ export function createComputed<T, U>(reactorHandle: Function<[], Reactive<T> | T
     ...option
   }
 
-  resetRecordReactor()
-  const initialValue = handle()
-  getRecordReactor()?.forEach((v) => dependencies.add(v as Reactive<U>))
+  const [initialValue, recordedReactors] = record(handle)
+  recordedReactors.forEach((v) => dependencies.add(v as Reactive<U>))
   if (isReactor(initialValue) && optionWithDefault.observableInitialValue) dependencies.add(initialValue as any)
 
   const reactor = createReactor(initialValue)

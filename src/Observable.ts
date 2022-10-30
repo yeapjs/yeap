@@ -1,7 +1,7 @@
 import { Function, Reactive, ReadOnlyReactor, SubscribeHandler } from "../types/app"
 import { createComputed, isReactor, isReadOnlyReactor } from "./app"
 import { FORCE_SYMBOL, OBSERVABLE_SYMBOL, READONLY_OBSERVABLE_SYMBOL } from "./constantes"
-import { addRecordReactor, getValue, isArrayMethod, isDefined, isJSXElement } from "./helpers"
+import { getValue, isArrayMethod, isDefined, isJSXElement, recordReactor } from "./helpers"
 
 export class DeepObservable<T>  {
   [OBSERVABLE_SYMBOL] = true;
@@ -54,7 +54,7 @@ export class DeepObservable<T>  {
         }
 
         if (argArray.length === 0) {
-          addRecordReactor(this as any)
+          recordReactor.push(this as any)
           return value
         }
 
