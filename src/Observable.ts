@@ -54,7 +54,7 @@ export class DeepObservable<T>  {
         }
 
         if (argArray.length === 0) {
-          recordReactor.push(this as any)
+          recordReactor.push(proxy as any)
           return value
         }
 

@@ -2,6 +2,7 @@ import { describe, test, expect, vi } from "vitest"
 
 import { createComputed, createEffect, createReactor, createRef, isReactor, isReadOnlyReactor } from "../src/app"
 import { next } from "../src/runtimeLoop"
+import { untrack } from "../src/utils"
 import { h } from "../src/web"
 import "./polyfill"
 
@@ -270,6 +271,45 @@ describe("createComputed", () => {
 
     expect(mock).toBeCalledTimes(2)
     expect(mock2).toBeCalledTimes(3)
+  })
+
+  test("untrack", async () => {
+    const reactor = createReactor(0)
+    const mock = vi.fn(() => reactor() + 1)
+
+    const compute = createComputed(untrack(mock))
+
+    expect(compute()).toBe(1)
+    expect(mock).toBeCalledTimes(1)
+
+    reactor(1)
+    await next()
+
+    expect(compute()).toBe(1)
+    expect(mock).toBeCalledTimes(1)
+  })
+
+  test("untrack specific", async () => {
+    const reactor = createReactor(0)
+    const reactor2 = createReactor(1)
+    const mock = vi.fn(() => reactor() + reactor2())
+
+    const compute = createComputed(untrack(mock, reactor2))
+
+    expect(compute()).toBe(1)
+    expect(mock).toBeCalledTimes(1)
+
+    reactor(1)
+    await next()
+
+    expect(compute()).toBe(2)
+    expect(mock).toBeCalledTimes(2)
+
+    reactor2(2)
+    await next()
+
+    expect(compute()).toBe(2)
+    expect(mock).toBeCalledTimes(2)
   })
 })
 describe("createEffect", () => {

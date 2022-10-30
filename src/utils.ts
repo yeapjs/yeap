@@ -1,4 +1,4 @@
-import { Reactive } from "../types/app"
+import { Function, Reactive } from "../types/app"
 import { recordReactor } from "./helpers"
 
 export function record<T>(callback: () => T): [value: T, recordedReactors: Array<Reactive<any>>] {
@@ -7,10 +7,13 @@ export function record<T>(callback: () => T): [value: T, recordedReactors: Array
   return [value, Array.from(recordReactor.stop() ?? [])]
 }
 
-export function untrack(callback: Function): Function {
+export function untrack<T>(callback: Function, ...deps: Array<Reactive<T>>): Function {
   return () => {
-    recordReactor.pause()
-    callback()
-    recordReactor.resume()
+    if (!deps.length) recordReactor.pause()
+    const value = callback()
+    if (!deps.length) recordReactor.resume()
+    else recordReactor.pop(...deps)
+
+    return value
   }
 }

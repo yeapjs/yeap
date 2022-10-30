@@ -7,8 +7,12 @@ export class Recorder<T> {
     this.isPause = false
   }
 
-  push(item: T) {
-    if (!this.isPause) this.#recorded?.add(item)
+  push(...items: Array<T>) {
+    if (!this.isPause && this.#recorded) items.forEach((item) => this.#recorded!.add(item))
+  }
+
+  pop(...items: Array<T>) {
+    if (this.#recorded) items.forEach((item) => this.#recorded!.delete(item))
   }
 
   pause() {
