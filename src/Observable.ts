@@ -78,7 +78,7 @@ export class DeepObservable<T>  {
 
         if (isReactor(value)) return value
 
-        if (!Object.hasOwn(this.value as any, p)) return value
+        if (!(p in this.value)) return value
 
         const descriptor = Object.getOwnPropertyDescriptor(this.value, p)
         const freeze = this.#freeze || typeof this.value !== "object" || !(descriptor?.writable ?? descriptor?.set)

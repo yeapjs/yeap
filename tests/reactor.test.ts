@@ -44,8 +44,7 @@ describe("createReactor", () => {
     expect(() => reactor.b = 5 as any).toThrow()
   })
 
-  // this test is skip while "https://github.com/vitest-dev/vitest/issues/2233" has not been resolved
-  test.skip("the recursive reactivite with the methods", () => {
+  test("the recursive reactivite with the methods", () => {
     const reactor = createReactor([0, 1])
 
     const map = reactor.map((v) => v + 1)
