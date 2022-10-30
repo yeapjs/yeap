@@ -1,7 +1,7 @@
 import { Reactive } from "../types/app"
 import { isReactor } from "./app"
 import { NULL } from "./constantes"
-import { batch, isDefined, isJSXElement, stringify, toArray } from "./utils"
+import { batch, isDefined, isJSXElement, stringify, toArray } from "./helpers"
 
 type HTMLContainer = Array<Element | Text>
 

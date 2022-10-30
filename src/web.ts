@@ -4,7 +4,7 @@ import { createComputed, createReactor, isReactor } from "./app"
 import { COMPONENT_SYMBOL, ELEMENT_SYMBOL } from "./constantes"
 import { generateList } from "./dom"
 import { DirectiveError, ModifierError } from "./errors"
-import { ComponentContext, createComponentContext, getValue, GLOBAL_CONTEXT, isDefined, isEvent, isSVGTag, setCurrentContext, setContextParent, stringify, toArray, getCurrentContext, isDirective, isSVGCamelCaseAttr, kebabCase } from "./utils"
+import { ComponentContext, createComponentContext, getValue, GLOBAL_CONTEXT, isDefined, isEvent, isSVGTag, setCurrentContext, setContextParent, stringify, toArray, getCurrentContext, isDirective, isSVGCamelCaseAttr, kebabCase } from "./helpers"
 
 type CustomAttribute<T> = T & { ref?: HTMLElement }
 export type ComponentCaller = Function & {

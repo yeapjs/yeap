@@ -1,7 +1,7 @@
 import { Function, Reactive, ReadOnlyReactor, SubscribeHandler } from "../types/app"
 import { createComputed, isReactor, isReadOnlyReactor } from "./app"
 import { FORCE_SYMBOL, OBSERVABLE_SYMBOL, READONLY_OBSERVABLE_SYMBOL } from "./constantes"
-import { addRecordReactor, getValue, isArrayMethod, isDefined, isJSXElement } from "./utils"
+import { addRecordReactor, getValue, isArrayMethod, isDefined, isJSXElement } from "./helpers"
 
 export class DeepObservable<T>  {
   [OBSERVABLE_SYMBOL] = true;
