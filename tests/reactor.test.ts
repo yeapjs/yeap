@@ -335,4 +335,18 @@ describe("createEffect", () => {
     await next()
     expect(mock).toBeCalledTimes(1)
   })
+
+  test("option.record", async () => {
+    const reactor = createReactor(0)
+    const mock = vi.fn(() => { reactor() })
+
+    createEffect(mock, {
+      record: true
+    })
+
+    expect(mock).toBeCalledTimes(1)
+    reactor(1)
+    await next()
+    expect(mock).toBeCalledTimes(2)
+  })
 })
