@@ -3,6 +3,7 @@ import "./jsx"
 export interface CreateComputedOption {
   observableInitialValue?: boolean
   unsubscription?: boolean
+  record?: boolean
 }
 
 export interface CreateEffectOption extends CreateComputedOption {

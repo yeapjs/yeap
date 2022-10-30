@@ -65,17 +65,19 @@ export function createComputed<T, U>(reactorHandle: Function<[], Reactive<T> | T
     if (isDefined(option)) dependencies.add(option as any)
     option = {
       observableInitialValue: false,
-      unsubscription: true
+      unsubscription: true,
+      record: true
     }
   }
   const optionWithDefault = {
     observableInitialValue: false,
     unsubscription: true,
+    record: true,
     ...option
   }
 
   const [initialValue, recordedReactors] = record(handle)
-  recordedReactors.forEach((v) => dependencies.add(v as Reactive<U>))
+  if (optionWithDefault.record) recordedReactors.forEach((v) => dependencies.add(v as Reactive<U>))
   if (isReactor(initialValue) && optionWithDefault.observableInitialValue) dependencies.add(initialValue as any)
 
   const reactor = createReactor(initialValue)
@@ -155,7 +157,8 @@ export function createEffect<T>(reactorHandle: Function<[], any, Closer>, option
     option = {
       immediate: true,
       observableInitialValue: false,
-      unsubscription: true
+      unsubscription: true,
+      record: false
     }
   }
   let first = true
@@ -163,12 +166,26 @@ export function createEffect<T>(reactorHandle: Function<[], any, Closer>, option
     immediate: true,
     observableInitialValue: false,
     unsubscription: true,
+    record: false,
     ...option
+  }
+
+  function sub(dep: Reactive<T>) {
+    const value: { prev: T | NULL, curr: T | NULL } = { prev: NULL, curr: NULL }
+    updates.set(dep, value)
+    return dep.subscribe((prev, curr) => {
+      if (value.prev == NULL) value.prev = prev
+      value.curr = curr
+      callback()
+    })
   }
 
   function subscriber() {
     if (first) {
-      const value = handle()
+      const [value, recordedReactors] = record(handle)
+      if (optionWithDefault.record) recordedReactors.forEach((v: Reactive<T>) => {
+        unsubscribes.push(sub(v))
+      })
       if (isReactor(value) && optionWithDefault.observableInitialValue) unsubscribes.push(value.subscribe(subscriber))
       first = false
       return
@@ -184,18 +201,10 @@ export function createEffect<T>(reactorHandle: Function<[], any, Closer>, option
     if (update) handle()
   }
 
-  if (optionWithDefault.immediate) subscriber()
-
   const callback = batch(subscriber)
-  const unsubscribes = Array.from(dependencies).map((dep) => {
-    const value: { prev: T | NULL, curr: T | NULL } = { prev: NULL, curr: NULL }
-    updates.set(dep, value)
-    return dep.subscribe((prev, curr) => {
-      if (value.prev == NULL) value.prev = prev
-      value.curr = curr
-      callback()
-    })
-  })
+  const unsubscribes = Array.from(dependencies).map(sub)
+
+  if (optionWithDefault.immediate) subscriber()
 
   function close() {
     updates.clear()
