@@ -1,6 +1,6 @@
 import { describe, test, expect, vi } from "vitest"
 
-import { createComputed, createEffect, createReactor, createRef, isReadOnlyReactor } from "../src/app"
+import { createComputed, createEffect, createReactor, createRef, isReactor, isReadOnlyReactor } from "../src/app"
 import { next } from "../src/runtimeLoop"
 import { h } from "../src/web"
 import "./polyfill"
@@ -21,6 +21,14 @@ describe("createReactor", () => {
     expect(reactor()).toBe(0)
   })
 
+  test("if the reactor is properly updated", () => {
+    const reactor = createReactor(0)
+
+    expect(reactor()).toBe(0)
+    expect(reactor(1)).toBe(0)
+    expect(reactor()).toBe(1)
+  })
+
   test("the recursive reactivite", () => {
     const reactor = createReactor({ a: 0, get b() { return 1 } })
 
@@ -36,7 +44,73 @@ describe("createReactor", () => {
     expect(() => reactor.b = 5 as any).toThrow()
   })
 
-  test("the 'subscribe' method", async () => {
+  // this test is skip while "https://github.com/vitest-dev/vitest/issues/2233" has not been resolved
+  test.skip("the recursive reactivite with the methods", () => {
+    const reactor = createReactor([0, 1])
+
+    const map = reactor.map((v) => v + 1)
+
+    expect(reactor()).toStrictEqual([0, 1])
+    expect(reactor.map).toBeTypeOf("function")
+    expect(map).toBeTypeOf("function")
+    expect(map()).toStrictEqual([1, 2])
+
+    reactor([0, 3, 2])
+
+    expect(map()).toStrictEqual([1, 4, 3])
+  })
+
+  test("the overwrites array method", () => {
+    const reactor = createReactor([0, 1])
+    const mock = vi.fn()
+
+    reactor.mapReactor((v) => expect(isReactor(v)).toBeTruthy())
+
+    reactor.subscribe(mock)
+
+    reactor.push(2)
+    expect(mock).toBeCalled()
+    expect(reactor()).toStrictEqual([0, 1, 2])
+    reactor.pop()
+    expect(mock).toBeCalled()
+    expect(reactor()).toStrictEqual([0, 1])
+    reactor.unshift(2)
+    expect(mock).toBeCalled()
+    expect(reactor()).toStrictEqual([2, 0, 1])
+    reactor.shift()
+    expect(mock).toBeCalled()
+    expect(reactor()).toStrictEqual([0, 1])
+
+    expect(mock).toBeCalledTimes(4)
+  })
+
+  test("delete property on a reactor", () => {
+    const reactor = createReactor({ a: 0 })
+
+    expect(reactor()).toStrictEqual({ a: 0 })
+    expect(reactor.a()).toBe(0)
+
+    // @ts-ignore
+    delete reactor.a
+
+    expect(reactor()).toStrictEqual({})
+    expect(reactor.a).toBe(undefined)
+  })
+
+  test("the 'copy' method", () => {
+    const reactor = createReactor("foo")
+    const reactorCopy = reactor.copy()
+
+    expect(reactor()).toBe("foo")
+    expect(reactorCopy()).toBe("foo")
+
+    reactor("bar")
+
+    expect(reactor()).toBe("bar")
+    expect(reactorCopy()).toBe("foo")
+  })
+
+  test("the 'subscribe' method", () => {
     const reactor = createReactor("foo")
     const readOnlyReactor = reactor.reader()
     const freezeReactor = reactor.freeze()
@@ -57,7 +131,6 @@ describe("createReactor", () => {
     expect(isReadOnlyReactor(freezeReactor)).toBeTruthy()
 
     reactor("bar")
-    await next()
 
     expect(subMock).toBeCalledTimes(1)
     expect(subMock).toBeCalledWith("foo", "bar")
