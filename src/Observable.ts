@@ -25,6 +25,7 @@ export class DeepObservable<T>  {
     this.#once = once
 
     this.call = this.call.bind(this)
+    this.copy = this.copy.bind(this)
     this.compute = this.compute.bind(this)
     this.freeze = this.freeze.bind(this)
     this.reader = this.reader.bind(this)
@@ -35,8 +36,6 @@ export class DeepObservable<T>  {
 
     const proxy = new Proxy(() => this.value, {
       apply: (_, thisArg, argArray: [((v: T) => T) | T] | []) => {
-        addRecordReactor(proxy as any)
-
         const value = this.value
         if (isReactor(value)) return value
         if (typeof value === "function") {
@@ -54,7 +53,10 @@ export class DeepObservable<T>  {
           return value
         }
 
-        if (argArray.length === 0) return value
+        if (argArray.length === 0) {
+          addRecordReactor(this as any)
+          return value
+        }
 
         if (typeof argArray[0] === "function" && !isReactor(argArray[0])) this.value = (argArray[0] as Function)(value)
         else this.value = getValue(argArray[0])!
@@ -110,7 +112,6 @@ export class DeepObservable<T>  {
       },
       deleteProperty: (_, p) => {
         if (delete (this.value as any)?.[p]) {
-          properties[p].#freeze = true
           delete properties[p]
           return true
         }

@@ -82,6 +82,8 @@ export interface ReadOnlyReactorMethod<T> {
    */
   when<U, F>(truthy: U | Function<[], U>, falsy: F | Function<[], F>): ReadOnlyReactor<U | F>
   when<U, F>(condition: Function<[T], boolean>, truthy: U | Function<[], U>, falsy: F | Function<[], F>): ReadOnlyReactor<U | F>
+
+  copy(): Reactor<T>
 }
 
 export type ReadOnlyReactor<T> = ToReadOnlyReactorObject<PrimitivesToObject<T>> & ReadOnlyReactorMethod<T> & {
