@@ -20,7 +20,7 @@ export class Recorder<T> {
   }
 
   resume() {
-    this.isPause = false
+    this.isPause = this.#recorded === null
   }
 
   stop(): Set<T> | null {
