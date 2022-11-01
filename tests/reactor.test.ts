@@ -98,16 +98,17 @@ describe("createReactor", () => {
   })
 
   test("the 'copy' method", () => {
-    const reactor = createReactor("foo")
+    const reactor = createReactor({ a: "foo" })
     const reactorCopy = reactor.copy()
 
-    expect(reactor()).toBe("foo")
-    expect(reactorCopy()).toBe("foo")
+    expect(reactor.a()).toBe("foo")
+    expect(reactorCopy.a()).toBe("foo")
 
-    reactor("bar")
+    reactor.a("bar")
+    reactorCopy.a("baz")
 
-    expect(reactor()).toBe("bar")
-    expect(reactorCopy()).toBe("foo")
+    expect(reactor.a()).toBe("bar")
+    expect(reactorCopy.a()).toBe("baz")
   })
 
   test("the 'subscribe' method", () => {

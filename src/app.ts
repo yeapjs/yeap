@@ -109,6 +109,7 @@ export function createComputed<T, U>(reactorHandle: Function<[], Reactive<T> | T
 
   if (optionWithDefault.unsubscription) onUnmounted(close)
 
+  reactor.metadata().dependencies = dependencies
   return reactor.reader()
 }
 
@@ -293,8 +294,8 @@ export function createTransition(): TransitionReturn {
 export function isReactor(arg: any): arg is Reactive<any> {
   return DeepObservable.isObservable(arg)
 }
-export function isReadOnlyReactor(arg: any): arg is ReadOnlyReactor<any> {
-  return DeepObservable.isReadOnly(arg)
+export function isReadOnlyReactor<T>(arg: Reactive<T> | DeepObservable<T>): arg is ReadOnlyReactor<T> {
+  return !arg.metadata().settable
 }
 
 export function onMounted(handler: Function) {

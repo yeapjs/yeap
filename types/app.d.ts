@@ -44,6 +44,12 @@ export interface Closer {
 }
 
 /// REACTIVE
+interface ReactorMetaData<T> {
+  readonly settable: boolean
+  readonly value: T
+  dependencies: Set<Reactive<any>>
+}
+
 interface ArrayReactorMethod<I> {
   /// Array Method for iterate on an rray without lost the reactivity on the item
   mapReactor<U>(callbackfn: (value: Reactive<I>, index: number) => U): Array<U>
@@ -83,8 +89,14 @@ export interface ReadOnlyReactorMethod<T> {
    */
   when<U, F>(truthy: U | Function<[], U>, falsy: F | Function<[], F>): ReadOnlyReactor<U | F>
   when<U, F>(condition: Function<[T], boolean>, truthy: U | Function<[], U>, falsy: F | Function<[], F>): ReadOnlyReactor<U | F>
-
+  /**
+   * make a copy of the current value, it don't keep the dependencies
+   */
   copy(): Reactor<T>
+  /**
+   * show the metadata of the reactor
+   */
+  metadata(): ReactorMetaData<T>
 }
 
 export type ReadOnlyReactor<T> = ToReadOnlyReactorObject<PrimitivesToObject<T>> & ReadOnlyReactorMethod<T> & {
@@ -93,7 +105,7 @@ export type ReadOnlyReactor<T> = ToReadOnlyReactorObject<PrimitivesToObject<T>> 
 
 export interface ReactorMethod<T> extends ReadOnlyReactorMethod<T> {
   /**
-   * create a new reactor, it cannot be updated, and it cannot observe the progress of the parent
+   * make a read only copy of the current value, it keep the dependencies
    */
   freeze(): ReadOnlyReactor<T>
   /**

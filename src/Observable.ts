@@ -1,4 +1,4 @@
-import { Function, Reactive, ReadOnlyReactor, SubscribeHandler } from "../types/app"
+import { Function, Reactive, ReactorMetaData, ReadOnlyReactor, SubscribeHandler } from "../types/app"
 import { createComputed, isReactor, isReadOnlyReactor } from "./app"
 import { FORCE_SYMBOL, OBSERVABLE_SYMBOL, READONLY_OBSERVABLE_SYMBOL } from "./constantes"
 import { getValue, isArrayMethod, isDefined, isJSXElement, recordReactor } from "./helpers"
@@ -9,17 +9,16 @@ export class DeepObservable<T>  {
   static isObservable(arg: any): arg is Reactive<any> {
     return !!arg?.[OBSERVABLE_SYMBOL]
   }
-  static isReadOnly(arg: any): arg is ReadOnlyReactor<any> {
-    return !!arg?.[READONLY_OBSERVABLE_SYMBOL]
-  }
 
   get [READONLY_OBSERVABLE_SYMBOL]() {
     return this.#freeze
   }
 
+  #proxy: Reactive<T>
   #freeze: boolean
   #once: boolean
   #handlers: Array<SubscribeHandler<T>> = []
+  #dependencies: Set<Reactive<any>> = new Set()
   constructor(public value: T, parent?: DeepObservable<any> | null, freeze = false, once = false) {
     this.#freeze = freeze
     this.#once = once
@@ -30,11 +29,12 @@ export class DeepObservable<T>  {
     this.freeze = this.freeze.bind(this)
     this.reader = this.reader.bind(this)
     this.subscribe = this.subscribe.bind(this)
+    this.metadata = this.metadata.bind(this)
     this.when = this.when.bind(this)
 
     const properties: Record<PropertyKey, any> = {}
 
-    const proxy = new Proxy(() => this.value, {
+    this.#proxy = new Proxy(() => this.value, {
       apply: (_, thisArg, argArray: [((v: T) => T) | T] | []) => {
         const value = this.value
         if (isReactor(value)) return value
@@ -54,7 +54,7 @@ export class DeepObservable<T>  {
         }
 
         if (argArray.length === 0) {
-          recordReactor.push(proxy as any)
+          recordReactor.push(this.#proxy)
           return value
         }
 
@@ -78,7 +78,11 @@ export class DeepObservable<T>  {
 
         if (isReactor(value)) return value
 
-        if (!(p in this.value)) return value
+        try {
+          if (!(p in this.value)) return value
+        } catch (e) {
+          return undefined
+        }
 
         const descriptor = Object.getOwnPropertyDescriptor(this.value, p)
         const freeze = this.#freeze || typeof this.value !== "object" || !(descriptor?.writable ?? descriptor?.set)
@@ -117,9 +121,9 @@ export class DeepObservable<T>  {
         }
         return false
       },
-    })
+    }) as any
 
-    return proxy as any
+    return this.#proxy as any
   }
 
   subscribe(handler: SubscribeHandler<T>) {
@@ -138,7 +142,10 @@ export class DeepObservable<T>  {
   }
 
   freeze() {
-    return new DeepObservable(this.value, null, true, false)
+    const freezed = new DeepObservable(this.value, null, true, false)
+    freezed.metadata().dependencies = this.#dependencies
+
+    return freezed
   }
 
   reader() {
@@ -148,11 +155,13 @@ export class DeepObservable<T>  {
 
       observable[FORCE_SYMBOL] = curr
     })
+    observable.metadata().dependencies = this.#dependencies
+
     return observable
   }
 
   compute<U>(handle: Function<[T], U>) {
-    return createComputed(() => handle(this.value), { observableInitialValue: false }, this as any)
+    return createComputed(() => handle(this.value), { observableInitialValue: false }, this.#proxy)
   }
 
   when<U, F>(condition: Function<[T], boolean>, truthy: U | Function<[], U>, falsy?: F | Function<[], F>): ReadOnlyReactor<any> {
@@ -167,6 +176,24 @@ export class DeepObservable<T>  {
         typeof truthy === "function" && !isReactor(truthy) && !isJSXElement(truthy) ? (truthy as Function)() : truthy :
         typeof falsy === "function" && !isReactor(falsy) && !isJSXElement(falsy) ? (falsy as Function)() : falsy
     })
+  }
+
+  metadata(): ReactorMetaData<T> {
+    const self = this
+    return {
+      get settable() {
+        return !self.#freeze
+      },
+      get value() {
+        return self.value
+      },
+      get dependencies() {
+        return self.#dependencies
+      },
+      set dependencies(value) {
+        self.#dependencies = value
+      }
+    }
   }
 
   /// Array Method for iterate on an array without lost the reactivity on the item
