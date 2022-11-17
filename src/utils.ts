@@ -1,5 +1,11 @@
 import { Function, Reactive } from "../types/app"
-import { recordReactor } from "./helpers"
+import { YeapConfig } from "../types/utils"
+import { GLOBAL_CONTEXT, recordReactor } from "./helpers"
+
+export function config<K extends keyof YeapConfig>(key: K, value?: YeapConfig[K]): YeapConfig[K] {
+  if (value) GLOBAL_CONTEXT.yeapContext![key] = value
+  return GLOBAL_CONTEXT.yeapContext![key]
+}
 
 export function record<T>(callback: () => T): [value: T, recordedReactors: Array<Reactive<any>>] {
   recordReactor.start()

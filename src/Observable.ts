@@ -1,7 +1,8 @@
 import { Function, Reactive, ReactorMetaData, ReadOnlyReactor, SubscribeHandler } from "../types/app"
 import { createComputed, isReactor, isReadOnlyReactor } from "./app"
 import { FORCE_SYMBOL, OBSERVABLE_SYMBOL, READONLY_OBSERVABLE_SYMBOL } from "./constantes"
-import { getValue, isArrayMethod, isDefined, isJSXElement, recordReactor } from "./helpers"
+import { getValue, GLOBAL_CONTEXT, isArrayMethod, isDefined, isJSXElement, recordReactor } from "./helpers"
+import { record } from "./utils";
 
 export class DeepObservable<T>  {
   [OBSERVABLE_SYMBOL] = true;
@@ -39,11 +40,16 @@ export class DeepObservable<T>  {
         const value = this.value
         if (isReactor(value)) return value
         if (typeof value === "function") {
-          const reactive: any = new DeepObservable(value.apply(getValue(thisArg), argArray))
+          const [firstValue, recordedReactors] = record(() => value.apply(getValue(thisArg), argArray))
 
-          if (parent) parent.subscribe(() => {
-            reactive(value.apply(getValue(thisArg), argArray))
-          })
+          const reactive: any = new DeepObservable(firstValue)
+
+          function subscribe() {
+            reactive((value as unknown as Function).apply(getValue(thisArg), argArray))
+          }
+
+          if (parent) parent.subscribe(subscribe)
+          if (GLOBAL_CONTEXT.yeapContext?.recordObserverValueMethod) recordedReactors.forEach((recordedReactor) => recordedReactor.subscribe(subscribe))
 
           return reactive.reader()
         }
@@ -161,7 +167,7 @@ export class DeepObservable<T>  {
   }
 
   compute<U>(handle: Function<[T], U>) {
-    return createComputed(() => handle(this.value), { observableInitialValue: false }, this.#proxy)
+    return createComputed(() => handle(this.value), { observableInitialValue: GLOBAL_CONTEXT.yeapContext?.recordObserverCompute }, this.#proxy)
   }
 
   when<U, F>(condition: Function<[T], boolean>, truthy: U | Function<[], U>, falsy?: F | Function<[], F>): ReadOnlyReactor<any> {

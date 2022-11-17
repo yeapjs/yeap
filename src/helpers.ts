@@ -1,4 +1,5 @@
 import { Context, Function, Reactive } from "../types/app"
+import { YeapConfig } from "../types/utils"
 import { isReactor } from "./app"
 import { COMPONENT_SYMBOL, ELEMENT_SYMBOL, SVG_CAMELCASE_ATTR, SVG_TAGS } from "./constantes"
 import { Recorder } from "./Recorder"
@@ -23,6 +24,7 @@ export interface ComponentContext {
   props: Record<PropertyKey, any>
   directives?: Map<string, Function>
   modifiers?: Map<string, Function | AddEventListenerOptions>
+  yeapContext?: YeapConfig
 }
 
 function makeMap(str: string): (key: string) => boolean {
@@ -41,6 +43,7 @@ let parent: ComponentContext
 export const GLOBAL_CONTEXT = createComponentContext()
 GLOBAL_CONTEXT.directives = new Map()
 GLOBAL_CONTEXT.modifiers = new Map()
+GLOBAL_CONTEXT.yeapContext = { recordObserverValueMethod: false, recordObserverCompute: false }
 setContextParent(GLOBAL_CONTEXT)
 
 export const isArrayMethod = (p: any) => typeof p === "string" && "mapReactor,push,pop,unshift,shift".includes(p)
