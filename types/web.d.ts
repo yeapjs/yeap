@@ -30,7 +30,7 @@ export function h(tag: string, props: Props | null, ...children: Array<JSX.Eleme
 export function h<C extends Component | Function>(
   tag: C,
   props: ComponentProps<(C extends Component<infer P> ? P : C extends Function<[infer A]> ? A : {})> | null,
-  ...children: Array<JSX.Element>
+  ...children: (C extends Component<any, infer H> ? H : C extends Function<[any, infer H]> ? H extends Array<any> ? H : [H] : {})
 ): HElement<HTMLElement | (() => HTMLElement)>
 
 /**
