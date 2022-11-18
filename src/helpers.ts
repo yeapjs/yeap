@@ -1,7 +1,7 @@
 import { Context, Function, Reactive } from "../types/app"
 import { YeapConfig } from "../types/utils"
 import { isReactor } from "./app"
-import { COMPONENT_SYMBOL, ELEMENT_SYMBOL, SVG_CAMELCASE_ATTR, SVG_TAGS } from "./constantes"
+import { ARRAY_METHOD, COMPONENT_SYMBOL, ELEMENT_SYMBOL, SVG_CAMELCASE_ATTR, SVG_TAGS } from "./constantes"
 import { Recorder } from "./Recorder"
 import { cancelRuntimeCallback, requestRuntimeCallback } from "./runtimeLoop"
 import { ComponentCaller, ElementCaller } from "./web"
@@ -33,7 +33,7 @@ function makeMap(str: string): (key: string) => boolean {
   for (let i = 0; i < list.length; i++) {
     map[list[i].toLowerCase()] = true
   }
-  return val => !!map[val.toLocaleLowerCase()]
+  return val => typeof val === "string" && !!map[val.toLocaleLowerCase()]
 }
 
 export const recordReactor: Recorder<Reactive<any>> = new Recorder()
@@ -46,7 +46,7 @@ GLOBAL_CONTEXT.modifiers = new Map()
 GLOBAL_CONTEXT.yeapContext = { recordObserverValueMethod: false, recordObserverCompute: false }
 setContextParent(GLOBAL_CONTEXT)
 
-export const isArrayMethod = (p: any) => typeof p === "string" && "mapReactor,push,pop,unshift,shift".includes(p)
+export const isArrayMethod = makeMap(ARRAY_METHOD)
 export const isSVGTag = makeMap(SVG_TAGS)
 export const isSVGCamelCaseAttr = makeMap(SVG_CAMELCASE_ATTR)
 export function kebabCase(str: string) {

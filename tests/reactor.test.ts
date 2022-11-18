@@ -203,15 +203,15 @@ describe("boolean operators", () => {
     expect(b.and(b)()).toBeFalsy()
   })
 
-  // test("or", () => {
-  //   const a = createReactor(true)
-  //   const b = createReactor(false)
+  test("or", () => {
+    const a = createReactor(true)
+    const b = createReactor(false)
 
-  //   expect(a.or(a)()).toBeTruthy()
-  //   expect(a.or(b)()).toBeTruthy()
-  //   expect(b.or(a)()).toBeTruthy()
-  //   expect(b.or(b)()).toBeFalsy()
-  // })
+    expect(a.or(a)()).toBeTruthy()
+    expect(a.or(b)()).toBeTruthy()
+    expect(b.or(a)()).toBeTruthy()
+    expect(b.or(b)()).toBeFalsy()
+  })
 
   test("not", () => {
     const a = createReactor(true)
