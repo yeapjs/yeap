@@ -192,6 +192,45 @@ describe("createReactor", () => {
   })
 })
 
+describe("boolean operators", () => {
+  test("and", () => {
+    const a = createReactor(true)
+    const b = createReactor(false)
+
+    expect(a.and(a)()).toBeTruthy()
+    expect(a.and(b)()).toBeFalsy()
+    expect(b.and(a)()).toBeFalsy()
+    expect(b.and(b)()).toBeFalsy()
+  })
+
+  // test("or", () => {
+  //   const a = createReactor(true)
+  //   const b = createReactor(false)
+
+  //   expect(a.or(a)()).toBeTruthy()
+  //   expect(a.or(b)()).toBeTruthy()
+  //   expect(b.or(a)()).toBeTruthy()
+  //   expect(b.or(b)()).toBeFalsy()
+  // })
+
+  test("not", () => {
+    const a = createReactor(true)
+    const b = createReactor(false)
+
+    expect(a.not()()).toBeFalsy()
+    expect(b.not()()).toBeTruthy()
+  })
+
+  test("nullish", () => {
+    const a = createReactor(false)
+    const b = createReactor(null)
+    const c = createReactor(3)
+
+    expect(a.nullish(b)()).toBeFalsy()
+    expect(b.nullish(c)()).toBe(3)
+  })
+})
+
 describe("createComputed", () => {
   test("without option", async () => {
     const reactor = createReactor(0)

@@ -90,6 +90,22 @@ export interface ReadOnlyReactorMethod<T> {
   when<U, F>(truthy: U | Function<[], U>, falsy: F | Function<[], F>): ReadOnlyReactor<U | F>
   when<U, F>(condition: Function<[T], boolean>, truthy: U | Function<[], U>, falsy: F | Function<[], F>): ReadOnlyReactor<U | F>
   /**
+   * reactivity keeper `value1 && value2`
+   */
+  and<U>(otherwise: Function<[], U> | U): ReadOnlyReactor<T | U>
+  /**
+   * reactivity keeper `value1 || value2`
+   */
+  or<U>(otherwise: Function<[], U> | U): ReadOnlyReactor<T | U>
+  /**
+   * reactivity keeper `!value`
+   */
+  not(): ReadOnlyReactor<boolean>
+  /**
+   * reactivity keeper `value1 ?? value2`
+   */
+  nullish<U>(otherwise: Function<[], U> | U): ReadOnlyReactor<T | U>
+  /**
    * make a copy of the current value, it don't keep the dependencies
    */
   copy(): Reactor<T>

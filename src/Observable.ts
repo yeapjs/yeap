@@ -2,7 +2,7 @@ import { Function, Reactive, ReactorMetaData, ReadOnlyReactor, SubscribeHandler 
 import { createComputed, isReactor, isReadOnlyReactor } from "./app"
 import { FORCE_SYMBOL, OBSERVABLE_SYMBOL, READONLY_OBSERVABLE_SYMBOL } from "./constantes"
 import { getValue, GLOBAL_CONTEXT, isArrayMethod, isDefined, isJSXElement, recordReactor } from "./helpers"
-import { record } from "./utils";
+import { record, untrack } from "./utils";
 
 export class DeepObservable<T>  {
   [OBSERVABLE_SYMBOL] = true;
@@ -32,6 +32,11 @@ export class DeepObservable<T>  {
     this.subscribe = this.subscribe.bind(this)
     this.metadata = this.metadata.bind(this)
     this.when = this.when.bind(this)
+
+    this.and = this.and.bind(this)
+    this.or = this.or.bind(this)
+    this.not = this.not.bind(this)
+    this.nullish = this.nullish.bind(this)
 
     const properties: Record<PropertyKey, any> = {}
 
@@ -182,6 +187,22 @@ export class DeepObservable<T>  {
         typeof truthy === "function" && !isReactor(truthy) && !isJSXElement(truthy) ? (truthy as Function)() : truthy :
         typeof falsy === "function" && !isReactor(falsy) && !isJSXElement(falsy) ? (falsy as Function)() : falsy
     })
+  }
+
+  and<U>(otherwise: Function<[], U> | U): ReadOnlyReactor<T | U> {
+    return this.compute<U>((v) => v && (typeof otherwise === "function" ? (otherwise as Function)() : otherwise))
+  }
+
+  or<U>(otherwise: Function<[], U> | U): ReadOnlyReactor<T | U> {
+    return this.compute<U>((v) => v || (typeof otherwise === "function" ? (otherwise as Function)() : otherwise))
+  }
+
+  not(): ReadOnlyReactor<boolean> {
+    return this.compute((v) => !v)
+  }
+
+  nullish<U>(otherwise: Function<[], U> | U): ReadOnlyReactor<T | U> {
+    return this.compute<U>((v) => v ?? (typeof otherwise === "function" ? (otherwise as Function)() : otherwise))
   }
 
   metadata(): ReactorMetaData<T> {
