@@ -190,11 +190,11 @@ export class DeepObservable<T>  {
   }
 
   and<U>(otherwise: Function<[], U> | U): ReadOnlyReactor<T | U> {
-    return this.compute<U>((v) => v && (typeof otherwise === "function" ? (otherwise as Function)() : otherwise))
+    return this.compute<U>((v) => v && (typeof otherwise === "function" && !isReactor(otherwise) && !isJSXElement(otherwise) ? (otherwise as Function)() : otherwise))
   }
 
   or<U>(otherwise: Function<[], U> | U): ReadOnlyReactor<T | U> {
-    return this.compute<U>((v) => v || (typeof otherwise === "function" ? (otherwise as Function)() : otherwise))
+    return this.compute<U>((v) => v || (typeof otherwise === "function" && !isReactor(otherwise) && !isJSXElement(otherwise) ? (otherwise as Function)() : otherwise))
   }
 
   not(): ReadOnlyReactor<boolean> {
@@ -202,7 +202,7 @@ export class DeepObservable<T>  {
   }
 
   nullish<U>(otherwise: Function<[], U> | U): ReadOnlyReactor<T | U> {
-    return this.compute<U>((v) => v ?? (typeof otherwise === "function" ? (otherwise as Function)() : otherwise))
+    return this.compute<U>((v) => v ?? (typeof otherwise === "function" && !isReactor(otherwise) && !isJSXElement(otherwise) ? (otherwise as Function)() : otherwise))
   }
 
   metadata(): ReactorMetaData<T> {
