@@ -136,3 +136,21 @@ export function batch<A extends Array<any>>(cb: Function): Function<A> {
     })
   }
 }
+
+export function equal(a: any, b: any) {
+  if (a === b) return true
+  if (!isDefined(a) || !isDefined(b)) return false
+  // test if is nan
+  if (a !== a && b !== b) return true
+  if (typeof a !== typeof b) return false
+  if (typeof a === "symbol") return false
+  if (typeof a !== "object") return false
+  if (a instanceof RegExp) return a.flags === b.flags && a.source === b.source
+  if (Array.isArray(a) && a.length !== b.length) return false
+
+  for (const key in a) {
+    if (!b.hasOwnProperty(key)) return false
+    if (!equal(a[key], b[key])) return false
+  }
+  return true
+}
