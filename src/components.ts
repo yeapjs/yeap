@@ -1,7 +1,20 @@
-import { Component } from "../types/app"
-import { createReactor, onMounted, onUnmounted } from "./app"
+import { Component, ComponentMetadata } from "../types/app"
+import { createContext, createReactor, isReactor, onMounted, onUnmounted, useContext } from "./app"
 import { generateList } from "./dom"
 import { h } from "./web"
+
+interface MatchContextValue {
+  when: any,
+  matched: boolean
+}
+
+const MatchContext = createContext<MatchContextValue>()
+
+export function noconditional<T>(comp: Component<T>): Component<T> {
+  if (!comp.metadata) comp.metadata = {} as ComponentMetadata
+  comp.metadata.noconditional = true
+  return comp
+}
 
 export const Dynamic: Component<{
   component?: Component<any> | string
@@ -39,3 +52,38 @@ export const Portal: Component<{ mount: Element }> = ({ mount = document.body },
 
   return []
 }
+
+export const Match: Component<{}> = noconditional(({ when }, children) => {
+  const value: MatchContextValue = { when, matched: false }
+
+  if (isReactor(when)) when.subscribe(() => {
+    value.matched = false
+  })
+
+  console.log("r")
+
+  return h(MatchContext.Provider, { value }, children)
+})
+
+export const Case: Component<{ default: false, test: any } | { default: true }> = noconditional((props, consequent) => {
+  const match = useContext(MatchContext)
+
+  if (!match) {
+    throw new Error("A <Case> has to be wrap into a <Match>")
+  }
+
+  const empty = ""
+
+  if (!isReactor(match.when)) {
+    if ((props.default || match.when == props.test) && !match.matched) {
+      match.matched = true
+      return consequent
+    }
+    return empty
+  }
+
+  return match.when.when((v) => (props.default || v === props.test) && !match.matched, () => {
+    match.matched = true
+    return consequent
+  }, empty)
+})

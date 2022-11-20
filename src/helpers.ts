@@ -115,7 +115,7 @@ export function batch<A extends Array<any>>(cb: Function): (...args: A) => void 
   }
 }
 
-export function equal(a: any, b: any) {
+export function equals(a: any, b: any) {
   if (a === b) return true
   if (!isDefined(a) || !isDefined(b)) return false
   // test if is nan
@@ -128,7 +128,7 @@ export function equal(a: any, b: any) {
 
   for (const key in a) {
     if (!b.hasOwnProperty(key)) return false
-    if (!equal(a[key], b[key])) return false
+    if (!equals(a[key], b[key])) return false
   }
   return true
 }

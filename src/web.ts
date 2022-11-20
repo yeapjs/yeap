@@ -102,12 +102,12 @@ export function children(callback: () => Array<JSX.Element>) {
   )
 }
 
-export function h(tag: Component | string, props: Props | null, ...children: Array<JSX.Element>): HElement<HTMLElement> | (() => HElement<HTMLElement>) {
+export function h(tag: Component | Function | string, props: Props | null, ...children: Array<JSX.Element>): HElement<HTMLElement> | (() => HElement<HTMLElement>) {
   if (!isDefined(props)) props = {}
 
   const fallback = toArray(props!["fallback"] ?? [new Text()])
 
-  if (tag instanceof Function) return hComp(tag, props, fallback, children)
+  if (tag instanceof Function) return hComp(tag as any, props, fallback, children)
 
   const display = createReactor(true)
   if ("when" in props!) {
@@ -233,7 +233,14 @@ function hComp(
 ): () => HElement<HTMLElement> {
   const properties = Object.assign({}, component.defaultProps, props)
 
+  component.metadata = {
+    noconditional: false,
+    ...component.metadata
+  }
+
   const createComponent = unique(() => {
+    if (component.metadata?.noconditional) return component(properties, children)
+
     const context = createComponentContext()
     context.props = properties
     if ("when" in props!) context.condition = props["when"]

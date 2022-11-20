@@ -1,6 +1,6 @@
 import { Reactive } from "../types/app"
 import { YeapConfig } from "../types/utils"
-import { equal, GLOBAL_CONTEXT, recordReactor } from "./helpers"
+import { equals, GLOBAL_CONTEXT, recordReactor } from "./helpers"
 
 export function config<K extends keyof YeapConfig>(key: K, value?: YeapConfig[K]): YeapConfig[K] {
   if (value) GLOBAL_CONTEXT.yeapContext![key] = value
@@ -23,7 +23,7 @@ export function memo(fn: Function): Function {
   let value: any
   let lastArgs: any
   return function (this: any, ...args: any[]) {
-    if (!equal(lastArgs, args)) value = fn.apply(this, args)
+    if (!equals(lastArgs, args)) value = fn.apply(this, args)
     lastArgs = args
     return value
   }
