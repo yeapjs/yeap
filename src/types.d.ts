@@ -18,8 +18,6 @@ export interface ComponentContext {
   hooks: Array<any>
   hookIndex: number
   props: Record<PropertyKey, any>
-  directives?: Map<string, Function>
-  modifiers?: Map<string, Function | AddEventListenerOptions>
   yeapContext?: YeapConfig
 }
 

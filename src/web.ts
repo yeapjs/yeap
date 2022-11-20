@@ -4,7 +4,7 @@ import { createComputed, createReactor, isReactor } from "./app"
 import { COMPONENT_SYMBOL, ELEMENT_SYMBOL } from "./constantes"
 import { generateList } from "./dom"
 import { DirectiveError, ModifierError } from "./errors"
-import { createComponentContext, getValue, GLOBAL_CONTEXT, isDefined, isEvent, isSVGTag, setCurrentContext, setContextParent, stringify, toArray, getCurrentContext, isDirective, isSVGCamelCaseAttr, kebabCase } from "./helpers"
+import { createComponentContext, getValue, GLOBAL_CONTEXT, isDefined, isEvent, isSVGTag, setCurrentContext, setContextParent, stringify, toArray, getCurrentContext, isDirective, isSVGCamelCaseAttr, kebabCase, directives, modifiers as modifiersMap } from "./helpers"
 import { ComponentCaller, ComponentContext, ElementCaller } from "./types"
 import { unique } from "./utils"
 
@@ -160,15 +160,15 @@ export function h(tag: Component | Function | string, props: Props | null, ...ch
 
       let option = {}
       for (const modifierName of modifiers) {
-        if (!GLOBAL_CONTEXT.modifiers?.has(modifierName)) throw new ModifierError(`the event modifier ${modifierName} does not exist`)
+        if (!modifiersMap.has(modifierName)) throw new ModifierError(`the event modifier ${modifierName} does not exist`)
 
-        const modifier = GLOBAL_CONTEXT.modifiers?.get(modifierName)
+        const modifier = modifiersMap.get(modifierName)
         if (typeof modifier === "object") option = { ...option, ...modifier }
       }
 
       element.addEventListener(eventName, (e) => {
         for (const modifierName of modifiers) {
-          const modifier = GLOBAL_CONTEXT.modifiers?.get(modifierName)
+          const modifier = modifiersMap.get(modifierName)
           if (modifier instanceof Function) modifier(e)
         }
 
@@ -182,9 +182,9 @@ export function h(tag: Component | Function | string, props: Props | null, ...ch
     } else if (isDirective(prop)) {
       const [directiveName, ...rest] = prop.slice(4).toLowerCase().split(":")
       if (rest.length > 0) throw new DirectiveError('syntax error "use:" can be take only one directive')
-      if (!GLOBAL_CONTEXT.directives?.has(directiveName)) throw new DirectiveError(`the directive ${directiveName} does not exist`)
+      if (!directives.has(directiveName)) throw new DirectiveError(`the directive ${directiveName} does not exist`)
 
-      const directive = GLOBAL_CONTEXT.directives?.get(directiveName)!
+      const directive = directives.get(directiveName)!
       directive(element, props[prop])
     } else {
       let writable = true

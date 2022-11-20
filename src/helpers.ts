@@ -1,4 +1,4 @@
-import { Reactive } from "../types/app"
+import { Reactive, Reactor } from "../types/app"
 import { ARRAY_METHOD, COMPONENT_SYMBOL, ELEMENT_SYMBOL, SVG_CAMELCASE_ATTR, SVG_TAGS } from "./constantes"
 import { DeepObservable } from "./Observable"
 import { Recorder } from "./Recorder"
@@ -15,12 +15,35 @@ function makeMap(str: string): (key: string) => boolean {
 }
 
 export const recordReactor: Recorder<Reactive<any>> = new Recorder()
+export const modifiers = new Map<string, Function | AddEventListenerOptions>([
+  ["prevent", (e: Event) => {
+    e.preventDefault()
+  }],
+  ["stop", (e: Event) => {
+    e.stopPropagation()
+  }],
+  ["capture", {
+    capture: true
+  }],
+  ["once", {
+    once: true
+  }],
+  ["passive", {
+    passive: true
+  }]
+])
+export const directives = new Map<string, Function>([
+  ["model", (el: HTMLInputElement | HTMLTextAreaElement, reactor: Reactor<string>) => {
+    el.value = reactor()
+    el.addEventListener("input", (e) => reactor(el.value))
+  }]
+])
+
 
 let current: ComponentContext
 let parent: ComponentContext
+
 export const GLOBAL_CONTEXT = createComponentContext()
-GLOBAL_CONTEXT.directives = new Map()
-GLOBAL_CONTEXT.modifiers = new Map()
 GLOBAL_CONTEXT.yeapContext = { recordObserverValueMethod: false, recordObserverCompute: false }
 setContextParent(GLOBAL_CONTEXT)
 

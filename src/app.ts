@@ -2,7 +2,7 @@ import { AsyncComputedReturn, AsyncReturn, Closer, Context, CreateComputedOption
 import { NULL } from "./constantes"
 import { DeepObservable } from "./Observable"
 import { next } from "./runtimeLoop"
-import { batch, cap, getCurrentContext, getValue, GLOBAL_CONTEXT, isDefined } from "./helpers"
+import { batch, cap, directives, getCurrentContext, getValue, isDefined, modifiers } from "./helpers"
 import { record } from "./utils"
 import { ComponentContext } from "./types"
 
@@ -147,7 +147,7 @@ export function createContext<T>(defaultValue?: T): Context<T> {
 }
 
 export function createDirective<T, E extends HTMLElement = HTMLElement>(name: string, callback: ((el: E, value: T) => any)) {
-  GLOBAL_CONTEXT.directives!.set(name, callback)
+  directives.set(name, callback)
 }
 
 export function createEffect<T>(reactorHandle: (this: Closer) => void, option?: CreateEffectOption | Reactive<T>, ...deps: Array<Reactive<T>>): void {
@@ -241,7 +241,7 @@ export function createEventDispatcher(): (name: string, detail: any) => void {
 }
 
 export function createEventModifier(name: string, callback: ((e: Event) => void) | AddEventListenerOptions) {
-  GLOBAL_CONTEXT.modifiers!.set(name, callback)
+  modifiers.set(name, callback)
 }
 
 export function createPersistor<T>(handle: () => T): T {
@@ -328,32 +328,4 @@ export function useContext<T>(context: Context<T>): T {
   }
 
   return context.defaultValue!
-}
-
-// init default event modifier
-if (GLOBAL_CONTEXT) {
-  createDirective<Reactor<string>, HTMLInputElement | HTMLTextAreaElement>("model", (el, reactor) => {
-    el.value = reactor()
-    el.addEventListener("input", (e) => reactor(el.value))
-  })
-
-  createEventModifier("prevent", (e) => {
-    e.preventDefault()
-  })
-
-  createEventModifier("stop", (e) => {
-    e.stopPropagation()
-  })
-
-  createEventModifier("capture", {
-    capture: true
-  })
-
-  createEventModifier("once", {
-    once: true
-  })
-
-  createEventModifier("passive", {
-    passive: true
-  })
 }

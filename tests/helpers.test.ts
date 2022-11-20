@@ -1,26 +1,26 @@
 import { test, expect, vi } from "vitest"
-import { batch, equal } from "../src/helpers"
+import { batch, equals } from "../src/helpers"
 import { next } from "../src/runtimeLoop"
 
 import "./polyfill"
 
 test("equal", () => {
-  expect(equal(null, [])).toBeFalsy()
-  expect(equal(null, undefined)).toBeFalsy()
-  expect(equal(null, null)).toBeTruthy()
-  expect(equal(NaN, NaN)).toBeTruthy()
-  expect(equal(0, 0)).toBeTruthy()
-  expect(equal(1, 0)).toBeFalsy()
-  expect(equal("a", "a")).toBeTruthy()
-  expect(equal([], [])).toBeTruthy()
-  expect(equal(["a"], [0])).toBeFalsy()
-  expect(equal(["a", { a: "" }], ["a", { a: "" }])).toBeTruthy()
-  expect(equal({}, {})).toBeTruthy()
-  expect(equal({ a: "" }, { a: "" })).toBeTruthy()
-  expect(equal({ a: "" }, { b: "" })).toBeFalsy()
-  expect(equal(/a/, /a/)).toBeTruthy()
-  expect(equal(/a/, /a/g)).toBeFalsy()
-  expect(equal(new Date(), new Date())).toBeTruthy()
+  expect(equals(null, [])).toBeFalsy()
+  expect(equals(null, undefined)).toBeFalsy()
+  expect(equals(null, null)).toBeTruthy()
+  expect(equals(NaN, NaN)).toBeTruthy()
+  expect(equals(0, 0)).toBeTruthy()
+  expect(equals(1, 0)).toBeFalsy()
+  expect(equals("a", "a")).toBeTruthy()
+  expect(equals([], [])).toBeTruthy()
+  expect(equals(["a"], [0])).toBeFalsy()
+  expect(equals(["a", { a: "" }], ["a", { a: "" }])).toBeTruthy()
+  expect(equals({}, {})).toBeTruthy()
+  expect(equals({ a: "" }, { a: "" })).toBeTruthy()
+  expect(equals({ a: "" }, { b: "" })).toBeFalsy()
+  expect(equals(/a/, /a/)).toBeTruthy()
+  expect(equals(/a/, /a/g)).toBeFalsy()
+  expect(equals(new Date(), new Date())).toBeTruthy()
 })
 
 test("batch", async () => {
