@@ -239,11 +239,10 @@ function hComp(
   }
 
   const createComponent = unique(() => {
-    if (component.metadata?.noconditional) return component(properties, children)
-
     const context = createComponentContext()
+
     context.props = properties
-    if ("when" in props!) context.condition = props["when"]
+    if ("when" in props! && !component.metadata?.noconditional) context.condition = props["when"]
 
     const allConditions: Array<Reactive<boolean>> = []
     let currentContext = context

@@ -60,8 +60,6 @@ export const Match: Component<{}> = noconditional(({ when }, children) => {
     value.matched = false
   })
 
-  console.log("r")
-
   return h(MatchContext.Provider, { value }, children)
 })
 
