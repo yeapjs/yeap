@@ -15,6 +15,9 @@
     "./components": {
       "default": "./lib/components.js"
     },
+    "./utils": {
+      "default": "./lib/utils.js"
+    },
     "./web": {
       "default": "./lib/web.js"
     }

@@ -1,4 +1,4 @@
-import { Reactive } from "./app"
+import { Function, Reactive } from "./app"
 
 export interface YeapConfig {
   recordObserverValueMethod: boolean
@@ -7,6 +7,10 @@ export interface YeapConfig {
 
 export function config<K extends keyof YeapConfig>(key: K, value?: YeapConfig[K]): YeapConfig[K]
 
+export function unique<F extends Function>(fn: F): F
+
+export function memo<F extends Function>(fn: F): F
+
 export function record<T>(callback: () => T): [value: T, recordedReactors: Array<Reactive<any>>]
 
-export function untrack<T>(callback: Function, ...deps: Array<Reactive<T>>): Function
+export function untrack<T, F extends Function>(callback: F, ...deps: Array<Reactive<T>>): F

@@ -34,4 +34,12 @@ test("batch", async () => {
   await next()
 
   expect(fn).toBeCalledTimes(1)
+
+  batchedFn()
+  batchedFn()
+  batchedFn()
+
+  await next()
+
+  expect(fn).toBeCalledTimes(2)
 })
