@@ -107,7 +107,7 @@ export function h(tag: Component | string, props: Props | null, ...children: Arr
 
   const fallback = toArray(props!["fallback"] ?? [new Text()])
 
-  if (typeof tag === "function") return hComp(tag, props, fallback, children)
+  if (tag instanceof Function) return hComp(tag, props, fallback, children)
 
   const display = createReactor(true)
   if ("when" in props!) {
@@ -115,7 +115,7 @@ export function h(tag: Component | string, props: Props | null, ...children: Arr
       props["when"].subscribe((_: any, curr: any) => display(!!curr))
       display(!!props["when"]())
     }
-    else if (typeof props["when"] === "function") {
+    else if (props["when"] instanceof Function) {
       const when = createComputed(props["when"])
       when.subscribe((_: any, curr: any) =>
         display(!!curr)
@@ -169,10 +169,10 @@ export function h(tag: Component | string, props: Props | null, ...children: Arr
       element.addEventListener(eventName, (e) => {
         for (const modifierName of modifiers) {
           const modifier = GLOBAL_CONTEXT.modifiers?.get(modifierName)
-          if (typeof modifier === "function") modifier(e)
+          if (modifier instanceof Function) modifier(e)
         }
 
-        if (typeof props![prop] === "function") props![prop](e)
+        if (props![prop] instanceof Function) props![prop](e)
         else {
           const [fn, ...args] = props![prop]
 
@@ -214,7 +214,7 @@ export function h(tag: Component | string, props: Props | null, ...children: Arr
     context.htmlConditions.push(display)
     element.append(...generateList([], element, toArray(children)))
 
-    if ("when" in props! && (isReactor(props["when"]) || typeof props["when"] === "function")) return display.when(element, fallback)
+    if ("when" in props! && (isReactor(props["when"]) || props["when"] instanceof Function)) return display.when(element, fallback)
 
     return display() ? element : fallback
   }) as ElementCaller

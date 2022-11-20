@@ -1,6 +1,6 @@
 import { Reactive } from "../types/app"
-import { isReactor } from "./app"
 import { ARRAY_METHOD, COMPONENT_SYMBOL, ELEMENT_SYMBOL, SVG_CAMELCASE_ATTR, SVG_TAGS } from "./constantes"
+import { DeepObservable } from "./Observable"
 import { Recorder } from "./Recorder"
 import { cancelRuntimeCallback, requestRuntimeCallback } from "./runtimeLoop"
 import { ComponentContext, ComponentCaller, ElementCaller } from "./types"
@@ -82,7 +82,7 @@ export function cap(str: string): string {
 }
 
 export function getValue<T>(a: Reactive<T> | T | undefined): T | undefined {
-  return isReactor(a) ? a() : a
+  return DeepObservable.isObservable(a) ? a() : a
 }
 
 export function toArray<T>(value: T | Array<T>): Array<T> {
