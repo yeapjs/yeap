@@ -1,4 +1,4 @@
-import { Function, Reactive } from "../types/app"
+import { Reactive } from "../types/app"
 import { YeapConfig } from "../types/utils"
 import { equal, GLOBAL_CONTEXT, recordReactor } from "./helpers"
 
@@ -36,9 +36,9 @@ export function record<T>(callback: () => T): [value: T, recordedReactors: Array
 }
 
 export function untrack<T>(callback: Function, ...deps: Array<Reactive<T>>): Function {
-  return () => {
+  return function (this: any, ...args: any[]) {
     if (!deps.length) recordReactor.pause()
-    const value = callback()
+    const value = callback.apply(this, args)
     if (!deps.length) recordReactor.resume()
     else recordReactor.pop(...deps)
 

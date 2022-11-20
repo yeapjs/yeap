@@ -1,4 +1,4 @@
-import { Component, ComponentProps, Function, Reactive } from "./app"
+import { Component, ComponentProps, Reactive } from "./app"
 
 type Props = Record<string, EventListenerOrEventListenerObject | Reactive<any> | any>
 export type HElement<E = HTMLElement> = () => E
@@ -11,7 +11,7 @@ interface DefineCustomElementOption {
 /**
  * transforms a functional component into a web component
  */
-export function define<T>(name: string, component: Component<T & { ref: Element }>, options?: DefineCustomElementOption): void
+export function define<T>(name: string, component: Component<T & { ref: Element }>, options?: DefineCustomElementOption): () => HTMLElement
 
 /**
  * transforms a array into a list of elements
@@ -29,8 +29,8 @@ export function h<T extends keyof JSX.IntrinsicElements, P = JSX.IntrinsicElemen
 export function h(tag: string, props: Props | null, ...children: Array<JSX.Element>): HElement<HTMLElement>
 export function h<C extends Component | Function>(
   tag: C,
-  props: ComponentProps<(C extends Component<infer P> ? P : C extends Function<[infer A]> ? A : {})> | null,
-  ...children: (C extends Component<any, infer H> ? H : C extends Function<[any, infer H]> ? H extends Array<any> ? H : [H] : {})
+  props: ComponentProps<(C extends Component<infer P> ? P : C extends (props: infer A) => any ? A : {})> | null,
+  ...children: (C extends Component<any, infer H> ? H : C extends (_: any, children: infer H) => any ? H extends Array<any> ? H : [H] : never)
 ): HElement<HTMLElement | (() => HTMLElement)>
 
 /**

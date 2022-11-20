@@ -10,9 +10,6 @@ export interface CreateEffectOption extends CreateComputedOption {
   immediate?: boolean
 }
 
-export type Function<A extends Array<any> = Array<any>, R = any, T = any> = (this: T, ...args: A) => R
-export type AsyncFunction<A extends Array<any> = Array<any>, R = any, T = any> = Function<A, Promise<R>, T>
-
 export interface AsyncComputedReturn<T, E = any> {
   data: ReadOnlyReactor<T>
   error: ReadOnlyReactor<E | null>
@@ -21,14 +18,14 @@ export interface AsyncComputedReturn<T, E = any> {
 export interface AsyncReturn<T, E = any> extends AsyncComputedReturn<T, E> {
   refetch(): void
 }
-export type TransitionReturn = [ReadOnlyReactor<boolean>, Function<[callback: Function]>]
+export type TransitionReturn = [ReadOnlyReactor<boolean>, (callback: Function) => void]
 
 export type SubscribeHandler<T> = (prev: T, next: T) => void
 
 export type ComponentProps<T> = T & { fallback?: JSX.Element, when?: any | Reactor<any> }
 export interface Component<T = object, C extends Array<JSX.Element> = Array<JSX.Element>> {
   (props: ComponentProps<T>, children: C): JSX.Element
-  attributeTypes?: Record<string, NumberConstructor | BooleanConstructor | BigIntConstructor | Function<[HTMLElement, unknown]>>
+  attributeTypes?: Record<string, NumberConstructor | BooleanConstructor | BigIntConstructor | ((el: HTMLElement, value?: string | null) => void)>
   defaultProps?: T
 }
 
@@ -72,7 +69,7 @@ type PrimitivesToObject<T> = T extends string ? String :
   T extends undefined ? object : T
 
 export type ToReadOnlyReactorObject<T = object> = {
-  [K in keyof T]: T[K] extends Function<infer A, infer R, infer T> ? Function<A, ReadOnlyReactor<R>, T> : ReadOnlyReactor<T[K]>
+  [K in keyof T]: T[K] extends (...args: infer A) => infer R ? (...args: A) => ReadOnlyReactor<R> : ReadOnlyReactor<T[K]>
 }
 
 export interface ReadOnlyReactorMethod<T> {
@@ -83,20 +80,20 @@ export interface ReadOnlyReactorMethod<T> {
   /**
    * takes a function and returns the result, used as createComputed but only for the current reactor
    */
-  compute<U>(handle: Function<[T], U>): ReadOnlyReactor<U>
+  compute<U>(handle: (value: T) => U): ReadOnlyReactor<U>
   /**
    * returns the value based on the reactor value, works like if else
    */
-  when<U, F>(truthy: U | Function<[], U>, falsy: F | Function<[], F>): ReadOnlyReactor<U | F>
-  when<U, F>(condition: Function<[T], boolean>, truthy: U | Function<[], U>, falsy: F | Function<[], F>): ReadOnlyReactor<U | F>
+  when<U, F>(truthy: U | (() => U), falsy: F | (() => F)): ReadOnlyReactor<U | F>
+  when<U, F>(condition: (value: T) => boolean, truthy: U | (() => U), falsy: F | (() => F)): ReadOnlyReactor<U | F>
   /**
    * reactivity keeper `value1 && value2`
    */
-  and<U>(otherwise: Function<[], U> | U): ReadOnlyReactor<T | U>
+  and<U>(otherwise: (() => U) | U): ReadOnlyReactor<T | U>
   /**
    * reactivity keeper `value1 || value2`
    */
-  or<U>(otherwise: Function<[], U> | U): ReadOnlyReactor<T | U>
+  or<U>(otherwise: (() => U) | U): ReadOnlyReactor<T | U>
   /**
    * reactivity keeper `!value`
    */
@@ -104,7 +101,7 @@ export interface ReadOnlyReactorMethod<T> {
   /**
    * reactivity keeper `value1 ?? value2`
    */
-  nullish<U>(otherwise: Function<[], U> | U): ReadOnlyReactor<T | U>
+  nullish<U>(otherwise: (() => U) | U): ReadOnlyReactor<T | U>
   /**
    * make a copy of the current value, it don't keep the dependencies
    */
@@ -131,7 +128,7 @@ export interface ReactorMethod<T> extends ReadOnlyReactorMethod<T> {
 }
 
 export type ToReactorObject<T> = {
-  [K in keyof T]: T[K] extends Function<infer A, infer R, infer T> ? Function<A, ReadOnlyReactor<R>, T> : Reactor<T[K]>
+  [K in keyof T]: T[K] extends (...args: infer A) => infer R ? (...args: A) => ReadOnlyReactor<R> : Reactor<T[K]>
 }
 export type Reactor<T> = ToReactorObject<PrimitivesToObject<T>> & ReactorMethod<T> & {
   (): T
@@ -143,11 +140,11 @@ export type Reactive<T> = Reactor<T> | ReadOnlyReactor<T>
 /**
  * takes a function and calls the fetcher asynchronously, returns the data, the error and if the fetcher is being called with the load
  */
-export function createAsync<T, E>(fetcher: AsyncFunction<[], T>): AsyncReturn<T, E>
+export function createAsync<T, E>(fetcher: () => Promise<T>): AsyncReturn<T, E>
 /**
  * takes a function and calls the fetcher asynchronously, returns the data, the error and if the fetcher is being called with the load, takes a default value
  */
-export function createAsync<T, E>(fetcher: AsyncFunction<[], T>, defaultValue: T): AsyncReturn<T, E>
+export function createAsync<T, E>(fetcher: () => Promise<T>, defaultValue: T): AsyncReturn<T, E>
 /**
  * shortened to
  * ```js
@@ -155,7 +152,7 @@ export function createAsync<T, E>(fetcher: AsyncFunction<[], T>, defaultValue: T
  * createComputed(refetch, deps) // or createEffect(refetch, deps)
  * ```
  */
-export function createAsyncComputed<T, E, U>(fetcher: AsyncFunction<[], T, Closer>, ...deps: Array<Reactive<U>>): AsyncComputedReturn<T, E>
+export function createAsyncComputed<T, E, U>(fetcher: (this: Closer) => Promise<T>, ...deps: Array<Reactive<U>>): AsyncComputedReturn<T, E>
 /**
  * shortened to
  * ```js
@@ -163,7 +160,7 @@ export function createAsyncComputed<T, E, U>(fetcher: AsyncFunction<[], T, Close
  * createComputed(refetch, deps) // or createEffect(refetch, deps)
  * ```
  */
-export function createAsyncComputed<T, E, U>(fetcher: AsyncFunction<[], T, Closer>, defaultValue: T, ...deps: Array<Reactive<U>>): AsyncComputedReturn<T, E>
+export function createAsyncComputed<T, E, U>(fetcher: (this: Closer) => Promise<T>, defaultValue: T, ...deps: Array<Reactive<U>>): AsyncComputedReturn<T, E>
 /**
  * shortened to
  * ```js
@@ -171,16 +168,16 @@ export function createAsyncComputed<T, E, U>(fetcher: AsyncFunction<[], T, Close
  * createComputed(refetch, deps) // or createEffect(refetch, option, deps)
  * ```
  */
-export function createAsyncComputed<T, E, U>(fetcher: AsyncFunction<[], T, Closer>, defaultValue: T, option: CreateEffectOption, ...deps: Array<Reactive<U>>): AsyncComputedReturn<T, E>
+export function createAsyncComputed<T, E, U>(fetcher: (this: Closer) => Promise<T>, defaultValue: T, option: CreateEffectOption, ...deps: Array<Reactive<U>>): AsyncComputedReturn<T, E>
 
 /**
  * observes all dependencies and calls the function again when a dependency has been updated, returns a reactor, it cannot be updated
  */
-export function createComputed<T, U>(handle: Function<[], Reactive<T> | T, Closer>, ...deps: Array<Reactive<U>>): ReadOnlyReactor<T>
+export function createComputed<T, U>(handle: (this: Closer) => Reactive<T> | T, ...deps: Array<Reactive<U>>): ReadOnlyReactor<T>
 /**
  * observes all dependencies and calls the function again when a dependency has been updated, returns a reactor, it cannot be updated, it takes options
  */
-export function createComputed<T, U>(handle: Function<[], Reactive<T> | T, Closer>, option: CreateComputedOption, ...deps: Array<Reactive<U>>): ReadOnlyReactor<T>
+export function createComputed<T, U>(handle: (this: Closer) => Reactive<T> | T, option: CreateComputedOption, ...deps: Array<Reactive<U>>): ReadOnlyReactor<T>
 
 export function createContext<T>(defaultValue?: T): Context<T>
 
@@ -188,26 +185,26 @@ export function createContext<T>(defaultValue?: T): Context<T>
 /**
  * create a directive, it can be modify the element, to call it `use:directive-name`
  */
-export function createDirective<T, E extends HTMLElement = HTMLElement>(name: string, callback: Function<[E, T]>): void
+export function createDirective<T, E extends HTMLElement = HTMLElement>(name: string, callback: (el: E, value: T) => void): void
 
 /**
  * observes all dependencies and calls the function again when a dependency has been updated, returns a reactor
  */
-export function createEffect<T>(handle: Function<[], any, Closer>, ...deps: Array<Reactive<T>>): void
+export function createEffect<T>(handle: (this: Closer) => void, ...deps: Array<Reactive<T>>): void
 /**
  * observes all dependencies and calls the function again when a dependency has been updated, returns a reactor, it takes options
  */
-export function createEffect<T>(handle: Function<[], any, Closer>, option: CreateEffectOption, ...deps: Array<Reactive<T>>): void
+export function createEffect<T>(handle: (this: Closer) => void, option: CreateEffectOption, ...deps: Array<Reactive<T>>): void
 
 /**
  * returns a event dispatcher
  */
-export function createEventDispatcher(): Function<[name: string, detail: any]>
+export function createEventDispatcher(): (name: string, detail: any) => void
 
 /**
  * create an event modifer, it will update the event, to call it `onEvent:event-modifier`
  */
-export function createEventModifier(name: string, callback: Function<[Event]> | AddEventListenerOptions): void
+export function createEventModifier(name: string, callback: ((e: Event) => any) | AddEventListenerOptions): void
 
 /**
  * allows the information to be retained despite reminders from the component
@@ -226,12 +223,12 @@ export function createPersistentReactor<T>(initialValue?: Reactive<T> | T): Reac
 /**
  * create a reactor, it is a function, it can be updated `reactor(newValue)`, returns the previous value and it can be read `reactor()`, returns the current value. It can be observed
  */
-export function createReactor<T>(initialValue?: Reactive<T> | Function<[], T> | T): Reactor<T>
+export function createReactor<T>(initialValue?: Reactive<T> | (() => T) | T): Reactor<T>
 
 /**
  * createRef is like createReactor but it can only be updated once, after that it becomes a ReadOnlyReactor
  */
-export function createRef<T>(initialValue?: Reactive<T> | Function<[], T> | T): Reactor<T>
+export function createRef<T>(initialValue?: Reactive<T> | (() => T) | T): Reactor<T>
 
 /**
  * create a transition, returns a reactive boolean and a function to start the transition

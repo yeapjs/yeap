@@ -1,11 +1,12 @@
-import { AsyncComputedReturn, AsyncFunction, AsyncReturn, Closer, Context, CreateComputedOption, CreateEffectOption, Function, Reactive, Reactor, ReadOnlyReactor, TransitionReturn } from "../types/app"
+import { AsyncComputedReturn, AsyncReturn, Closer, Context, CreateComputedOption, CreateEffectOption, Reactive, Reactor, ReadOnlyReactor, TransitionReturn } from "../types/app"
 import { NULL } from "./constantes"
 import { DeepObservable } from "./Observable"
 import { next } from "./runtimeLoop"
-import { batch, cap, ComponentContext, getCurrentContext, getValue, GLOBAL_CONTEXT, isDefined } from "./helpers"
+import { batch, cap, getCurrentContext, getValue, GLOBAL_CONTEXT, isDefined } from "./helpers"
 import { record } from "./utils"
+import { ComponentContext } from "./types"
 
-export function createAsync<T, E>(fetcher: AsyncFunction<[], T>, defaultValue?: T): AsyncReturn<T, E> {
+export function createAsync<T, E>(fetcher: () => Promise<T>, defaultValue?: T): AsyncReturn<T, E> {
   const data = createReactor<T>(defaultValue)
   const error = createReactor<E | null>(null)
   const loading = createReactor(false)
@@ -31,7 +32,7 @@ export function createAsync<T, E>(fetcher: AsyncFunction<[], T>, defaultValue?: 
   }
 }
 
-export function createAsyncComputed<T, E, U>(fetcher: AsyncFunction<[], T, Closer>, defaultValue?: Reactive<U> | T, option?: CreateEffectOption | Reactive<U>, ...deps: Array<Reactive<U>>): AsyncComputedReturn<T, E> {
+export function createAsyncComputed<T, E, U>(fetcher: (this: Closer) => Promise<T>, defaultValue?: Reactive<U> | T, option?: CreateEffectOption | Reactive<U>, ...deps: Array<Reactive<U>>): AsyncComputedReturn<T, E> {
   if (isReactor(defaultValue)) {
     deps.push(defaultValue)
     defaultValue = undefined
@@ -57,7 +58,7 @@ export function createAsyncComputed<T, E, U>(fetcher: AsyncFunction<[], T, Close
   return { data, error, loading }
 }
 
-export function createComputed<T, U>(reactorHandle: Function<[], Reactive<T> | T, Closer>, option?: CreateComputedOption | Reactive<U>, ...deps: Array<Reactive<U>>): ReadOnlyReactor<T> {
+export function createComputed<T, U>(reactorHandle: (this: Closer) => Reactive<T> | T, option?: CreateComputedOption | Reactive<U>, ...deps: Array<Reactive<U>>): ReadOnlyReactor<T> {
   const dependencies = new Set(deps)
   const updates = new Map<Reactive<U>, { prev: U | NULL, curr: U | NULL }>()
   const handle = reactorHandle.bind({ close })
@@ -145,11 +146,11 @@ export function createContext<T>(defaultValue?: T): Context<T> {
   return context
 }
 
-export function createDirective<T, E extends HTMLElement = HTMLElement>(name: string, callback: Function<[E, T]>) {
+export function createDirective<T, E extends HTMLElement = HTMLElement>(name: string, callback: ((el: E, value: T) => any)) {
   GLOBAL_CONTEXT.directives!.set(name, callback)
 }
 
-export function createEffect<T>(reactorHandle: Function<[], any, Closer>, option?: CreateEffectOption | Reactive<T>, ...deps: Array<Reactive<T>>): void {
+export function createEffect<T>(reactorHandle: (this: Closer) => void, option?: CreateEffectOption | Reactive<T>, ...deps: Array<Reactive<T>>): void {
   const dependencies = new Set(deps)
   const updates = new Map<Reactive<T>, { prev: T | NULL, curr: T | NULL }>()
   const handle = reactorHandle.bind({ close })
@@ -215,7 +216,7 @@ export function createEffect<T>(reactorHandle: Function<[], any, Closer>, option
   if (optionWithDefault.unsubscription) onUnmounted(close)
 }
 
-export function createEventDispatcher(): Function<[name: string, detail: any]> {
+export function createEventDispatcher(): (name: string, detail: any) => void {
   const context = getCurrentContext()
 
   // force if the persistent callbacks are set, pass the while loop
@@ -239,7 +240,7 @@ export function createEventDispatcher(): Function<[name: string, detail: any]> {
   })
 }
 
-export function createEventModifier(name: string, callback: Function<[Event]> | AddEventListenerOptions) {
+export function createEventModifier(name: string, callback: ((e: Event) => void) | AddEventListenerOptions) {
   GLOBAL_CONTEXT.modifiers!.set(name, callback)
 }
 
@@ -264,13 +265,13 @@ export function createPersistentCallback<T extends Function>(callback: T): T {
 export function createPersistentReactor<T>(initialValue?: Reactive<T> | T) {
   return createPersistor(() => createReactor(initialValue))
 }
-export function createReactor<T>(initialValue?: Reactive<T> | Function<[], T> | T): Reactor<T> {
+export function createReactor<T>(initialValue?: Reactive<T> | (() => T) | T): Reactor<T> {
   if (typeof initialValue === "function") initialValue = (initialValue as Function)()
 
   return new DeepObservable(getValue(initialValue)) as any
 }
 
-export function createRef<T>(initialValue?: Reactive<T> | Function<[], T> | T): Reactor<T> {
+export function createRef<T>(initialValue?: Reactive<T> | (() => T) | T): Reactor<T> {
   if (typeof initialValue === "function") initialValue = (initialValue as Function)()
 
   return new DeepObservable(getValue(initialValue), null, false, true) as any
@@ -330,27 +331,29 @@ export function useContext<T>(context: Context<T>): T {
 }
 
 // init default event modifier
-createDirective<Reactor<string>, HTMLInputElement | HTMLTextAreaElement>("model", (el, reactor) => {
-  el.value = reactor()
-  el.addEventListener("input", (e) => reactor(el.value))
-})
+if (GLOBAL_CONTEXT) {
+  createDirective<Reactor<string>, HTMLInputElement | HTMLTextAreaElement>("model", (el, reactor) => {
+    el.value = reactor()
+    el.addEventListener("input", (e) => reactor(el.value))
+  })
 
-createEventModifier("prevent", (e) => {
-  e.preventDefault()
-})
+  createEventModifier("prevent", (e) => {
+    e.preventDefault()
+  })
 
-createEventModifier("stop", (e) => {
-  e.stopPropagation()
-})
+  createEventModifier("stop", (e) => {
+    e.stopPropagation()
+  })
 
-createEventModifier("capture", {
-  capture: true
-})
+  createEventModifier("capture", {
+    capture: true
+  })
 
-createEventModifier("once", {
-  once: true
-})
+  createEventModifier("once", {
+    once: true
+  })
 
-createEventModifier("passive", {
-  passive: true
-})
+  createEventModifier("passive", {
+    passive: true
+  })
+}

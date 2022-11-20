@@ -1,4 +1,4 @@
-import { Function, Reactive } from "./app"
+import { Reactive } from "./app"
 
 export interface YeapConfig {
   recordObserverValueMethod: boolean

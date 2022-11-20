@@ -1,31 +1,9 @@
-import { Context, Function, Reactive } from "../types/app"
-import { YeapConfig } from "../types/utils"
+import { Reactive } from "../types/app"
 import { isReactor } from "./app"
 import { ARRAY_METHOD, COMPONENT_SYMBOL, ELEMENT_SYMBOL, SVG_CAMELCASE_ATTR, SVG_TAGS } from "./constantes"
 import { Recorder } from "./Recorder"
 import { cancelRuntimeCallback, requestRuntimeCallback } from "./runtimeLoop"
-import { ComponentCaller, ElementCaller } from "./web"
-
-interface ProvidedContext<T> {
-  id: symbol
-  value?: T
-}
-
-export interface ComponentContext {
-  element?: Element
-  parent?: ComponentContext
-  condition: Reactive<boolean> | boolean
-  htmlConditions: Array<Reactive<boolean>>,
-  contexts: Record<symbol, { context?: Context<any> | null, provider: ProvidedContext<any> | null }>
-  mounted: Array<Function> | null
-  unmounted: Array<Function> | null
-  hooks: Array<any>
-  hookIndex: number
-  props: Record<PropertyKey, any>
-  directives?: Map<string, Function>
-  modifiers?: Map<string, Function | AddEventListenerOptions>
-  yeapContext?: YeapConfig
-}
+import { ComponentContext, ComponentCaller, ElementCaller } from "./types"
 
 function makeMap(str: string): (key: string) => boolean {
   const map: Record<string, boolean> = {}
@@ -123,7 +101,7 @@ export function isDirective(v: string): boolean {
   return v.startsWith("use:")
 }
 
-export function batch<A extends Array<any>>(cb: Function): Function<A> {
+export function batch<A extends Array<any>>(cb: Function): (...args: A) => void {
   let timer: number | null = null
   return (...args: A) => {
     if (timer) cancelRuntimeCallback(timer)

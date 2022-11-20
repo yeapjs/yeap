@@ -1,4 +1,4 @@
-import { Component, Function, Reactive, Reactor, ToReadOnlyReactorObject } from "./app"
+import { Component, Reactive, Reactor, ToReadOnlyReactorObject } from "./app"
 
 declare global {
   // JSX type definitions for Yeap
@@ -220,7 +220,7 @@ declare global {
       view: ReactivableSVGAttributes<SVGElement>
     }
 
-    type EventHandler<T, E extends Event, A extends Array<any> = Array<any>> = ((e: E & { currentTarget: T }) => void) | [Function<A>, ...A]
+    type EventHandler<T, E extends Event, A extends Array<any> = Array<any>> = ((e: E & { currentTarget: T }) => void) | [(...args: A) => void, ...A]
 
     type YeapAtributes<T> = {
       classList?: { [key: PropertyKey]: any | Reactive<any> }

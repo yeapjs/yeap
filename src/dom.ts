@@ -15,7 +15,7 @@ export function generateList(container: HTMLContainer, parent: Element, children
     if (child instanceof Element || child instanceof Text) container = [...container, child]
     else if (child instanceof Array) container = [...generateList(container, parent, child)]
     else if (isReactor(child)) container = [...container, ...reconcileReactor(parent, child)]
-    else if (isJSXElement(child)) container = [...generateList(container, parent, toArray(child()))]
+    else if (isJSXElement(child)) container = [...generateList(container, parent, toArray((child as Function)()))]
     else container = [...container, generateDOM(child)]
   }
 

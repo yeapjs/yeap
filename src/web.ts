@@ -1,20 +1,14 @@
-import { Component, Function, Reactive, Reactor } from "../types/app"
-import { DefineCustomElementOption, Props } from "../types/web"
+import { Component, Reactive, Reactor } from "../types/app"
+import { DefineCustomElementOption, HElement, Props } from "../types/web"
 import { createComputed, createReactor, isReactor } from "./app"
 import { COMPONENT_SYMBOL, ELEMENT_SYMBOL } from "./constantes"
 import { generateList } from "./dom"
 import { DirectiveError, ModifierError } from "./errors"
-import { ComponentContext, createComponentContext, getValue, GLOBAL_CONTEXT, isDefined, isEvent, isSVGTag, setCurrentContext, setContextParent, stringify, toArray, getCurrentContext, isDirective, isSVGCamelCaseAttr, kebabCase } from "./helpers"
+import { createComponentContext, getValue, GLOBAL_CONTEXT, isDefined, isEvent, isSVGTag, setCurrentContext, setContextParent, stringify, toArray, getCurrentContext, isDirective, isSVGCamelCaseAttr, kebabCase } from "./helpers"
+import { ComponentCaller, ComponentContext, ElementCaller } from "./types"
+import { unique } from "./utils"
 
 type CustomAttribute<T> = T & { ref?: HTMLElement }
-export type ComponentCaller = Function & {
-  key: any
-  [COMPONENT_SYMBOL]: true
-}
-export type ElementCaller = Function & {
-  key: any
-  [ELEMENT_SYMBOL]: true
-}
 
 export function define<T>(name: string, component: Component<CustomAttribute<T>>, { reactiveAttributes, shadowed }: DefineCustomElementOption = {}) {
   class Component extends HTMLElement {
@@ -96,6 +90,8 @@ export function define<T>(name: string, component: Component<CustomAttribute<T>>
   }
 
   customElements.define(name, Component)
+
+  return () => new Component()
 }
 
 export function children(callback: () => Array<JSX.Element>) {
@@ -106,7 +102,7 @@ export function children(callback: () => Array<JSX.Element>) {
   )
 }
 
-export function h(tag: Component | string, props: Props | null, ...children: Array<JSX.Element>) {
+export function h(tag: Component | string, props: Props | null, ...children: Array<JSX.Element>): HElement<HTMLElement> | (() => HElement<HTMLElement>) {
   if (!isDefined(props)) props = {}
 
   const fallback = toArray(props!["fallback"] ?? [new Text()])
@@ -213,25 +209,20 @@ export function h(tag: Component | string, props: Props | null, ...children: Arr
     }
   }
 
-  let result: any = null
-
-  const createElement: ElementCaller = function createElement() {
-    if (result) return result
-
+  const createElement = unique(() => {
     const context = getCurrentContext()
     context.htmlConditions.push(display)
     element.append(...generateList([], element, toArray(children)))
 
-    if ("when" in props! && (isReactor(props["when"]) || typeof props["when"] === "function")) result = display.when(element, fallback)
-    else result = display() ? element : fallback
+    if ("when" in props! && (isReactor(props["when"]) || typeof props["when"] === "function")) return display.when(element, fallback)
 
-    return result
-  } as any
+    return display() ? element : fallback
+  }) as ElementCaller
 
   createElement.key = props!["key"]
   createElement[ELEMENT_SYMBOL] = true
 
-  return createElement
+  return createElement as any
 }
 
 function hComp(
@@ -239,13 +230,10 @@ function hComp(
   props: Props | null,
   fallback: any,
   children: Array<JSX.Element>
-) {
+): () => HElement<HTMLElement> {
   const properties = Object.assign({}, component.defaultProps, props)
-  let reactive: Reactive<any>
 
-  const createComponent: ComponentCaller = function createComponent() {
-    if (reactive) return reactive
-
+  const createComponent = unique(() => {
     const context = createComponentContext()
     context.props = properties
     if ("when" in props!) context.condition = props["when"]
@@ -262,7 +250,7 @@ function hComp(
 
     let toMount = true
 
-    reactive = createComputed(() => {
+    const element = createComputed(() => {
       setCurrentContext(context)
       if (!allConditions.some((reactive) => !reactive())) {
         setContextParent(context)
@@ -286,13 +274,13 @@ function hComp(
       }
     }, { unsubscription: false }, ...allConditions)
 
-    return allConditions.length === 0 ? reactive() : reactive
-  } as any
+    return allConditions.length === 0 ? element() : element
+  }) as ComponentCaller
 
   createComponent.key = props!["key"]
   createComponent[COMPONENT_SYMBOL] = true
 
-  return createComponent
+  return createComponent as any
 }
 
 function mount(context: ComponentContext) {

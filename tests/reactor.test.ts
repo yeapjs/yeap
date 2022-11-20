@@ -317,6 +317,7 @@ describe("createComputed", () => {
     const reactor = createReactor(0)
     const mock = vi.fn(() => reactor() + 1)
 
+    // @ts-ignore
     const compute = createComputed(untrack(mock))
 
     expect(compute()).toBe(1)
@@ -334,6 +335,7 @@ describe("createComputed", () => {
     const reactor2 = createReactor(1)
     const mock = vi.fn(() => reactor() + reactor2())
 
+    // @ts-ignore
     const compute = createComputed(untrack(mock, reactor2))
 
     expect(compute()).toBe(1)
