@@ -18,8 +18,8 @@ test("Match", async () => {
   function App() {
     return (
       <Match when={reactor}>
-        <Case test={0}>0</Case>
-        <Case test={1}>1</Case>
+        <Case test={(v) => v == 0 || v == 3}>0</Case>
+        <Case tests={[1, 4]}>1</Case>
         <Case default>default</Case>
       </Match>
     )
@@ -36,4 +36,12 @@ test("Match", async () => {
   reactor(2)
   await next()
   expect(body.innerHTML).toBe("default")
+
+  reactor(3)
+  await next()
+  expect(body.innerHTML).toBe("0")
+
+  reactor(4)
+  await next()
+  expect(body.innerHTML).toBe("1")
 })

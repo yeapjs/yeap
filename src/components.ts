@@ -1,4 +1,5 @@
-import { Component, ComponentMetadata } from "../types/app"
+import { Component, ComponentMetadata, NoConditionalComponent } from "../types/components"
+import { CaseProps } from "../types/components"
 import { createContext, createReactor, isReactor, onMounted, onUnmounted, useContext } from "./app"
 import { generateList } from "./dom"
 import { h } from "./web"
@@ -10,7 +11,7 @@ interface MatchContextValue {
 
 const MatchContext = createContext<MatchContextValue>()
 
-export function noconditional<T>(comp: Component<T>): Component<T> {
+export function noconditional<T>(comp: NoConditionalComponent<T>): NoConditionalComponent<T> {
   if (!comp.metadata) comp.metadata = {} as ComponentMetadata
   comp.metadata.noconditional = true
   return comp
@@ -53,7 +54,7 @@ export const Portal: Component<{ mount: Element }> = ({ mount = document.body },
   return []
 }
 
-export const Match: Component<{}> = noconditional(({ when }, children) => {
+export const Match: NoConditionalComponent<{ when: any }> = noconditional(({ when }, children) => {
   const value: MatchContextValue = { when, matched: false }
 
   if (isReactor(when)) when.subscribe(() => {
@@ -63,24 +64,29 @@ export const Match: Component<{}> = noconditional(({ when }, children) => {
   return h(MatchContext.Provider, { value }, children)
 })
 
-export const Case: Component<{ default?: false, test: any } | { default: true }> = noconditional((props, consequent) => {
+export const Case: NoConditionalComponent<CaseProps> = noconditional((props, consequent) => {
   const match = useContext(MatchContext)
 
   if (!match) {
     throw new Error("A <Case> has to be wrap into a <Match>")
   }
 
+  const isMatch = (v: any) => !match.matched &&
+    (props.default ||
+      (typeof props.test === "function" ? props.test(v) : props.test === v) ||
+      (props.tests?.length && props.tests.some((curr) => typeof curr === "function" ? curr(v) : curr === v)))
+
   const empty = ""
 
   if (!isReactor(match.when)) {
-    if ((props.default || match.when == props.test) && !match.matched) {
+    if (isMatch(match.when)) {
       match.matched = true
       return consequent
     }
     return empty
   }
 
-  return match.when.when((v) => (props.default || v === props.test) && !match.matched, () => {
+  return match.when.when((v) => isMatch(v), () => {
     match.matched = true
     return consequent
   }, empty)

@@ -1,4 +1,5 @@
-import { Component, Reactive, Reactor } from "../types/app"
+import { Reactive, Reactor } from "../types/app"
+import { NoConditionalComponent } from "../types/components"
 import { DefineCustomElementOption, HElement, Props } from "../types/web"
 import { createComputed, createReactor, isReactor } from "./app"
 import { COMPONENT_SYMBOL, ELEMENT_SYMBOL } from "./constantes"
@@ -10,7 +11,7 @@ import { unique } from "./utils"
 
 type CustomAttribute<T> = T & { ref?: HTMLElement }
 
-export function define<T>(name: string, component: Component<CustomAttribute<T>>, { reactiveAttributes, shadowed }: DefineCustomElementOption = {}) {
+export function define<T>(name: string, component: NoConditionalComponent<CustomAttribute<T>>, { reactiveAttributes, shadowed }: DefineCustomElementOption = {}) {
   class Component extends HTMLElement {
     private props: CustomAttribute<any> = {}
     #context: ComponentContext
@@ -102,7 +103,7 @@ export function children(callback: () => Array<JSX.Element>) {
   )
 }
 
-export function h(tag: Component | Function | string, props: Props | null, ...children: Array<JSX.Element>): HElement<HTMLElement> | (() => HElement<HTMLElement>) {
+export function h(tag: NoConditionalComponent | Function | string, props: Props | null, ...children: Array<JSX.Element>): HElement<HTMLElement> | (() => HElement<HTMLElement>) {
   if (!isDefined(props)) props = {}
 
   const fallback = toArray(props!["fallback"] ?? [new Text()])
@@ -166,7 +167,7 @@ export function h(tag: Component | Function | string, props: Props | null, ...ch
         if (typeof modifier === "object") option = { ...option, ...modifier }
       }
 
-      element.addEventListener(eventName, (e) => {
+      element.addEventListener(eventName, (e: Event) => {
         for (const modifierName of modifiers) {
           const modifier = modifiersMap.get(modifierName)
           if (modifier instanceof Function) modifier(e)
@@ -226,7 +227,7 @@ export function h(tag: Component | Function | string, props: Props | null, ...ch
 }
 
 function hComp(
-  component: Component,
+  component: NoConditionalComponent,
   props: Props | null,
   fallback: any,
   children: Array<JSX.Element>

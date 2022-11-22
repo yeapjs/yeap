@@ -1,3 +1,4 @@
+import { Component } from "./components"
 import "./jsx"
 
 export interface CreateComputedOption {
@@ -21,18 +22,6 @@ export interface AsyncReturn<T, E = any> extends AsyncComputedReturn<T, E> {
 export type TransitionReturn = [ReadOnlyReactor<boolean>, (callback: Function) => void]
 
 export type SubscribeHandler<T> = (prev: T, next: T) => void
-
-export interface ComponentMetadata {
-  noconditional: boolean
-}
-
-export type ComponentProps<T> = T & { fallback?: JSX.Element, when?: any | Reactor<any> }
-export interface Component<T = object, C extends Array<JSX.Element> = Array<JSX.Element>> {
-  (props: ComponentProps<T>, children: C): JSX.Element
-  metadata?: ComponentMetadata
-  attributeTypes?: Record<string, NumberConstructor | BooleanConstructor | BigIntConstructor | ((el: HTMLElement, value?: string | null) => void)>
-  defaultProps?: T
-}
 
 export interface Context<T> {
   id: symbol
