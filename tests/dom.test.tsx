@@ -1,5 +1,5 @@
 // @ts-ignore
-import React from "react"
+import type React from "react"
 import { describe, test, expect, vi, beforeEach } from "vitest"
 
 import {

@@ -63,7 +63,7 @@ export const Match: Component<{}> = noconditional(({ when }, children) => {
   return h(MatchContext.Provider, { value }, children)
 })
 
-export const Case: Component<{ default: false, test: any } | { default: true }> = noconditional((props, consequent) => {
+export const Case: Component<{ default?: false, test: any } | { default: true }> = noconditional((props, consequent) => {
   const match = useContext(MatchContext)
 
   if (!match) {

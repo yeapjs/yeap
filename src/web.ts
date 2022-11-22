@@ -270,7 +270,7 @@ function hComp(
         setCurrentContext(context.parent!)
         setContextParent(context.parent!)
 
-        return elements
+        return [elements]
       } else {
         if (!toMount) {
           unmount(context)

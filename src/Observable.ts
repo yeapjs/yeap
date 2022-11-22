@@ -43,7 +43,7 @@ export class DeepObservable<T>  {
     this.#proxy = new Proxy(() => this.value, {
       apply: (_, thisArg, argArray: [((v: T) => T) | T] | []) => {
         const value = this.value
-        if (DeepObservable.isObservable(value)) return value
+        if (DeepObservable.isObservable(value)) return value()
         if (value instanceof Function) {
           const [firstValue, recordedReactors] = record(() => value.apply(getValue(thisArg), argArray))
 

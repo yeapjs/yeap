@@ -91,7 +91,7 @@ export function createComputed<T, U>(reactorHandle: (this: Closer) => Reactive<T
       v.prev = NULL
     }
 
-    if (update) reactor(getValue(handle())!)
+    if (update) reactor(handle())
   })
   const unsubscribes = Array.from(dependencies).map((dep) => {
     const value: { prev: U | NULL, curr: U | NULL } = { prev: NULL, curr: NULL }
@@ -266,15 +266,15 @@ export function createPersistentReactor<T>(initialValue?: Reactive<T> | T) {
   return createPersistor(() => createReactor(initialValue))
 }
 export function createReactor<T>(initialValue?: Reactive<T> | (() => T) | T): Reactor<T> {
-  if (initialValue instanceof Function) initialValue = initialValue()
+  if (initialValue instanceof Function && !isReactor(initialValue)) initialValue = initialValue()
 
-  return new DeepObservable(getValue(initialValue)) as any
+  return new DeepObservable(initialValue) as any
 }
 
 export function createRef<T>(initialValue?: Reactive<T> | (() => T) | T): Reactor<T> {
-  if (initialValue instanceof Function) initialValue = initialValue()
+  if (initialValue instanceof Function && !isReactor(initialValue)) initialValue = initialValue()
 
-  return new DeepObservable(getValue(initialValue), null, false, true) as any
+  return new DeepObservable(initialValue, null, false, true) as any
 }
 
 export function createTransition(): TransitionReturn {
