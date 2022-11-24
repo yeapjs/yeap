@@ -1,4 +1,5 @@
 import { Reactive, Reactor } from "../types/app"
+import { NoConditionalComponent } from "../types/components"
 import { ARRAY_METHOD, COMPONENT_SYMBOL, ELEMENT_SYMBOL, SVG_CAMELCASE_ATTR, SVG_TAGS } from "./constantes"
 import { DeepObservable } from "./Observable"
 import { Recorder } from "./Recorder"
@@ -43,7 +44,7 @@ export const directives = new Map<string, Function>([
 let current: ComponentContext
 let parent: ComponentContext
 
-export const GLOBAL_CONTEXT = createComponentContext()
+export const GLOBAL_CONTEXT = createComponentContext(null)
 GLOBAL_CONTEXT.yeapContext = { recordObserverValueMethod: false, recordObserverCompute: false }
 setContextParent(GLOBAL_CONTEXT)
 
@@ -57,10 +58,11 @@ export function kebabCase(str: string) {
     .toLowerCase()
 }
 
-export function createComponentContext(): ComponentContext {
+export function createComponentContext(component: NoConditionalComponent<any, any> | null): ComponentContext {
   const context: ComponentContext = {
     parent,
     condition: true,
+    component,
     htmlConditions: [],
     contexts: {},
     mounted: null,

@@ -1,4 +1,5 @@
 import { Context, Reactive } from "../types/app"
+import { NoConditionalComponent } from "../types/components"
 import { YeapConfig } from "../types/utils"
 import { COMPONENT_SYMBOL, ELEMENT_SYMBOL } from "./constantes"
 
@@ -11,6 +12,7 @@ export interface ComponentContext {
   element?: Element
   parent?: ComponentContext
   condition: Reactive<boolean> | boolean
+  component: NoConditionalComponent | null
   htmlConditions: Array<Reactive<boolean>>,
   contexts: Record<symbol, { context?: Context<any> | null, provider: ProvidedContext<any> | null }>
   mounted: Array<Function> | null

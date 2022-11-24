@@ -22,7 +22,7 @@ export function define<T>(name: string, component: NoConditionalComponent<Custom
 
     constructor() {
       super()
-      this.#context = createComponentContext()
+      this.#context = createComponentContext(component)
       this.#context.element = this
       this.#context.parent = undefined
       this.#parent = shadowed ? this.attachShadow({ mode: shadowed }) : this
@@ -240,7 +240,7 @@ function hComp(
   }
 
   const createComponent = unique(() => {
-    const context = createComponentContext()
+    const context = createComponentContext(component)
 
     context.props = properties
     if ("when" in props! && !component.metadata?.noconditional) context.condition = props["when"]
@@ -248,11 +248,11 @@ function hComp(
     const allConditions: Array<Reactive<boolean>> = []
     let currentContext = context
 
-    while (currentContext.parent) {
+    while (currentContext) {
       if (currentContext.condition === false) return fallback
       if (isReactor(currentContext.condition)) allConditions.push(currentContext.condition)
       allConditions.push(...currentContext.htmlConditions)
-      currentContext = currentContext.parent
+      currentContext = currentContext.parent!
     }
 
     let toMount = true
@@ -271,7 +271,7 @@ function hComp(
         setCurrentContext(context.parent!)
         setContextParent(context.parent!)
 
-        return [elements]
+        return isReactor(elements) ? [elements] : elements
       } else {
         if (!toMount) {
           unmount(context)

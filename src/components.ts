@@ -2,6 +2,7 @@ import { Component, ComponentMetadata, NoConditionalComponent } from "../types/c
 import { CaseProps } from "../types/components"
 import { createContext, createReactor, isReactor, onMounted, onUnmounted, useContext } from "./app"
 import { generateList } from "./dom"
+import { getCurrentContext } from "./helpers"
 import { h } from "./web"
 
 interface MatchContextValue {
@@ -10,6 +11,10 @@ interface MatchContextValue {
 }
 
 const MatchContext = createContext<MatchContextValue>()
+
+export function getComponentParent(): NoConditionalComponent | null {
+  return getCurrentContext().parent?.component ?? null
+}
 
 export function noconditional<T>(comp: NoConditionalComponent<T>): NoConditionalComponent<T> {
   if (!comp.metadata) comp.metadata = {} as ComponentMetadata
@@ -65,11 +70,13 @@ export const Match: NoConditionalComponent<{ when: any }> = noconditional(({ whe
 })
 
 export const Case: NoConditionalComponent<CaseProps> = noconditional((props, consequent) => {
-  const match = useContext(MatchContext)
-
-  if (!match) {
+  // TODO: Actually, I have a voluntary issue for the creation of a tree for the components
+  const parent = getComponentParent()
+  if (parent !== MatchContext.Provider) {
     throw new Error("A <Case> has to be wrap into a <Match>")
   }
+
+  const match = useContext(MatchContext)
 
   const isMatch = (v: any) => !match.matched &&
     (props.default ||
