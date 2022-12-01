@@ -157,3 +157,21 @@ export function equals(a: any, b: any) {
   }
   return true
 }
+
+export function diff(obj1: Record<string, [any, any]>, obj2: Record<string, [any, any]>): Record<string, { old: any, new: any, action: "add" | "del" | "update" }> | null {
+  const result: Record<any, any> = {}
+
+  if (Object.is(obj1, obj2)) return null
+  if (!obj2 || typeof obj2 !== 'object') return obj2;
+
+  [...Object.keys(obj1), ...Object.keys(obj2)].forEach((key) => {
+    if (key in result) return
+    if (obj2[key][0] !== obj1[key][0] || obj2[key][1] !== obj1[key][1]) result[key] = {
+      old: obj1[key],
+      new: obj2[key],
+      action: obj2[key] === undefined ? "del" : obj1[key] === undefined ? "add" : "update"
+    }
+  })
+
+  return result
+}
