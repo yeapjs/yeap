@@ -88,7 +88,7 @@ export class DeepObservable<T>  {
         if (DeepObservable.isObservable(value)) return value
 
         try {
-          if (!(p in this.value)) return value
+          if (!(p in (this.value as any))) return value
         } catch (e) {
           return undefined
         }
