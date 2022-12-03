@@ -1,6 +1,5 @@
 import { Reactive } from "../types/app"
 import { isReactor } from "./app"
-import { NULL } from "./constantes"
 import { batch, diff, isJSXElement, stringify, toArray } from "./helpers"
 import { ComponentCaller, ElementCaller } from "./types"
 
@@ -8,11 +7,11 @@ function generateTextNode(data: any): Element | Text {
   return document.createTextNode(stringify(data))
 }
 
-function generateSensibleDOM(reactor: Reactive<any>, parent: Element): Array<Element | Text> {
+function generateSensibleDOM(reactor: Reactive<any>, parent: Element, previousSibling?: Element | Text): Array<Element | Text> {
   let currentValues = toArray(reactor())
   let currentElements: Array<Element | Text> = generateDOM(currentValues, parent)
 
-  const reconciler = (_: any, newValues: any) => {
+  const reconciler = batch((_: any, newValues: any) => {
     const nextValues = toArray(newValues)
     const currentValuesObject = toArrayObject(currentValues)
     const nextValuesObject = toArrayObject(nextValues)
@@ -37,9 +36,9 @@ function generateSensibleDOM(reactor: Reactive<any>, parent: Element): Array<Ele
 
         if (i < prevIndex || prevIndex === -1) {
           if (i > 0) currentElements[i - 1].after(...newElements)
+          else if (previousSibling) previousSibling.after(...newElements)
           else parent.prepend(...newElements)
         } else {
-          console.log(i, prevSize)
           currentElements[i + prevSize - 2].after(...newElements)
         }
 
@@ -60,20 +59,20 @@ function generateSensibleDOM(reactor: Reactive<any>, parent: Element): Array<Ele
     }
 
     currentValues = nextValues
-  }
+  })
 
   reactor.subscribe(reconciler)
 
   return currentElements
 }
 
-export function generateDOM(jsxElements: Array<JSX.Element | ElementCaller | ComponentCaller>, parent: Element): Array<Element | Text> {
+export function generateDOM(jsxElements: Array<JSX.Element | ElementCaller | ComponentCaller>, parent: Element, previousSibling?: Element | Text): Array<Element | Text> {
   let elements: Array<Element | Text> = []
   for (const jsxElement of jsxElements) {
     if (jsxElement instanceof Element || jsxElement instanceof Text) elements = [...elements, jsxElement]
-    else if (jsxElement instanceof Array) elements = [...elements, ...generateDOM(jsxElement, parent)]
-    else if (isReactor(jsxElement)) elements = [...elements, ...generateSensibleDOM(jsxElement, parent)]
-    else if (isJSXElement(jsxElement)) elements = [...elements, ...generateDOM(toArray(jsxElement.apply(undefined)), parent)]
+    else if (jsxElement instanceof Array) elements = [...elements, ...generateDOM(jsxElement, parent, elements[elements.length - 1] ?? previousSibling)]
+    else if (isReactor(jsxElement)) elements = [...elements, ...generateSensibleDOM(jsxElement, parent, elements[elements.length - 1] ?? previousSibling)]
+    else if (isJSXElement(jsxElement)) elements = [...elements, ...generateDOM(toArray(jsxElement.apply(undefined)), parent, elements[elements.length - 1] ?? previousSibling)]
     else elements = [...elements, generateTextNode(jsxElement)]
   }
   return elements
