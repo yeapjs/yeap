@@ -1,7 +1,7 @@
 import { Component, ComponentMetadata, NoConditionalComponent } from "../types/components"
 import { CaseProps } from "../types/components"
 import { createContext, createReactor, isReactor, onMounted, onUnmounted, useContext } from "./app"
-import { generateList } from "./dom"
+import { generateDOM } from "./dom"
 import { getCurrentContext } from "./helpers"
 import { h } from "./web"
 
@@ -47,7 +47,7 @@ export function lazy(callback: (...args: Array<any>) => Promise<any>): Component
 }
 
 export const Portal: Component<{ mount: Element }> = ({ mount = document.body }, children) => {
-  const childs = generateList([], mount, children)
+  const childs = generateDOM(children, mount)
 
   onMounted(() => {
     mount.append(...childs)

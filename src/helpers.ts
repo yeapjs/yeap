@@ -166,10 +166,10 @@ export function diff(obj1: Record<string, [any, any]>, obj2: Record<string, [any
 
   [...Object.keys(obj1), ...Object.keys(obj2)].forEach((key) => {
     if (key in result) return
-    if (obj2[key][0] !== obj1[key][0] || obj2[key][1] !== obj1[key][1]) result[key] = {
-      old: obj1[key],
-      new: obj2[key],
-      action: obj2[key] === undefined ? "del" : obj1[key] === undefined ? "add" : "update"
+    if (obj2?.[key]?.[0] !== obj1?.[key]?.[0] || obj2?.[key]?.[1] !== obj1?.[key]?.[1]) result[key] = {
+      old: obj1?.[key],
+      new: obj2?.[key],
+      action: obj2?.[key] === undefined ? "del" : obj1?.[key] === undefined ? "add" : "update"
     }
   })
 

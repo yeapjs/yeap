@@ -3,7 +3,7 @@ import { NoConditionalComponent } from "../types/components"
 import { DefineCustomElementOption, HElement, Props } from "../types/web"
 import { createComputed, createReactor, isReactor } from "./app"
 import { COMPONENT_SYMBOL, ELEMENT_SYMBOL } from "./constantes"
-import { generateList } from "./dom"
+import { generateDOM } from "./dom"
 import { DirectiveError, ModifierError } from "./errors"
 import { createComponentContext, getValue, GLOBAL_CONTEXT, isDefined, isEvent, isSVGTag, setCurrentContext, setContextParent, stringify, toArray, getCurrentContext, isDirective, isSVGCamelCaseAttr, kebabCase, directives, modifiers as modifiersMap } from "./helpers"
 import { ComponentCaller, ComponentContext, ElementCaller } from "./types"
@@ -64,15 +64,14 @@ export function define<T>(name: string, component: NoConditionalComponent<Custom
 
       this.props.ref = this
 
-      this.#parent.append(...generateList(
-        [],
-        this.#parent as Element,
+      this.#parent.append(...generateDOM(
         toArray(
           component(
             this.props,
             Array.from(this.childNodes)
           )
-        )
+        ),
+        this.#parent as Element
       ))
       if (isDefined(this.#context.mounted)) this.#context.mounted!.forEach((handle) => handle())
       this.#context.mounted = null
@@ -96,10 +95,9 @@ export function define<T>(name: string, component: NoConditionalComponent<Custom
 }
 
 export function children(callback: () => Array<JSX.Element>) {
-  return () => generateList(
-    [],
-    document.createElement("div"),
-    callback()
+  return () => generateDOM(
+    callback(),
+    document.createElement("div")
   )
 }
 
@@ -213,7 +211,7 @@ export function h(tag: NoConditionalComponent | Function | string, props: Props 
   const createElement = unique(() => {
     const context = getCurrentContext()
     context.htmlConditions.push(display)
-    element.append(...generateList([], element, toArray(children)))
+    element.append(...generateDOM(children, element))
 
     if ("when" in props! && (isReactor(props["when"]) || props["when"] instanceof Function)) return display.when(element, fallback)
 
@@ -298,7 +296,7 @@ function unmount(context: ComponentContext) {
 }
 
 export function render(children: JSX.Element, container: HTMLElement | SVGElement) {
-  container.append(...generateList([], container, toArray(children)))
+  container.append(...generateDOM(toArray(children), container))
 
   if (isDefined(GLOBAL_CONTEXT.mounted)) GLOBAL_CONTEXT.mounted!.forEach((handle) => handle())
   GLOBAL_CONTEXT.mounted = null
