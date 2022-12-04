@@ -1,6 +1,10 @@
 import { Component } from "./components"
 import "./jsx"
 
+type CSSProperties = {
+  [K in keyof CSSStyleDeclaration]?: CSSStyleDeclaration[K] extends Function ? never : CSSStyleDeclaration[K]
+}
+
 export interface CreateComputedOption {
   observableInitialValue?: boolean
   unsubscription?: boolean
@@ -32,6 +36,10 @@ export interface Context<T> {
 
 export interface Closer {
   close(): void
+}
+
+export type StyleComponentSheet = /*Array<[Array<any> | string, CSSProperties]> |*/ {
+  [key: string]: CSSProperties
 }
 
 /// REACTIVE
@@ -243,6 +251,8 @@ export function onMounted(handle: Function): void
  * registers a function that will be called when the component is deleted 
  */
 export function onUnmounted(handle: Function): void
+
+export function setStyledComponent(style: StyleComponentSheet): void
 
 /**
  * retrieves the nearest context (provided before/parent)

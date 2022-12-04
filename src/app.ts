@@ -1,4 +1,4 @@
-import { AsyncComputedReturn, AsyncReturn, Closer, Context, CreateComputedOption, CreateEffectOption, Reactive, Reactor, ReadOnlyReactor, TransitionReturn } from "../types/app"
+import { AsyncComputedReturn, AsyncReturn, Closer, Context, CreateComputedOption, CreateEffectOption, Reactive, Reactor, ReadOnlyReactor, StyleComponentSheet, TransitionReturn } from "../types/app"
 import { NULL } from "./constantes"
 import { DeepObservable } from "./Observable"
 import { next } from "./runtimeLoop"
@@ -317,6 +317,12 @@ export function onUnmounted(handler: Function) {
   const context = getCurrentContext()
   if (!isDefined(context.unmounted)) context.unmounted = [handler]
   else context.unmounted!.push(handler)
+}
+
+export function setStyledComponent(style: StyleComponentSheet) {
+  const context = getCurrentContext()
+  context.id = crypto.randomUUID().slice(0, 8)
+  context.style = style
 }
 
 export function useContext<T>(context: Context<T>): T {

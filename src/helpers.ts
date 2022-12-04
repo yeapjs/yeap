@@ -45,6 +45,7 @@ let current: ComponentContext
 let parent: ComponentContext
 
 export const GLOBAL_CONTEXT = createComponentContext(null)
+GLOBAL_CONTEXT.element = document.head
 GLOBAL_CONTEXT.yeapContext = { recordObserverValueMethod: false, recordObserverCompute: false }
 setContextParent(GLOBAL_CONTEXT)
 
@@ -61,6 +62,7 @@ export function kebabCase(str: string) {
 export function createComponentContext(component: NoConditionalComponent<any, any> | null): ComponentContext {
   const context: ComponentContext = {
     parent,
+    topContext: parent?.topContext ?? parent,
     condition: true,
     component,
     htmlConditions: [],

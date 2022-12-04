@@ -25,6 +25,7 @@ export function define<T>(name: string, component: NoConditionalComponent<Custom
       this.#context = createComponentContext(component)
       this.#context.element = this
       this.#context.parent = undefined
+      this.#context.topContext = undefined
       this.#parent = shadowed ? this.attachShadow({ mode: shadowed }) : this
       this.#reactiveProps = {}
     }
@@ -64,13 +65,9 @@ export function define<T>(name: string, component: NoConditionalComponent<Custom
 
       this.props.ref = this
 
+      setContextParent(this.#context)
       this.#parent.append(...generateDOM(
-        toArray(
-          component(
-            this.props,
-            Array.from(this.childNodes)
-          )
-        ),
+        toArray(hComp(component, this.props, null, Array.from(this.childNodes))),
         this.#parent as Element
       ))
       if (isDefined(this.#context.mounted)) this.#context.mounted!.forEach((handle) => handle())
@@ -213,6 +210,8 @@ export function h(tag: NoConditionalComponent | Function | string, props: Props 
     context.htmlConditions.push(display)
     element.append(...generateDOM(children, element))
 
+    if (context.id) element.setAttribute(`data-${context.id}`, "")
+
     if ("when" in props! && (isReactor(props["when"]) || props["when"] instanceof Function)) return display.when(element, fallback)
 
     return display() ? element : fallback
@@ -277,6 +276,15 @@ function hComp(
         if (toMount) {
           mount(context)
           toMount = false
+        }
+
+        if (context.style) {
+          let style = document.createElement("style")
+          const dataId = `[data-${context.id}]`
+          for (const rule in context.style) {
+            style.innerHTML += `${rule.split(" ").map((rulePart) => rulePart + dataId).join(" ")}{${Object.entries(context.style[rule]).map(([property, value]) => `${property}: ${value}`).join(";")}}`
+          }
+          context.topContext?.element?.prepend(style)
         }
 
         setCurrentContext(context.parent!)
