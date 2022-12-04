@@ -255,6 +255,7 @@ function hComp(
     let toMount = true
     let dom: Array<Element | Text>
     let domFallback: Array<Element | Text>
+    let style: HTMLStyleElement
 
     const element = createComputed(() => {
       setCurrentContext(context)
@@ -263,6 +264,11 @@ function hComp(
           if (toMount) {
             mount(context)
             toMount = false
+
+            const counter = +style.getAttribute(`data-style-${context.id}`)!
+            style.setAttribute(`data-style-${context.id}`, (counter + 1).toString())
+
+            if (counter === 0) context.topContext?.element?.prepend(style)
           }
 
           return dom
@@ -273,18 +279,22 @@ function hComp(
         const elements = toArray(component(properties, children))
         dom = generateDOM(elements, parent, previousSibling)
 
-        if (toMount) {
-          mount(context)
-          toMount = false
-        }
+        mount(context)
+        toMount = false
 
-        if (context.style) {
-          let style = document.createElement("style")
+        const styleElement = document.querySelector<HTMLStyleElement>(`[data-style-${context.id}]`)
+        if (!styleElement && context.style) {
+          style = document.createElement("style")
+          style.setAttribute(`data-style-${context.id}`, "1")
           const dataId = `[data-${context.id}]`
           for (const rule in context.style) {
             style.innerHTML += `${rule.split(" ").map((rulePart) => rulePart + dataId).join(" ")}{${Object.entries(context.style[rule]).map(([property, value]) => `${property}: ${value}`).join(";")}}`
           }
           context.topContext?.element?.prepend(style)
+        } else if (styleElement) {
+          style = styleElement
+          const counter = +style.getAttribute(`data-style-${context.id}`)!
+          style.setAttribute(`data-style-${context.id}`, (counter + 1).toString())
         }
 
         setCurrentContext(context.parent!)
@@ -295,6 +305,10 @@ function hComp(
         if (!toMount) {
           unmount(context)
           toMount = true
+          const counter = +style.getAttribute(`data-style-${context.id}`)!
+
+          style.setAttribute(`data-style-${context.id}`, (+style.getAttribute(`data-style-${context.id}`)! - 1).toString())
+          if (counter === 1) style.remove()
         }
 
         if (!domFallback) domFallback = generateDOM(toArray(fallback), parent, previousSibling)

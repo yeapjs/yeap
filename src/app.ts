@@ -2,7 +2,7 @@ import { AsyncComputedReturn, AsyncReturn, Closer, Context, CreateComputedOption
 import { NULL } from "./constantes"
 import { DeepObservable } from "./Observable"
 import { next } from "./runtimeLoop"
-import { batch, cap, directives, getCurrentContext, isDefined, modifiers } from "./helpers"
+import { batch, cap, directives, getCurrentContext, hash, isDefined, modifiers } from "./helpers"
 import { record } from "./utils"
 import { ComponentContext } from "./types"
 
@@ -321,7 +321,7 @@ export function onUnmounted(handler: Function) {
 
 export function setStyledComponent(style: StyleComponentSheet) {
   const context = getCurrentContext()
-  context.id = crypto.randomUUID().slice(0, 8)
+  context.id = hash(context.component?.name ?? "")
   context.style = style
 }
 

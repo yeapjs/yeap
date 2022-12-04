@@ -176,3 +176,9 @@ export function diff(obj1: Record<string, [any, any]>, obj2: Record<string, [any
 
   return result
 }
+
+export function hash(str: string): string {
+  return str.split("").map((char) => {
+    return char.charCodeAt(0)
+  }).reduce((a, b) => a * b).toString(16).slice(0, 8)
+}
