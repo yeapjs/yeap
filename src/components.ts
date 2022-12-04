@@ -70,7 +70,6 @@ export const Match: NoConditionalComponent<{ when: any }> = noconditional(({ whe
 })
 
 export const Case: NoConditionalComponent<CaseProps> = noconditional((props, consequent) => {
-  // TODO: Actually, I have a voluntary issue for the creation of a tree for the components
   const parent = getComponentParent()
   if (parent !== MatchContext.Provider) {
     throw new Error("A <Case> has to be wrap into a <Match>")

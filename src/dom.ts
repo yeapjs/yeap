@@ -74,7 +74,7 @@ export function generateDOM(jsxElements: Array<JSX.Element | ElementCaller | Com
     if (jsxElement instanceof Element || jsxElement instanceof Text) elements = [...elements, jsxElement]
     else if (jsxElement instanceof Array) elements = [...elements, ...generateDOM(jsxElement, parent, elements[elements.length - 1] ?? previousSibling)]
     else if (isReactor(jsxElement)) elements = [...elements, ...generateSensibleDOM(jsxElement, parent, elements[elements.length - 1] ?? previousSibling)]
-    else if (isJSXElement(jsxElement)) elements = [...elements, ...generateDOM(toArray(jsxElement.apply(undefined)), parent, elements[elements.length - 1] ?? previousSibling)]
+    else if (isJSXElement(jsxElement)) elements = [...elements, ...generateDOM(toArray(jsxElement.apply(undefined, [parent, elements[elements.length - 1] ?? previousSibling])), parent, elements[elements.length - 1] ?? previousSibling)]
     else elements = [...elements, generateTextNode(jsxElement)]
   }
   return elements

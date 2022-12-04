@@ -237,7 +237,7 @@ function hComp(
     ...component.metadata
   }
 
-  const createComponent = unique(() => {
+  const createComponent = unique((parent: Element, previousSibling?: Element | Text) => {
     const context = createComponentContext(component)
 
     context.props = properties
@@ -254,28 +254,43 @@ function hComp(
     }
 
     let toMount = true
+    let dom: Array<Element | Text>
+    let domFallback: Array<Element | Text>
 
     const element = createComputed(() => {
       setCurrentContext(context)
       if (!allConditions.some((reactive) => !reactive())) {
+        if (dom) {
+          if (toMount) {
+            mount(context)
+            toMount = false
+          }
+
+          return dom
+        }
+
         setContextParent(context)
         context.hookIndex = 0
-        const elements = component(properties, children)
+        const elements = toArray(component(properties, children))
+        dom = generateDOM(elements, parent, previousSibling)
 
         if (toMount) {
           mount(context)
           toMount = false
         }
+
         setCurrentContext(context.parent!)
         setContextParent(context.parent!)
 
-        return isReactor(elements) ? [elements] : elements
+        return dom
       } else {
         if (!toMount) {
           unmount(context)
           toMount = true
         }
-        return fallback
+
+        if (!domFallback) domFallback = generateDOM(toArray(fallback), parent, previousSibling)
+        return domFallback
       }
     }, { unsubscription: false }, ...allConditions)
 
