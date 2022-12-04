@@ -70,7 +70,7 @@ export interface ReadOnlyReactorMethod<T> {
   /**
    * observe when the reactor is updated
    */
-  subscribe(handler: SubscribeHandler<T>): () => void
+  subscribe(handler: SubscribeHandler<T>, id?: any): () => void
   /**
    * takes a function and returns the result, used as createComputed but only for the current reactor
    */

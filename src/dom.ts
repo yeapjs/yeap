@@ -1,5 +1,6 @@
 import { Reactive } from "../types/app"
 import { isReactor } from "./app"
+import { SEND_EVENT_SYMBOL } from "./constantes"
 import { batch, diff, isJSXElement, stringify, toArray } from "./helpers"
 import { ComponentCaller, ElementCaller } from "./types"
 
@@ -30,6 +31,7 @@ function generateSensibleDOM(reactor: Reactive<any>, parent: Element, previousSi
 
       if (action === "del") {
         currentElements[i].remove()
+        if (isReactor(currentValues[i])) currentValues[i][SEND_EVENT_SYMBOL]("delete_dom")
         delete currentElements[i]
       } else if (action === "add") {
         const newElements = generateDOM(values, parent)
@@ -61,7 +63,7 @@ function generateSensibleDOM(reactor: Reactive<any>, parent: Element, previousSi
     currentValues = nextValues
   })
 
-  reactor.subscribe(reconciler)
+  reactor.subscribe(reconciler, "dom_reconciler")
 
   return currentElements
 }
@@ -81,7 +83,7 @@ export function generateDOM(jsxElements: Array<JSX.Element | ElementCaller | Com
 function toArrayObject(obj: any) {
   const result: Record<any, any> = {}
   for (const i in obj) {
-    const key = obj[i]?.key ?? i
+    const key = !isReactor(obj[i]) && isJSXElement(obj[i]) ? obj[i]?.key ?? i : i
     result[key] = [+i, obj[i]]
   }
   return result

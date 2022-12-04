@@ -1,8 +1,10 @@
 import { Reactive, ReactorMetaData, ReadOnlyReactor, SubscribeHandler } from "../types/app"
 import { createComputed } from "./app"
-import { FORCE_SYMBOL, OBSERVABLE_SYMBOL, READONLY_OBSERVABLE_SYMBOL } from "./constantes"
+import { FORCE_SYMBOL, OBSERVABLE_SYMBOL, READONLY_OBSERVABLE_SYMBOL, SEND_EVENT_SYMBOL } from "./constantes"
 import { getValue, GLOBAL_CONTEXT, isArrayMethod, isDefined, isJSXElement, recordReactor } from "./helpers"
 import { record } from "./utils";
+
+type SubscribeHandlers<T> = ((prev: T, next: T) => void) | [(prev: T, next: T) => void, any]
 
 export class DeepObservable<T>  {
   [OBSERVABLE_SYMBOL] = true;
@@ -15,10 +17,16 @@ export class DeepObservable<T>  {
     return this.#freeze
   }
 
+  [SEND_EVENT_SYMBOL](event: string) {
+    if (event === "delete_dom")
+      this.#handlers = this.#handlers.filter((callback) => (Array.isArray(callback) ? callback[1] !== "dom_reconciler" : true))
+    else if (event === "delete") this.#handlers = []
+  }
+
   #proxy: Reactive<T>
   #freeze: boolean
   #once: boolean
-  #handlers: Array<SubscribeHandler<T>> = []
+  #handlers: Array<SubscribeHandlers<T>> = []
   #dependencies: Set<Reactive<any>> = new Set()
   constructor(public value: T, parent?: DeepObservable<any> | null, freeze = false, once = false) {
     this.#freeze = freeze
@@ -32,6 +40,7 @@ export class DeepObservable<T>  {
     this.subscribe = this.subscribe.bind(this)
     this.metadata = this.metadata.bind(this)
     this.when = this.when.bind(this)
+    this[SEND_EVENT_SYMBOL] = this[SEND_EVENT_SYMBOL].bind(this)
 
     this.and = this.and.bind(this)
     this.or = this.or.bind(this)
@@ -125,6 +134,7 @@ export class DeepObservable<T>  {
       },
       deleteProperty: (_, p) => {
         if (delete (this.value as any)?.[p]) {
+          properties[p][SEND_EVENT_SYMBOL]("delete")
           delete properties[p]
           return true
         }
@@ -135,15 +145,19 @@ export class DeepObservable<T>  {
     return this.#proxy as any
   }
 
-  subscribe(handler: SubscribeHandler<T>) {
-    this.#handlers.push(handler)
+  subscribe(handler: SubscribeHandler<T>, id?: any) {
+    if (id) this.#handlers.push([handler, id])
+    else this.#handlers.push(handler)
     return () => {
-      this.#handlers = this.#handlers.filter((callback) => callback !== handler)
+      this.#handlers = this.#handlers.filter((callback) => (Array.isArray(callback) ? callback[0] : callback) !== handler)
     }
   }
 
   call(prev: T, next: T) {
-    this.#handlers.forEach((handle) => handle(prev, next))
+    this.#handlers.forEach((handle) => {
+      if (Array.isArray(handle)) handle[0](prev, next)
+      else handle(prev, next)
+    })
   }
 
   copy() {

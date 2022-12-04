@@ -3,6 +3,7 @@ export const ELEMENT_SYMBOL = Symbol("element")
 export const FORCE_SYMBOL = Symbol("forcedToSetValue")
 export const OBSERVABLE_SYMBOL = Symbol("observable")
 export const READONLY_OBSERVABLE_SYMBOL = Symbol("readOnlyObservable")
+export const SEND_EVENT_SYMBOL = Symbol("sendEvent")
 export const NULL = Symbol("null")
 export type NULL = typeof NULL
 
