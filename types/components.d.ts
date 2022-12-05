@@ -1,5 +1,18 @@
 import { Reactor } from "./app"
+import { Props } from "./web"
 
+type Child = {
+  isComponent: false
+  element: any
+} | {
+  key: any
+  props: Props
+  children: Array<JSX.Element>
+  isComponent: true
+  component: NoConditionalComponent
+  element: any
+}
+type Children = Array<Child>
 export interface ComponentMetadata {
   noconditional: boolean
 }
@@ -25,6 +38,11 @@ export const Fragment: Component<{}>
 export function noconditional<T>(comp: Component<T>): Component<T>
 
 export function lazy<T>(callback: (props: ComponentProps<T>, children: Array<JSX.Element>) => Promise<any>): Component<T & { fallback: JSX.Element }>
+
+/**
+ * transforms a array of jsx element into a list of info elements
+ */
+export function children(callback: () => Array<JSX.Element>): Children
 
 export const Portal: Component<{ mount: Element }>
 

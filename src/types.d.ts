@@ -1,5 +1,5 @@
 import { Context, CSSProperties, Reactive } from "../types/app"
-import { NoConditionalComponent } from "../types/components"
+import { ComponentMetadata, NoConditionalComponent } from "../types/components"
 import { YeapConfig } from "../types/utils"
 import { COMPONENT_SYMBOL, ELEMENT_SYMBOL } from "./constantes"
 
@@ -28,6 +28,9 @@ export interface ComponentContext {
 
 export type ComponentCaller = Function & {
   key: any
+  props: any,
+  component: NoConditionalComponent,
+  children: Array<JSX.Element>,
   [COMPONENT_SYMBOL]: true
 }
 export type ElementCaller = Function & {

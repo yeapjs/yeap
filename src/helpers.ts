@@ -91,6 +91,10 @@ export function getCurrentContext(): ComponentContext {
   return current
 }
 
+export function isComponent(arg: any): arg is ComponentCaller {
+  return !!arg?.[COMPONENT_SYMBOL]
+}
+
 export function isJSXElement(arg: any): arg is ElementCaller | ComponentCaller {
   return !!arg?.[ELEMENT_SYMBOL] || !!arg?.[COMPONENT_SYMBOL]
 }

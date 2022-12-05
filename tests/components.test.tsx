@@ -3,7 +3,7 @@ import type React from "react"
 
 import { test, expect } from "vitest"
 import { createReactor } from "../src/app"
-import { Match, Case, Fragment, Portal } from "../src/components"
+import { Match, Case, Fragment, Portal, children } from "../src/components"
 import { next } from "../src/runtimeLoop"
 import { h, render } from "../src/web"
 
@@ -110,4 +110,41 @@ test("Portal reactive", async () => {
 
   expect(body.innerHTML).toBe("")
   expect(body2.innerHTML).toBe("")
+})
+
+test("children manipulation", () => {
+  function App(_: any, children) {
+    return ""
+  }
+
+  const list = [<App a="" />]
+  const listInfo = children(() => list)
+  expect(listInfo).toBeInstanceOf(Array)
+  expect(listInfo[0]).toStrictEqual({
+    children: [],
+    component: App,
+    element: list[0],
+    isComponent: true,
+    key: undefined,
+    props: {
+      a: "",
+    },
+  })
+
+  const p = <p>Hello</p>
+  const list2 = [<App a="">{p}</App>]
+  const list2Info = children(() => list2)
+  expect(list2Info).toBeInstanceOf(Array)
+  expect(list2Info).toStrictEqual([
+    {
+      isComponent: true,
+      children: [p],
+      component: App,
+      element: list2[0],
+      key: undefined,
+      props: {
+        a: "",
+      },
+    },
+  ])
 })

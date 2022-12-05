@@ -1,8 +1,8 @@
-import { Component, ComponentMetadata, NoConditionalComponent } from "../types/components"
+import { Children, Component, ComponentMetadata, NoConditionalComponent } from "../types/components"
 import { CaseProps } from "../types/components"
-import { createContext, createReactor, isReactor, onMounted, onUnmounted, useContext } from "./app"
+import { createContext, createReactor, isReactor, useContext } from "./app"
 import { generateDOM } from "./dom"
-import { getCurrentContext } from "./helpers"
+import { getCurrentContext, isComponent } from "./helpers"
 import { h } from "./web"
 
 interface MatchContextValue {
@@ -14,6 +14,22 @@ const MatchContext = createContext<MatchContextValue>()
 
 export function getComponentParent(): NoConditionalComponent | null {
   return getCurrentContext().parent?.component ?? null
+}
+
+export function children(callback: () => Array<any>): Children {
+  return callback().map((element) =>
+    isComponent(element) ? {
+      isComponent: true,
+      key: element.key,
+      props: element.props,
+      component: element.component,
+      children: element.children,
+      element
+    } : {
+      isComponent: false,
+      element
+    }
+  )
 }
 
 export function noconditional<T>(comp: NoConditionalComponent<T>): NoConditionalComponent<T> {

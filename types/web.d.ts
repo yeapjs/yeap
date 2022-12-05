@@ -15,11 +15,6 @@ interface DefineCustomElementOption {
 export function define<T>(name: string, component: NoConditionalComponent<T & { ref: Element }>, options?: DefineCustomElementOption): () => HTMLElement
 
 /**
- * transforms a array into a list of elements
- */
-export function children(callback: () => Array<JSX.Element>): Array<Element | Text>
-
-/**
  * JSX to HTML element
  */
 export function h<T extends keyof JSX.IntrinsicElements, P = JSX.IntrinsicElements[T]>(tag: T, props: JSX.IntrinsicElements[T] | null, ...children: Array<JSX.Element>): HElement<

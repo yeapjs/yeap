@@ -91,13 +91,6 @@ export function define<T>(name: string, component: NoConditionalComponent<Custom
   return () => new Component()
 }
 
-export function children(callback: () => Array<JSX.Element>) {
-  return () => generateDOM(
-    callback(),
-    document.createElement("div")
-  )
-}
-
 export function h(tag: NoConditionalComponent | Function | string, props: Props | null, ...children: Array<JSX.Element>): HElement<HTMLElement> | (() => HElement<HTMLElement>) {
   if (!isDefined(props)) props = {}
 
@@ -326,6 +319,9 @@ function hComp(
 
   createComponent.key = props!["key"]
   createComponent[COMPONENT_SYMBOL] = true
+  createComponent.props = props
+  createComponent.component = component
+  createComponent.children = children
 
   return createComponent as any
 }
