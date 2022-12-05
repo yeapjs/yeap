@@ -86,3 +86,28 @@ test("Portal", () => {
   expect(body.innerHTML).toBe("")
   expect(body2.innerHTML).toBe("<p>1</p>")
 })
+
+test("Portal reactive", async () => {
+  const body = document.createElement("body")
+  const body2 = document.createElement("body")
+  const reactor = createReactor(true)
+
+  function App() {
+    return (
+      <Portal mount={body2} when={reactor}>
+        <p>1</p>
+      </Portal>
+    )
+  }
+
+  render(<App />, body)
+
+  expect(body.innerHTML).toBe("")
+  expect(body2.innerHTML).toBe("<p>1</p>")
+
+  reactor(false)
+  await next()
+
+  expect(body.innerHTML).toBe("")
+  expect(body2.innerHTML).toBe("")
+})

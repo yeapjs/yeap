@@ -46,18 +46,11 @@ export function lazy(callback: (...args: Array<any>) => Promise<any>): Component
   }
 }
 
-export const Portal: Component<{ mount: Element }> = ({ mount = document.body }, children) => {
-  const childs = generateDOM(children, mount)
-
-  onMounted(() => {
-    mount.append(...childs)
-  })
-  onUnmounted(() => {
-    childs.forEach((child) => child.remove())
-  })
+export const Portal: Component<{ mount: Element }> = noconditional(({ mount = document.body, when, fallback }, children) => {
+  mount.append(...generateDOM([h(Fragment, { when, fallback }, children)], mount))
 
   return []
-}
+})
 
 export const Match: NoConditionalComponent<{ when: any }> = noconditional(({ when }, children) => {
   const value: MatchContextValue = { when, matched: false }
