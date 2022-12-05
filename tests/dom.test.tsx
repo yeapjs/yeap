@@ -9,6 +9,7 @@ import {
   createRef,
   onMounted,
   onUnmounted,
+  setStyledComponent,
 } from "../src/app"
 import { DirectiveError, ModifierError } from "../src/errors"
 import { next } from "../src/runtimeLoop"
@@ -205,7 +206,7 @@ describe("dom/jsx", () => {
     })
   })
 
-  let body
+  let body: HTMLBodyElement
   beforeEach(() => {
     body = document.createElement("body")
   })
@@ -238,5 +239,25 @@ describe("dom/jsx", () => {
     await next()
     expect(body.querySelector("p")).toBeNull()
     expect(body.querySelector("span")).not.toBeNull()
+  })
+
+  test("style", () => {
+    function App() {
+      setStyledComponent({
+        div: {
+          color: "red",
+        },
+      })
+
+      return <div>Hello</div>
+    }
+
+    render(<App />, body)
+
+    expect(document.head.querySelector("style")).not.toBeNull()
+    expect(
+      document.head.querySelector("style")!.hasAttribute("data-style-c7100")
+    ).toBeTruthy()
+    expect(body.querySelector("div")!.hasAttribute("data-c7100")).toBeTruthy()
   })
 })
