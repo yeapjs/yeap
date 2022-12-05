@@ -265,10 +265,12 @@ function hComp(
             mount(context)
             toMount = false
 
-            const counter = +style.getAttribute(`data-style-${context.id}`)!
-            style.setAttribute(`data-style-${context.id}`, (counter + 1).toString())
+            if (style) {
+              const counter = +style.getAttribute(`data-style-${context.id}`)!
+              style.setAttribute(`data-style-${context.id}`, (counter + 1).toString())
 
-            if (counter === 0) context.topContext?.element?.prepend(style)
+              if (counter === 0) context.topContext?.element?.prepend(style)
+            }
           }
 
           return dom
@@ -282,7 +284,7 @@ function hComp(
         mount(context)
         toMount = false
 
-        const styleElement = document.querySelector<HTMLStyleElement>(`[data-style-${context.id}]`)
+        const styleElement = context.topContext?.element?.querySelector<HTMLStyleElement>(`[data-style-${context.id}]`)
         if (!styleElement && context.style) {
           style = document.createElement("style")
           style.setAttribute(`data-style-${context.id}`, "1")
@@ -305,10 +307,13 @@ function hComp(
         if (!toMount) {
           unmount(context)
           toMount = true
-          const counter = +style.getAttribute(`data-style-${context.id}`)!
 
-          style.setAttribute(`data-style-${context.id}`, (+style.getAttribute(`data-style-${context.id}`)! - 1).toString())
-          if (counter === 1) style.remove()
+          if (style) {
+            const counter = +style.getAttribute(`data-style-${context.id}`)!
+
+            style.setAttribute(`data-style-${context.id}`, (+style.getAttribute(`data-style-${context.id}`)! - 1).toString())
+            if (counter === 1) style.remove()
+          }
         }
 
         if (!domFallback) domFallback = generateDOM(toArray(fallback), parent, previousSibling)
