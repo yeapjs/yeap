@@ -1,6 +1,6 @@
 import { Reactive, Reactor } from "../types/app"
-import { NoConditionalComponent } from "../types/components"
-import { ARRAY_METHOD, COMPONENT_SYMBOL, ELEMENT_SYMBOL, SVG_CAMELCASE_ATTR, SVG_TAGS } from "./constantes"
+import { Child, NoConditionalComponent } from "../types/components"
+import { ARRAY_METHOD, COMPONENT_SYMBOL, ELEMENT_SYMBOL, MANIPULABLE_SYMBOL, SVG_CAMELCASE_ATTR, SVG_TAGS } from "./constantes"
 import { DeepObservable } from "./Observable"
 import { Recorder } from "./Recorder"
 import { cancelRuntimeCallback, requestRuntimeCallback } from "./runtimeLoop"
@@ -89,6 +89,10 @@ export function setContextParent(context: ComponentContext) {
 
 export function getCurrentContext(): ComponentContext {
   return current
+}
+
+export function isManipulable(arg: any): arg is Child {
+  return !!arg?.[MANIPULABLE_SYMBOL]
 }
 
 export function isComponent(arg: any): arg is ComponentCaller {

@@ -1,5 +1,5 @@
 import { Reactive, Reactor, ToReadOnlyReactorObject } from "./app"
-import { NoConditionalComponent } from "./components"
+import { Child, Children, NoConditionalComponent } from "./components"
 
 declare global {
   // JSX type definitions for Yeap
@@ -9,6 +9,8 @@ declare global {
       | SVGElement
       | Text
       | ChildNode
+      | Children
+      | Child
       | Array<Element>
       | NoConditionalComponent<any>
       | Function

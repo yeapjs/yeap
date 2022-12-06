@@ -1,6 +1,7 @@
 import { Children, Component, ComponentMetadata, NoConditionalComponent } from "../types/components"
 import { CaseProps } from "../types/components"
 import { createContext, createReactor, isReactor, useContext } from "./app"
+import { MANIPULABLE_SYMBOL } from "./constantes"
 import { generateDOM } from "./dom"
 import { getCurrentContext, isComponent } from "./helpers"
 import { h } from "./web"
@@ -19,6 +20,7 @@ export function getComponentParent(): NoConditionalComponent | null {
 export function children(callback: () => Array<any>): Children {
   return callback().map((element) =>
     isComponent(element) ? {
+      [MANIPULABLE_SYMBOL]: true,
       isComponent: true,
       key: element.key,
       props: element.props,
@@ -26,6 +28,7 @@ export function children(callback: () => Array<any>): Children {
       children: element.children,
       element
     } : {
+      [MANIPULABLE_SYMBOL]: true,
       isComponent: false,
       element
     }

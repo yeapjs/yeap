@@ -1,7 +1,7 @@
 // @ts-ignore it fix React not found error for the JSX
 import type React from "react"
 
-import { test, expect } from "vitest"
+import { test, expect, describe } from "vitest"
 import { createReactor } from "../src/app"
 import { Match, Case, Fragment, Portal, children } from "../src/components"
 import { next } from "../src/runtimeLoop"
@@ -112,39 +112,73 @@ test("Portal reactive", async () => {
   expect(body2.innerHTML).toBe("")
 })
 
-test("children manipulation", () => {
-  function App(_: any, children) {
-    return ""
-  }
+describe("children manipulation", () => {
+  test("get component infos", () => {
+    function App() {
+      return ""
+    }
 
-  const list = [<App a="" />]
-  const listInfo = children(() => list)
-  expect(listInfo).toBeInstanceOf(Array)
-  expect(listInfo[0]).toStrictEqual({
-    children: [],
-    component: App,
-    element: list[0],
-    isComponent: true,
-    key: undefined,
-    props: {
-      a: "",
-    },
+    const list = [<App a="" />]
+    const listInfo = children(() => list)
+    expect(listInfo).toBeInstanceOf(Array)
+    expect(listInfo).toMatchObject([
+      {
+        children: [],
+        component: App,
+        element: list[0],
+        isComponent: true,
+        key: undefined,
+        props: {
+          a: "",
+        },
+      },
+    ])
   })
 
-  const p = <p>Hello</p>
-  const list2 = [<App a="">{p}</App>]
-  const list2Info = children(() => list2)
-  expect(list2Info).toBeInstanceOf(Array)
-  expect(list2Info).toStrictEqual([
-    {
-      isComponent: true,
-      children: [p],
-      component: App,
-      element: list2[0],
-      key: undefined,
-      props: {
-        a: "",
+  test("try render component infos", () => {
+    const body = document.createElement("body")
+    function App() {
+      return <p>Hello</p>
+    }
+
+    const list = [<App />]
+    const listInfo = children(() => list)
+    expect(listInfo).toBeInstanceOf(Array)
+    expect(listInfo).toMatchObject([
+      {
+        isComponent: true,
+        children: [],
+        component: App,
+        element: list[0],
+        key: undefined,
+        props: {},
       },
-    },
-  ])
+    ])
+
+    render(listInfo, body)
+    expect(body.innerHTML).toBe("<p>Hello</p>")
+  })
+
+  test("get components children", () => {
+    function App() {
+      return ""
+    }
+
+    const p = <p>Hello</p>
+    const list = [<App a="">{p}</App>]
+    const listInfo = children(() => list)
+    expect(listInfo).toBeInstanceOf(Array)
+    expect(listInfo).toMatchObject([
+      {
+        isComponent: true,
+        children: [p],
+        component: App,
+        element: list[0],
+        key: undefined,
+        props: {
+          a: "",
+        },
+      },
+    ])
+  })
 })
