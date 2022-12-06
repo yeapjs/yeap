@@ -1,5 +1,5 @@
 import { Reactive, Reactor, ToReadOnlyReactorObject } from "./app"
-import { Child, Children, NoConditionalComponent } from "./components"
+import { Children, NoConditionalComponent } from "./components"
 
 declare global {
   // JSX type definitions for Yeap
@@ -10,7 +10,7 @@ declare global {
       | Text
       | ChildNode
       | Children
-      | Child
+      | Children[number]
       | Array<Element>
       | NoConditionalComponent<any>
       | Function

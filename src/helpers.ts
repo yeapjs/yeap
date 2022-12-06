@@ -1,10 +1,10 @@
 import { Reactive, Reactor } from "../types/app"
-import { Child, NoConditionalComponent } from "../types/components"
+import { NoConditionalComponent } from "../types/components"
 import { ARRAY_METHOD, COMPONENT_SYMBOL, ELEMENT_SYMBOL, MANIPULABLE_SYMBOL, SVG_CAMELCASE_ATTR, SVG_TAGS } from "./constantes"
 import { DeepObservable } from "./Observable"
 import { Recorder } from "./Recorder"
 import { cancelRuntimeCallback, requestRuntimeCallback } from "./runtimeLoop"
-import { ComponentContext, ComponentCaller, ElementCaller } from "./types"
+import { ComponentContext, ComponentCaller, ElementCaller, Children } from "./types"
 
 function makeMap(str: string): (key: string) => boolean {
   const map: Record<string, boolean> = {}
@@ -91,8 +91,12 @@ export function getCurrentContext(): ComponentContext {
   return current
 }
 
-export function isManipulable(arg: any): arg is Child {
+export function isManipulable(arg: any): arg is Children[number] {
   return !!arg?.[MANIPULABLE_SYMBOL]
+}
+
+export function isElement(arg: any): arg is ElementCaller {
+  return !!arg?.[ELEMENT_SYMBOL]
 }
 
 export function isComponent(arg: any): arg is ComponentCaller {

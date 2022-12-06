@@ -1,7 +1,7 @@
 import { Context, CSSProperties, Reactive } from "../types/app"
-import { ComponentMetadata, NoConditionalComponent } from "../types/components"
+import { ComponentInfos, DataInfos, ElementInfos, NoConditionalComponent } from "../types/components"
 import { YeapConfig } from "../types/utils"
-import { COMPONENT_SYMBOL, ELEMENT_SYMBOL } from "./constantes"
+import { COMPONENT_SYMBOL, ELEMENT_SYMBOL, MANIPULABLE_SYMBOL } from "./constantes"
 
 interface ProvidedContext<T> {
   id: symbol
@@ -37,3 +37,4 @@ export type ElementCaller = Function & {
   key: any
   [ELEMENT_SYMBOL]: true
 }
+export type Children = Array<{ [MANIPULABLE_SYMBOL]: true } & (ComponentInfos | DataInfos | ElementInfos)>

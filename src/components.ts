@@ -1,9 +1,10 @@
-import { Children, Component, ComponentMetadata, NoConditionalComponent } from "../types/components"
+import { Component, ComponentMetadata, NoConditionalComponent } from "../types/components"
 import { CaseProps } from "../types/components"
 import { createContext, createReactor, isReactor, useContext } from "./app"
 import { MANIPULABLE_SYMBOL } from "./constantes"
 import { generateDOM } from "./dom"
-import { getCurrentContext, isComponent } from "./helpers"
+import { getCurrentContext, isComponent, isElement } from "./helpers"
+import { Children } from "./types"
 import { h } from "./web"
 
 interface MatchContextValue {
@@ -17,22 +18,34 @@ export function getComponentParent(): NoConditionalComponent | null {
   return getCurrentContext().parent?.component ?? null
 }
 
-export function children(callback: () => Array<any>): Children {
-  return callback().map((element) =>
-    isComponent(element) ? {
+export function getChildrenInfos(callback: () => Array<any>): Children {
+  let childrenInfos: Children = []
+  for (const child of callback()) {
+    if (isComponent(child)) childrenInfos = [...childrenInfos, {
       [MANIPULABLE_SYMBOL]: true,
       isComponent: true,
-      key: element.key,
-      props: element.props,
-      component: element.component,
-      children: element.children,
-      element
-    } : {
+      isHTML: false,
+      key: child.key,
+      props: child.props,
+      component: child.component,
+      children: child.children,
+      element: child
+    }]
+    else if (isElement(child)) childrenInfos = [...childrenInfos, {
       [MANIPULABLE_SYMBOL]: true,
       isComponent: false,
-      element
-    }
-  )
+      isHTML: true,
+      element: child
+    }]
+    else if (Array.isArray(child)) childrenInfos = [...childrenInfos, ...getChildrenInfos(() => child)]
+    else childrenInfos = [...childrenInfos, {
+      [MANIPULABLE_SYMBOL]: true,
+      isComponent: false,
+      isHTML: false,
+      element: child
+    }]
+  }
+  return childrenInfos
 }
 
 export function noconditional<T>(comp: NoConditionalComponent<T>): NoConditionalComponent<T> {

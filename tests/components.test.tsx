@@ -3,7 +3,13 @@ import type React from "react"
 
 import { test, expect, describe } from "vitest"
 import { createReactor } from "../src/app"
-import { Match, Case, Fragment, Portal, children } from "../src/components"
+import {
+  Match,
+  Case,
+  Fragment,
+  Portal,
+  getChildrenInfos,
+} from "../src/components"
 import { next } from "../src/runtimeLoop"
 import { h, render } from "../src/web"
 
@@ -118,8 +124,8 @@ describe("children manipulation", () => {
       return ""
     }
 
-    const list = [<App a="" />]
-    const listInfo = children(() => list)
+    const list = [<App a="" />, <p>1</p>, [6]]
+    const listInfo = getChildrenInfos(() => list)
     expect(listInfo).toBeInstanceOf(Array)
     expect(listInfo).toMatchObject([
       {
@@ -127,10 +133,21 @@ describe("children manipulation", () => {
         component: App,
         element: list[0],
         isComponent: true,
+        isHTML: false,
         key: undefined,
         props: {
           a: "",
         },
+      },
+      {
+        element: list[1],
+        isComponent: false,
+        isHTML: true,
+      },
+      {
+        element: 6,
+        isComponent: false,
+        isHTML: false,
       },
     ])
   })
@@ -142,11 +159,12 @@ describe("children manipulation", () => {
     }
 
     const list = [<App />]
-    const listInfo = children(() => list)
+    const listInfo = getChildrenInfos(() => list)
     expect(listInfo).toBeInstanceOf(Array)
     expect(listInfo).toMatchObject([
       {
         isComponent: true,
+        isHTML: false,
         children: [],
         component: App,
         element: list[0],
@@ -166,11 +184,12 @@ describe("children manipulation", () => {
 
     const p = <p>Hello</p>
     const list = [<App a="">{p}</App>]
-    const listInfo = children(() => list)
+    const listInfo = getChildrenInfos(() => list)
     expect(listInfo).toBeInstanceOf(Array)
     expect(listInfo).toMatchObject([
       {
         isComponent: true,
+        isHTML: false,
         children: [p],
         component: App,
         element: list[0],

@@ -1,5 +1,4 @@
 import { Reactive } from "../types/app"
-import { Child } from "../types/components"
 import { isReactor } from "./app"
 import { SEND_EVENT_SYMBOL } from "./constantes"
 import { batch, diff, isJSXElement, isManipulable, stringify, toArray } from "./helpers"

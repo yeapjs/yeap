@@ -1,18 +1,29 @@
 import { Reactor } from "./app"
 import { Props } from "./web"
 
-type Child = {
-  isComponent: false
-  element: any
-} | {
+interface ComponentInfos {
   key: any
   props: Props
   children: Array<JSX.Element>
   isComponent: true
+  isHTML: false
   component: NoConditionalComponent
+  element: Function
+}
+
+interface ElementInfos {
+  isComponent: false
+  isHTML: true
+  element: Function
+}
+
+interface DataInfos {
+  isComponent: false
+  isHTML: false
   element: any
 }
-type Children = Array<Child>
+
+type Children = Array<ComponentInfos | DataInfos | ElementInfos>
 export interface ComponentMetadata {
   noconditional: boolean
 }
@@ -27,7 +38,7 @@ export interface NoConditionalComponent<T = any, C extends Array<JSX.Element> = 
 
 export type Component<T = object, C extends Array<JSX.Element> = Array<JSX.Element>> = NoConditionalComponent<ComponentProps<T>, C>
 
-export type CaseProps = { default?: false, test: any, tests?: Array<any> } | { default?: false, test?: any, tests: Array<any> } | { default: true }
+type CaseProps = { default?: false, test: any, tests?: Array<any> } | { default?: false, test?: any, tests: Array<any> } | { default: true }
 
 export function Dynamic<T>(props: ComponentProps<T & {
   component?: Component<T> | string | keyof JSX.IntrinsicElements
@@ -42,7 +53,7 @@ export function lazy<T>(callback: (props: ComponentProps<T>, children: Array<JSX
 /**
  * transforms a array of jsx element into a list of info elements
  */
-export function children(callback: () => Array<JSX.Element>): Children
+export function getChildrenInfos(callback: () => Array<JSX.Element>): Children
 
 export const Portal: Component<{ mount: Element }>
 
