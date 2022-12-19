@@ -243,11 +243,11 @@ describe("dom/jsx", () => {
 
   test("style", () => {
     function App() {
-      setStyledComponent({
-        div: {
-          color: "red",
-        },
-      })
+      setStyledComponent(`
+        div {
+          color: "red";
+        }
+      `)
 
       return <div>Hello</div>
     }

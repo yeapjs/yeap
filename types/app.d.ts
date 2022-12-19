@@ -38,9 +38,9 @@ export interface Closer {
   close(): void
 }
 
-export type StyleComponentSheet = /*Array<[Array<any> | string, CSSProperties]> |*/ {
+export type StyleComponentSheet = string | Array<string> /*Array<[Array<any> | string, CSSProperties]> | {
   [key: string]: CSSProperties
-}
+}*/
 
 /// REACTIVE
 interface ReactorMetaData<T> {
@@ -252,7 +252,9 @@ export function onMounted(handle: Function): void
  */
 export function onUnmounted(handle: Function): void
 
-export function setStyledComponent(style: StyleComponentSheet): void
+export function setStyledComponent(style: TemplateStringsArray, ...expression: Array<any>): void
+export function setStyledComponent(style: Exclude<StyleComponentSheet, Array<string>>): void
+export const css: typeof setStyledComponent
 
 /**
  * retrieves the nearest context (provided before/parent)

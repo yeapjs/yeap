@@ -1,10 +1,17 @@
+import { CssNode, generate, parse, Selector, walk } from "css-tree"
 import { Reactive, Reactor } from "../types/app"
 import { NoConditionalComponent } from "../types/components"
 import { ARRAY_METHOD, COMPONENT_SYMBOL, ELEMENT_SYMBOL, MANIPULABLE_SYMBOL, SVG_CAMELCASE_ATTR, SVG_TAGS } from "./constantes"
 import { DeepObservable } from "./Observable"
 import { Recorder } from "./Recorder"
 import { cancelRuntimeCallback, requestRuntimeCallback } from "./runtimeLoop"
-import { ComponentContext, ComponentCaller, ElementCaller, Children } from "./types"
+import { ComponentContext, ComponentCaller, ElementCaller, Children, CssTreeList } from "./types"
+
+function isPseudoSelector(item: CssNode) {
+  return (
+    item.type === "PseudoElementSelector" || item.type === "PseudoClassSelector"
+  )
+}
 
 function makeMap(str: string): (key: string) => boolean {
   const map: Record<string, boolean> = {}
@@ -193,4 +200,28 @@ export function hash(str: string): string {
   return str.split("").map((char) => {
     return char.charCodeAt(0)
   }).reduce((a, b) => a * b).toString(16).slice(0, 8)
+}
+
+export function addCSSHash(css: string, hash: string): string {
+  const ast = parse(css)
+  walk(ast, (node, item, list) => {
+    if (node.type === "Selector" || node.type === "Combinator") {
+      const attribute: CssNode = {
+        type: "AttributeSelector",
+        name: { type: "Identifier", name: `data-${hash}` },
+        matcher: null,
+        value: null,
+        flags: null,
+      }
+      const parent = ((node as Selector).children ?? list) as CssTreeList<CssNode>
+      let insertItem = node.type === "Combinator" ? item : parent.tail
+      while (!!insertItem?.prev && isPseudoSelector(insertItem.prev.data))
+        insertItem = insertItem.prev
+
+      if (!insertItem?.next) parent.appendData(attribute)
+      else parent.insertData(attribute, insertItem)
+    }
+  })
+
+  return generate(ast)
 }

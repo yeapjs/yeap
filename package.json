@@ -60,6 +60,7 @@
   },
   "homepage": "https://github.com/yeapjs/yeap#readme",
   "devDependencies": {
+    "@types/css-tree": "^2.0.0",
     "@vitest/coverage-c8": "^0.24.3",
     "happy-dom": "^7.6.6",
     "prettier": "^2.7.1",
@@ -67,5 +68,8 @@
     "typescript": "^4.8.4",
     "vite": "^3.2.4",
     "vitest": "^0.24.3"
+  },
+  "dependencies": {
+    "css-tree": "^2.3.1"
   }
 }

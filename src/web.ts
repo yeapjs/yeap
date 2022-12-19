@@ -5,7 +5,7 @@ import { createComputed, createReactor, isReactor } from "./app"
 import { COMPONENT_SYMBOL, ELEMENT_SYMBOL } from "./constantes"
 import { generateDOM } from "./dom"
 import { DirectiveError, ModifierError } from "./errors"
-import { createComponentContext, getValue, GLOBAL_CONTEXT, isDefined, isEvent, isSVGTag, setCurrentContext, setContextParent, stringify, toArray, getCurrentContext, isDirective, isSVGCamelCaseAttr, kebabCase, directives, modifiers as modifiersMap } from "./helpers"
+import { createComponentContext, getValue, GLOBAL_CONTEXT, isDefined, isEvent, isSVGTag, setCurrentContext, setContextParent, stringify, toArray, getCurrentContext, isDirective, isSVGCamelCaseAttr, kebabCase, directives, modifiers as modifiersMap, addCSSHash } from "./helpers"
 import { ComponentCaller, ComponentContext, ElementCaller } from "./types"
 import { unique } from "./utils"
 
@@ -281,10 +281,7 @@ function hComp(
         if (!styleElement && context.style) {
           style = document.createElement("style")
           style.setAttribute(`data-style-${context.id}`, "1")
-          const dataId = `[data-${context.id}]`
-          for (const rule in context.style) {
-            style.innerHTML += `${rule.split(" ").map((rulePart) => rulePart + dataId).join(" ")}{${Object.entries(context.style[rule]).map(([property, value]) => `${property}: ${value}`).join(";")}}`
-          }
+          style.innerHTML = addCSSHash(context.style, context.id!)
           context.topContext?.element?.prepend(style)
         } else if (styleElement) {
           style = styleElement

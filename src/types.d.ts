@@ -1,3 +1,4 @@
+import { List, ListItem } from "css-tree"
 import { Context, CSSProperties, Reactive } from "../types/app"
 import { ComponentInfos, DataInfos, ElementInfos, NoConditionalComponent } from "../types/components"
 import { YeapConfig } from "../types/utils"
@@ -10,7 +11,7 @@ interface ProvidedContext<T> {
 
 export interface ComponentContext {
   id?: string
-  style?: { [key: string]: CSSProperties }
+  style?: string
   element?: Element
   parent?: ComponentContext
   condition: Reactive<boolean> | boolean
@@ -38,3 +39,7 @@ export type ElementCaller = Function & {
   [ELEMENT_SYMBOL]: true
 }
 export type Children = Array<{ [MANIPULABLE_SYMBOL]: true } & (ComponentInfos | DataInfos | ElementInfos)>
+export interface CssTreeList<T> extends List<T> {
+  head: ListItem<T> | null,
+  tail: ListItem<T> | null,
+}
