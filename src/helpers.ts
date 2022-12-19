@@ -7,6 +7,12 @@ import { Recorder } from "./Recorder"
 import { cancelRuntimeCallback, requestRuntimeCallback } from "./runtimeLoop"
 import { ComponentContext, ComponentCaller, ElementCaller, Children, CssTreeList } from "./types"
 
+function hex(n: number) {
+  let ret = ((n < 0 ? 0x8 : 0) + ((n >> 28) & 0x7)).toString(16) + (n & 0xfffffff).toString(16)
+  while (ret.length < 8) ret = '0' + ret
+  return ret
+}
+
 function isPseudoSelector(item: CssNode) {
   return (
     item.type === "PseudoElementSelector" || item.type === "PseudoClassSelector"
@@ -197,9 +203,12 @@ export function diff(obj1: Record<string, [any, any]>, obj2: Record<string, [any
 }
 
 export function hash(str: string): string {
-  return str.split("").map((char) => {
-    return char.charCodeAt(0)
-  }).reduce((a, b) => a * b).toString(16).slice(0, 8)
+  let hash = 0
+  for (let i = 0; i < str.length; i++) {
+    hash = (hash << 5) - hash + str.charCodeAt(i)
+    hash |= 0 // Convert to 32bit integer
+  }
+  return hex(hash ** 2)
 }
 
 export function addCSSHash(css: string, hash: string): string {

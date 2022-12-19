@@ -256,8 +256,10 @@ describe("dom/jsx", () => {
 
     expect(document.head.querySelector("style")).not.toBeNull()
     expect(
-      document.head.querySelector("style")!.hasAttribute("data-style-c7100")
+      document.head.querySelector("style")!.hasAttribute("data-style-04060401")
     ).toBeTruthy()
-    expect(body.querySelector("div")!.hasAttribute("data-c7100")).toBeTruthy()
+    expect(
+      body.querySelector("div")!.hasAttribute("data-04060401")
+    ).toBeTruthy()
   })
 })
