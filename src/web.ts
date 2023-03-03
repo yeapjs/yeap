@@ -281,7 +281,7 @@ function hComp(
         if (!styleElement && context.style) {
           style = document.createElement("style")
           style.setAttribute(`data-style-${context.id}`, "1")
-          style.innerHTML = addCSSHash(context.style, context.id!)
+          addCSSHash(context.style, context.id!).then((content) => style.innerHTML = content)
           context.topContext?.element?.prepend(style)
         } else if (styleElement) {
           style = styleElement

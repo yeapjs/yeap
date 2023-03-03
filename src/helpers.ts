@@ -1,4 +1,4 @@
-import { CssNode, generate, parse, Selector, walk } from "css-tree"
+import type { CssNode, Selector } from "css-tree"
 import { Reactive, Reactor } from "../types/app"
 import { NoConditionalComponent } from "../types/components"
 import { ARRAY_METHOD, COMPONENT_SYMBOL, ELEMENT_SYMBOL, MANIPULABLE_SYMBOL, SVG_CAMELCASE_ATTR, SVG_TAGS } from "./constantes"
@@ -211,7 +211,9 @@ export function hash(str: string): string {
   return hex(hash ** 2)
 }
 
-export function addCSSHash(css: string, hash: string): string {
+export async function addCSSHash(css: string, hash: string): Promise<string> {
+  const { generate, parse, walk } = await import("css-tree");
+
   const ast = parse(css)
   walk(ast, (node, item, list) => {
     if (node.type === "Selector" || node.type === "Combinator") {
