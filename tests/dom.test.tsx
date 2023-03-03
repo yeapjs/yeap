@@ -239,7 +239,26 @@ describe("dom/jsx", () => {
     expect(div).toBeTypeOf("function")
     expect(div()).toBeInstanceOf(HTMLDivElement)
   })
-  // ref class classList dangerouslySetInnerHTML style
+
+  test("reactor to text node", async () => {
+    const reactor = createReactor(0)
+    const div = (<div>{reactor}</div>) as HElement<HTMLDivElement>
+
+    expect(div().innerHTML).toBe("0")
+    reactor(1)
+    await next()
+    expect(div().innerHTML).toBe("1")
+  })
+
+  test("function to text node without losing reactivity", async () => {
+    const reactor = createReactor(0)
+    const div = (<div>{() => reactor()}</div>) as HElement<HTMLDivElement>
+
+    expect(div().innerHTML).toBe("0")
+    reactor(1)
+    await next()
+    expect(div().innerHTML).toBe("1")
+  })
 
   test("when and fallback attributes", async () => {
     const reactor = createReactor(true)

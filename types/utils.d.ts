@@ -13,4 +13,6 @@ export function memo<F extends Function>(fn: F): F
 
 export function record<T>(callback: () => T): [value: T, recordedReactors: Array<Reactive<any>>]
 
+export function reactable<T>(callback: Reactive<T> | (() => T)): Reactive<T>
+
 export function untrack<T, F extends Function>(callback: F, ...deps: Array<Reactive<T>>): F

@@ -2,7 +2,6 @@ import type { CssNode, Selector } from "css-tree"
 import { Reactive, Reactor } from "../types/app"
 import { NoConditionalComponent } from "../types/components"
 import { ARRAY_METHOD, COMPONENT_SYMBOL, ELEMENT_SYMBOL, MANIPULABLE_SYMBOL, SVG_CAMELCASE_ATTR, SVG_TAGS } from "./constantes"
-import { DeepObservable } from "./Observable"
 import { Recorder } from "./Recorder"
 import { cancelRuntimeCallback, requestRuntimeCallback } from "./runtimeLoop"
 import { ComponentContext, ComponentCaller, ElementCaller, Children, CssTreeList } from "./types"
@@ -132,8 +131,8 @@ export function cap(str: string): string {
   return str.charAt(0).toUpperCase() + str.slice(1)
 }
 
-export function getValue<T>(a: Reactive<T> | T | undefined): T | undefined {
-  return DeepObservable.isObservable(a) ? a() : a
+export function getValue<T>(a: Reactive<T> | (() => T) | T | undefined): T | undefined {
+  return isReactable(a) ? a() : a
 }
 
 export function toArray<T>(value: T | Array<T>): Array<T> {
@@ -142,6 +141,10 @@ export function toArray<T>(value: T | Array<T>): Array<T> {
 
 export function isDefined(v: any): boolean {
   return v !== null && v !== undefined
+}
+
+export function isReactable(v: any): v is Function {
+  return typeof v === "function"
 }
 
 export function isEvent(v: string): boolean {

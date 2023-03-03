@@ -1,8 +1,9 @@
 import { Reactive } from "../types/app"
 import { isReactor } from "./app"
 import { SEND_EVENT_SYMBOL } from "./constantes"
-import { batch, diff, isJSXElement, isManipulable, stringify, toArray } from "./helpers"
+import { batch, diff, isJSXElement, isManipulable, isReactable, stringify, toArray } from "./helpers"
 import { ComponentCaller, ElementCaller } from "./types"
+import { reactable } from "./utils"
 
 function generateTextNode(data: any): Element | Text {
   return document.createTextNode(stringify(data))
@@ -74,8 +75,8 @@ export function generateDOM(jsxElements: Array<JSX.Element | ElementCaller | Com
     if (jsxElement instanceof Element || jsxElement instanceof Text) elements = [...elements, jsxElement]
     else if (jsxElement instanceof Array) elements = [...elements, ...generateDOM(jsxElement, parent, elements[elements.length - 1] ?? previousSibling)]
     else if (isManipulable(jsxElement)) elements = [...elements, ...generateDOM([jsxElement.element], parent, elements[elements.length - 1] ?? previousSibling)]
-    else if (isReactor(jsxElement)) elements = [...elements, ...generateSensibleDOM(jsxElement, parent, elements[elements.length - 1] ?? previousSibling)]
     else if (isJSXElement(jsxElement)) elements = [...elements, ...generateDOM(toArray(jsxElement.apply(undefined, [parent, elements[elements.length - 1] ?? previousSibling])), parent, elements[elements.length - 1] ?? previousSibling)]
+    else if (isReactable(jsxElement)) elements = [...elements, ...generateSensibleDOM(reactable(jsxElement as any), parent, elements[elements.length - 1] ?? previousSibling)]
     else elements = [...elements, generateTextNode(jsxElement)]
   }
   return elements
