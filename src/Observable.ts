@@ -99,7 +99,7 @@ export class DeepObservable<T>  {
         try {
           if (!(p in (this.value as any))) return value
         } catch (e) {
-          return undefined
+          if (!value) return undefined
         }
 
         const descriptor = Object.getOwnPropertyDescriptor(this.value, p)
