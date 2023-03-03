@@ -154,6 +154,28 @@ describe("dom/jsx", () => {
       expect(div().style.color).toBe("blue")
     })
 
+    test("style attribute on camel case inline style (issue #17)", async () => {
+      const color = createReactor("red")
+      const div = (
+        <div style={{ "background-color": color } as any} />
+      ) as HElement<HTMLDivElement>
+
+      expect(div().style.backgroundColor).toBe("red")
+      color("blue")
+      await next()
+      expect(div().style.backgroundColor).toBe("blue")
+
+      const color2 = createReactor("red")
+      const div2 = (
+        <div style={{ backgroundColor: color2 }} />
+      ) as HElement<HTMLDivElement>
+
+      expect(div2().style.backgroundColor).toBe("red")
+      color2("blue")
+      await next()
+      expect(div2().style.backgroundColor).toBe("blue")
+    })
+
     test("random attributes", async () => {
       const color = createReactor("red")
       const div = (<div id={color} />) as HElement<HTMLDivElement>

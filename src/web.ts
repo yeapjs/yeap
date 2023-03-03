@@ -141,8 +141,12 @@ export function h(tag: NoConditionalComponent | Function | string, props: Props 
     } else if (prop === "style") {
       const style = props[prop]
       for (const item in style) {
-        if (isReactor(style[item])) style[item].subscribe((_: any, curr: any) => element.style.setProperty(item, curr))
+        if (isReactor(style[item])) style[item].subscribe((_: any, curr: any) => {
+          element.style.setProperty(item, curr)
+          element.style[item as any] = curr
+        })
         element.style.setProperty(item, getValue<string>(style[item])!)
+        element.style[item as any] = getValue<string>(style[item])!
       }
     } else if (isEvent(prop)) {
       const [eventName, ...modifiers] = prop.slice(2).toLowerCase().split(":")
