@@ -1,7 +1,7 @@
 import type { CssNode, Selector } from "css-tree"
 import { Reactive, Reactor } from "../types/app"
 import { NoConditionalComponent } from "../types/components"
-import { ARRAY_METHOD, COMPONENT_SYMBOL, ELEMENT_SYMBOL, MANIPULABLE_SYMBOL, SVG_CAMELCASE_ATTR, SVG_TAGS } from "./constantes"
+import { ARRAY_METHOD, COMPONENT_SYMBOL, ELEMENT_SYMBOL, MANIPULABLE_SYMBOL, NULL, SVG_CAMELCASE_ATTR, SVG_TAGS } from "./constantes"
 import { Recorder } from "./Recorder"
 import { cancelRuntimeCallback, requestRuntimeCallback } from "./runtimeLoop"
 import { ComponentContext, ComponentCaller, ElementCaller, Children, CssTreeList } from "./types"
@@ -71,7 +71,7 @@ export function kebabCase(str: string) {
     .toLowerCase()
 }
 
-export function createComponentContext(component: NoConditionalComponent<any, any> | null): ComponentContext {
+export function createComponentContext(component: NoConditionalComponent<any> | null): ComponentContext {
   const context: ComponentContext = {
     parent,
     topContext: parent?.topContext ?? parent,
@@ -122,7 +122,7 @@ export function isJSXElement(arg: any): arg is ElementCaller | ComponentCaller {
 export function stringify(v: unknown): string {
   if (typeof v === "string") return v
   if (typeof v === "object" && v !== null) return JSON.stringify(v)
-  if (typeof v === "boolean" || typeof v === "undefined" || v === null) return ""
+  if (typeof v === "boolean" || typeof v === "undefined" || v === null || v === NULL) return ""
 
   return String(v)
 }
@@ -139,7 +139,7 @@ export function toArray<T>(value: T | Array<T>): Array<T> {
   return value instanceof Array ? value : [value]
 }
 
-export function isDefined(v: any): boolean {
+export function isDefined(v: unknown): typeof v extends null ? never : typeof v extends undefined ? never : typeof v {
   return v !== null && v !== undefined
 }
 

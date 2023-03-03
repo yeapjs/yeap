@@ -23,7 +23,7 @@ export function h<T extends keyof JSX.IntrinsicElements, P = JSX.IntrinsicElemen
   ? S : never
 >
 export function h(tag: string, props: Props | null, ...children: Array<JSX.Element>): HElement<HTMLElement>
-export function h<C extends NoConditionalComponent | Function>(
+export function h<T extends object, C extends NoConditionalComponent<T> | Function>(
   tag: C,
   props: (C extends NoConditionalComponent<infer P> ? P : C extends (props: infer A) => any ? A : {}) | null,
   ...children: (C extends NoConditionalComponent<any, infer H> ? H : C extends (_: any, children: infer H) => any ? H extends Array<any> ? H : [H] : never)

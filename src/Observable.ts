@@ -1,4 +1,4 @@
-import { Reactive, ReactorMetaData, ReadOnlyReactor, SubscribeHandler } from "../types/app"
+import { Reactive, Reactor, ReactorMetaData, ReadOnlyReactor, SubscribeHandler } from "../types/app"
 import { createComputed } from "./app"
 import { FORCE_SYMBOL, OBSERVABLE_SYMBOL, READONLY_OBSERVABLE_SYMBOL, SEND_EVENT_SYMBOL } from "./constantes"
 import { getValue, GLOBAL_CONTEXT, isArrayMethod, isDefined, isJSXElement, recordReactor } from "./helpers"
@@ -9,7 +9,7 @@ type SubscribeHandlers<T> = ((prev: T, next: T) => void) | [(prev: T, next: T) =
 export class DeepObservable<T>  {
   [OBSERVABLE_SYMBOL] = true;
   [FORCE_SYMBOL]: any = undefined
-  static isObservable(arg: any): arg is Reactive<any> {
+  static isObservable(arg: any): arg is Reactive<unknown> {
     return !!arg?.[OBSERVABLE_SYMBOL]
   }
 
@@ -56,7 +56,7 @@ export class DeepObservable<T>  {
         if (value instanceof Function) {
           const [firstValue, recordedReactors] = record(() => value.apply(getValue(thisArg), argArray))
 
-          const reactive: Reactive<any> = new DeepObservable(firstValue) as any;
+          const reactive = new DeepObservable(firstValue) as unknown as Reactor<T>;
 
           const subscribe = () => reactive(value.apply(getValue(thisArg), argArray))
 
@@ -77,7 +77,7 @@ export class DeepObservable<T>  {
         }
 
         if (argArray[0] instanceof Function && !DeepObservable.isObservable(argArray[0])) this.value = argArray[0](value)
-        else this.value = getValue(argArray[0])!
+        else this.value = getValue(argArray[0])! as T
 
         if (this.#once) this.#freeze = true
 
@@ -183,7 +183,7 @@ export class DeepObservable<T>  {
     return observable
   }
 
-  compute<U>(handle: (value: T) => any): ReadOnlyReactor<U> {
+  compute<U>(handle: (value: T) => U): ReadOnlyReactor<U> {
     return createComputed(() => handle(this.value), { observableInitialValue: GLOBAL_CONTEXT.yeapContext?.recordObserverCompute }, this.#proxy)
   }
 
@@ -196,17 +196,17 @@ export class DeepObservable<T>  {
 
     return this.compute((v) => {
       return condition(v) ?
-        truthy instanceof Function && !DeepObservable.isObservable(truthy) && !isJSXElement(truthy) ? truthy() : truthy :
-        falsy instanceof Function && !DeepObservable.isObservable(falsy) && !isJSXElement(falsy) ? falsy() : falsy
+        truthy instanceof Function && !DeepObservable.isObservable(truthy) && !isJSXElement(truthy) ? truthy() : truthy as U :
+        falsy instanceof Function && !DeepObservable.isObservable(falsy) && !isJSXElement(falsy) ? falsy() : falsy as F
     })
   }
 
   and<U>(otherwise: (() => U) | U): ReadOnlyReactor<T | U> {
-    return this.compute<U>((v) => v && (otherwise instanceof Function && !DeepObservable.isObservable(otherwise) && !isJSXElement(otherwise) ? otherwise() : otherwise))
+    return this.compute((v) => v && (otherwise instanceof Function && !DeepObservable.isObservable(otherwise) && !isJSXElement(otherwise) ? otherwise() : otherwise as U))
   }
 
   or<U>(otherwise: (() => U) | U): ReadOnlyReactor<T | U> {
-    return this.compute<U>((v) => v || (otherwise instanceof Function && !DeepObservable.isObservable(otherwise) && !isJSXElement(otherwise) ? otherwise() : otherwise))
+    return this.compute((v) => v || (otherwise instanceof Function && !DeepObservable.isObservable(otherwise) && !isJSXElement(otherwise) ? otherwise() : otherwise as U))
   }
 
   not(): ReadOnlyReactor<boolean> {
@@ -214,7 +214,7 @@ export class DeepObservable<T>  {
   }
 
   nullish<U>(otherwise: (() => U) | U): ReadOnlyReactor<T | U> {
-    return this.compute<U>((v) => v ?? (otherwise instanceof Function && !DeepObservable.isObservable(otherwise) && !isJSXElement(otherwise) ? otherwise() : otherwise))
+    return this.compute((v) => v ?? (otherwise instanceof Function && !DeepObservable.isObservable(otherwise) && !isJSXElement(otherwise) ? otherwise() : otherwise as U))
   }
 
   metadata(): ReactorMetaData<T> {

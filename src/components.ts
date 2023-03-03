@@ -1,7 +1,7 @@
-import { Component, ComponentMetadata, NoConditionalComponent } from "../types/components"
+import { Component, ComponentMetadata, ComponentProps, NoConditionalComponent } from "../types/components"
 import { CaseProps } from "../types/components"
 import { createContext, createReactor, isReactor, useContext } from "./app"
-import { MANIPULABLE_SYMBOL } from "./constantes"
+import { MANIPULABLE_SYMBOL, NULL } from "./constantes"
 import { generateDOM } from "./dom"
 import { getCurrentContext, isComponent, isElement } from "./helpers"
 import { Children } from "./types"
@@ -14,11 +14,11 @@ interface MatchContextValue {
 
 const MatchContext = createContext<MatchContextValue>()
 
-export function getComponentParent(): NoConditionalComponent | null {
+export function getComponentParent(): NoConditionalComponent<any> | null {
   return getCurrentContext().parent?.component ?? null
 }
 
-export function getChildrenInfos(callback: () => Array<any>): Children {
+export function getChildrenInfos(callback: () => Array<unknown>): Children {
   let childrenInfos: Children = []
   for (const child of callback()) {
     if (isComponent(child)) childrenInfos = [...childrenInfos, {
@@ -48,7 +48,7 @@ export function getChildrenInfos(callback: () => Array<any>): Children {
   return childrenInfos
 }
 
-export function noconditional<T>(comp: NoConditionalComponent<T>): NoConditionalComponent<T> {
+export function noconditional<T extends object>(comp: NoConditionalComponent<T>): NoConditionalComponent<T> {
   if (!comp.metadata) comp.metadata = {} as ComponentMetadata
   comp.metadata.noconditional = true
   return comp
@@ -64,17 +64,13 @@ export const Fragment: Component<{}> = (_, children) => {
   return children
 }
 
-export function lazy(callback: (...args: Array<any>) => Promise<any>): Component<{ fallback: any }> {
+export function lazy<T, U>(callback: (props: ComponentProps<T>, children: Array<JSX.Element>) => Promise<U>): Component<T & { fallback: JSX.Element }> {
   return ({ fallback, ...props }, children) => {
-    const reactor = createReactor(false)
-    let content: any
+    const content = createReactor<NULL | U>(NULL)
 
-    Promise.all([callback(props, children)]).then((value) => {
-      content = value
-      reactor(true)
-    })
+    Promise.all([callback(props as ComponentProps<T>, children)]).then(([value]) => content(value))
 
-    return reactor.when(() => content, fallback)
+    return content
   }
 }
 
@@ -87,6 +83,7 @@ export const Portal: Component<{ mount: Element }> = noconditional(({ mount = do
 export const Match: NoConditionalComponent<{ when: any }> = noconditional(({ when }, children) => {
   const value: MatchContextValue = { when, matched: false }
 
+  // FIXME: reactor => reactable 
   if (isReactor(when)) when.subscribe(() => {
     value.matched = false
   })

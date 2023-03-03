@@ -7,7 +7,7 @@ interface ComponentInfos {
   children: Array<JSX.Element>
   isComponent: true
   isHTML: false
-  component: NoConditionalComponent
+  component: NoConditionalComponent<object>
   element: Function
 }
 
@@ -28,8 +28,8 @@ export interface ComponentMetadata {
   noconditional: boolean
 }
 
-export type ComponentProps<T> = T & { fallback?: JSX.Element, when?: any | Reactor<any> }
-export interface NoConditionalComponent<T = any, C extends Array<JSX.Element> = Array<JSX.Element>> {
+export type ComponentProps<T> = T & { fallback?: JSX.Element, when?: unknown | Reactor<unknown> }
+export interface NoConditionalComponent<T extends object, C extends Array<JSX.Element> = Array<JSX.Element>> {
   (props: T, children: C): JSX.Element
   metadata?: ComponentMetadata
   attributeTypes?: Record<string, NumberConstructor | BooleanConstructor | BigIntConstructor | ((el: HTMLElement, value?: string | null) => void)>
@@ -48,7 +48,7 @@ export const Fragment: Component<{}>
 
 export function noconditional<T>(comp: Component<T>): Component<T>
 
-export function lazy<T>(callback: (props: ComponentProps<T>, children: Array<JSX.Element>) => Promise<any>): Component<T & { fallback: JSX.Element }>
+export function lazy<T>(callback: (props: ComponentProps<T>, children: Array<JSX.Element>) => Promise<unknown>): Component<T & { fallback: JSX.Element }>
 
 /**
  * transforms a array of jsx element into a list of info elements

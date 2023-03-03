@@ -15,7 +15,7 @@ export interface ComponentContext {
   element?: Element
   parent?: ComponentContext
   condition: Reactive<boolean> | boolean
-  component: NoConditionalComponent | null
+  component: NoConditionalComponent<object> | null
   htmlConditions: Array<Reactive<boolean>>
   topContext?: ComponentContext
   contexts: Record<symbol, { context?: Context<any> | null, provider: ProvidedContext<any> | null }>
@@ -30,7 +30,7 @@ export interface ComponentContext {
 export type ComponentCaller = Function & {
   key: any
   props: any,
-  component: NoConditionalComponent,
+  component: NoConditionalComponent<object>,
   children: Array<JSX.Element>,
   [COMPONENT_SYMBOL]: true
 }

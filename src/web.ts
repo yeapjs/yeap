@@ -91,7 +91,7 @@ export function define<T>(name: string, component: NoConditionalComponent<Custom
   return () => new Component()
 }
 
-export function h(tag: NoConditionalComponent | Function | string, props: Props | null, ...children: Array<JSX.Element>): HElement<HTMLElement> | (() => HElement<HTMLElement>) {
+export function h(tag: NoConditionalComponent<any> | Function | string, props: Props | null, ...children: Array<JSX.Element>): HElement<HTMLElement> | (() => HElement<HTMLElement>) {
   if (!isDefined(props)) props = {}
 
   const fallback = toArray(props!["fallback"] ?? [new Text()])
@@ -214,7 +214,7 @@ export function h(tag: NoConditionalComponent | Function | string, props: Props 
 }
 
 function hComp(
-  component: NoConditionalComponent,
+  component: NoConditionalComponent<any>,
   props: Props | null,
   fallback: any,
   children: Array<JSX.Element>

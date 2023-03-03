@@ -11,7 +11,7 @@ export function unique<F extends Function>(fn: F): F
 
 export function memo<F extends Function>(fn: F): F
 
-export function record<T>(callback: () => T): [value: T, recordedReactors: Array<Reactive<any>>]
+export function record<T>(callback: () => T): [value: T, recordedReactors: Array<Reactive<unknown>>]
 
 export function reactable<T>(callback: Reactive<T> | (() => T)): Reactive<T>
 

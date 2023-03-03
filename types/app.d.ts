@@ -201,7 +201,7 @@ export function createEffect<T>(handle: (this: Closer) => void, option: CreateEf
 /**
  * returns a event dispatcher
  */
-export function createEventDispatcher(): (name: string, detail: any) => void
+export function createEventDispatcher<D>(): (name: string, detail: D) => void
 
 /**
  * create an event modifer, it will update the event, to call it `onEvent:event-modifier`
