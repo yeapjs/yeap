@@ -6,14 +6,14 @@ import { batch, cap, directives, getCurrentContext, hash, isDefined, modifiers }
 import { record } from "./utils"
 import { ComponentContext } from "./types"
 
-export function createAsync<T, E>(fetcher: () => Promise<T>, defaultValue?: T): AsyncReturn<T, E> {
+export function createAsync<T, E, A extends Array<unknown>>(fetcher: (...args: A) => Promise<T>, defaultValue?: T): AsyncReturn<T, E> {
   const data = createReactor<T>(defaultValue)
   const error = createReactor<E | null>(null)
   const loading = createReactor(false)
 
-  function refetch() {
+  function refetch(...args: A) {
     loading(true)
-    Promise.all([fetcher()])
+    Promise.all([fetcher(...args)])
       .then(([result]) => {
         data(result)
         if (error() !== null) error(null)
@@ -22,7 +22,7 @@ export function createAsync<T, E>(fetcher: () => Promise<T>, defaultValue?: T): 
       .finally(() => loading(false))
   }
 
-  refetch()
+  refetch.apply(undefined)
 
   return {
     data: data.reader(),
@@ -50,7 +50,7 @@ export function createAsyncComputed<T, E, U>(fetcher: (this: Closer) => Promise<
     ...option
   }
 
-  const { data, error, loading, refetch } = createAsync<T, E>(fetcher, defaultValue!)
+  const { data, error, loading, refetch } = createAsync<T, E, []>(fetcher, defaultValue!)
   createEffect(refetch, option, ...deps)
 
   return { data, error, loading }

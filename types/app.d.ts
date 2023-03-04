@@ -143,10 +143,12 @@ export type Reactive<T> = Reactor<T> | ReadOnlyReactor<T>
  * takes a function and calls the fetcher asynchronously, returns the data, the error and if the fetcher is being called with the load
  */
 export function createAsync<T, E>(fetcher: () => Promise<T>): AsyncReturn<T, E>
+export function createAsync<T, E, A extends Array<unknown>>(fetcher: (...args: A) => Promise<T>): AsyncReturn<T, E>
 /**
  * takes a function and calls the fetcher asynchronously, returns the data, the error and if the fetcher is being called with the load, takes a default value
  */
 export function createAsync<T, E>(fetcher: () => Promise<T>, defaultValue: T): AsyncReturn<T, E>
+export function createAsync<T, E, A extends Array<unknown>>(fetcher: (...args: A) => Promise<T>, defaultValue: T): AsyncReturn<T, E>
 /**
  * shortened to
  * ```js
