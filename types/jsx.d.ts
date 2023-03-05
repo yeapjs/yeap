@@ -18,6 +18,8 @@ declare global {
       | number
       | bigint
       | boolean
+      | null
+      | undefined
 
     type ReactivableHTMLAttributes<T> = {
       [K in keyof HTMLAttributes<T>]: (K extends keyof EventsAttributes<T> ? HTMLAttributes<T>[K] : Reactive<HTMLAttributes<T>[K]> | HTMLAttributes<T>[K]) | null

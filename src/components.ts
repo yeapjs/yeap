@@ -1,10 +1,11 @@
 import { Component, ComponentMetadata, ComponentProps, NoConditionalComponent } from "../types/components"
 import { CaseProps } from "../types/components"
 import { createContext, createReactor, isReactor, useContext } from "./app"
-import { MANIPULABLE_SYMBOL, NULL } from "./constantes"
+import { MANIPULABLE_SYMBOL } from "./constantes"
 import { generateDOM } from "./dom"
-import { getCurrentContext, isComponent, isElement } from "./helpers"
+import { getCurrentContext, isComponent, isElement, isReactable } from "./helpers"
 import { Children } from "./types"
+import { reactable } from "./utils"
 import { h } from "./web"
 
 interface MatchContextValue {
@@ -66,7 +67,7 @@ export const Fragment: Component<{}> = (_, children) => {
 
 export function lazy<T, U>(callback: (props: ComponentProps<T>, children: Array<JSX.Element>) => Promise<U>): Component<T & { fallback: JSX.Element }> {
   return ({ fallback, ...props }, children) => {
-    const content = createReactor<NULL | U>(NULL)
+    const content = createReactor<U | null>(null)
 
     Promise.all([callback(props as ComponentProps<T>, children)]).then(([value]) => content(value))
 
@@ -81,10 +82,9 @@ export const Portal: Component<{ mount: Element }> = noconditional(({ mount = do
 })
 
 export const Match: NoConditionalComponent<{ when: any }> = noconditional(({ when }, children) => {
-  const value: MatchContextValue = { when, matched: false }
+  const value: MatchContextValue = { when: reactable(when), matched: false }
 
-  // FIXME: reactor => reactable 
-  if (isReactor(when)) when.subscribe(() => {
+  if (isReactable(when)) value.when.subscribe(() => {
     value.matched = false
   })
 

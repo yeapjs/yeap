@@ -122,7 +122,7 @@ export function isJSXElement(arg: any): arg is ElementCaller | ComponentCaller {
 export function stringify(v: unknown): string {
   if (typeof v === "string") return v
   if (typeof v === "object" && v !== null) return JSON.stringify(v)
-  if (typeof v === "boolean" || typeof v === "undefined" || v === null || v === NULL) return ""
+  if (typeof v === "boolean" || typeof v === "undefined" || v === null) return ""
 
   return String(v)
 }
