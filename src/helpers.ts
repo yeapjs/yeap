@@ -1,8 +1,7 @@
-import { CssNode, generate, parse, Selector, walk } from "css-tree"
+import type { CssNode, Selector } from "css-tree"
 import { Reactive, Reactor } from "../types/app"
 import { NoConditionalComponent } from "../types/components"
-import { ARRAY_METHOD, COMPONENT_SYMBOL, ELEMENT_SYMBOL, MANIPULABLE_SYMBOL, SVG_CAMELCASE_ATTR, SVG_TAGS } from "./constantes"
-import { DeepObservable } from "./Observable"
+import { ARRAY_METHOD, COMPONENT_SYMBOL, ELEMENT_SYMBOL, MANIPULABLE_SYMBOL, NULL, SVG_CAMELCASE_ATTR, SVG_TAGS } from "./constantes"
 import { Recorder } from "./Recorder"
 import { cancelRuntimeCallback, requestRuntimeCallback } from "./runtimeLoop"
 import { ComponentContext, ComponentCaller, ElementCaller, Children, CssTreeList } from "./types"
@@ -72,7 +71,7 @@ export function kebabCase(str: string) {
     .toLowerCase()
 }
 
-export function createComponentContext(component: NoConditionalComponent<any, any> | null): ComponentContext {
+export function createComponentContext(component: NoConditionalComponent<any> | null): ComponentContext {
   const context: ComponentContext = {
     parent,
     topContext: parent?.topContext ?? parent,
@@ -132,16 +131,20 @@ export function cap(str: string): string {
   return str.charAt(0).toUpperCase() + str.slice(1)
 }
 
-export function getValue<T>(a: Reactive<T> | T | undefined): T | undefined {
-  return DeepObservable.isObservable(a) ? a() : a
+export function getValue<T>(a: Reactive<T> | (() => T) | T | undefined): T | undefined {
+  return isReactable(a) ? a() : a
 }
 
 export function toArray<T>(value: T | Array<T>): Array<T> {
   return value instanceof Array ? value : [value]
 }
 
-export function isDefined(v: any): boolean {
+export function isDefined(v: unknown): typeof v extends null ? never : typeof v extends undefined ? never : typeof v {
   return v !== null && v !== undefined
+}
+
+export function isReactable(v: any): v is Function {
+  return typeof v === "function"
 }
 
 export function isEvent(v: string): boolean {
@@ -211,7 +214,9 @@ export function hash(str: string): string {
   return hex(hash ** 2)
 }
 
-export function addCSSHash(css: string, hash: string): string {
+export async function addCSSHash(css: string, hash: string): Promise<string> {
+  const { generate, parse, walk } = await import("css-tree");
+
   const ast = parse(css)
   walk(ast, (node, item, list) => {
     if (node.type === "Selector" || node.type === "Combinator") {

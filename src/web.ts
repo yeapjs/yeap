@@ -1,13 +1,13 @@
 import { Reactive, Reactor } from "../types/app"
 import { NoConditionalComponent } from "../types/components"
 import { DefineCustomElementOption, HElement, Props } from "../types/web"
-import { createComputed, createReactor, isReactor } from "./app"
+import { createComputed, createReactor } from "./app"
 import { COMPONENT_SYMBOL, ELEMENT_SYMBOL } from "./constantes"
 import { generateDOM } from "./dom"
 import { DirectiveError, ModifierError } from "./errors"
-import { createComponentContext, getValue, GLOBAL_CONTEXT, isDefined, isEvent, isSVGTag, setCurrentContext, setContextParent, stringify, toArray, getCurrentContext, isDirective, isSVGCamelCaseAttr, kebabCase, directives, modifiers as modifiersMap, addCSSHash } from "./helpers"
+import { createComponentContext, getValue, GLOBAL_CONTEXT, isDefined, isEvent, isSVGTag, setCurrentContext, setContextParent, stringify, toArray, getCurrentContext, isDirective, isSVGCamelCaseAttr, kebabCase, directives, modifiers as modifiersMap, addCSSHash, isReactable } from "./helpers"
 import { ComponentCaller, ComponentContext, ElementCaller } from "./types"
-import { unique } from "./utils"
+import { reactable, unique } from "./utils"
 
 type CustomAttribute<T> = T & { ref?: HTMLElement }
 
@@ -91,7 +91,7 @@ export function define<T>(name: string, component: NoConditionalComponent<Custom
   return () => new Component()
 }
 
-export function h(tag: NoConditionalComponent | Function | string, props: Props | null, ...children: Array<JSX.Element>): HElement<HTMLElement> | (() => HElement<HTMLElement>) {
+export function h(tag: NoConditionalComponent<any> | Function | string, props: Props | null, ...children: Array<JSX.Element>): HElement<HTMLElement> | (() => HElement<HTMLElement>) {
   if (!isDefined(props)) props = {}
 
   const fallback = toArray(props!["fallback"] ?? [new Text()])
@@ -100,16 +100,9 @@ export function h(tag: NoConditionalComponent | Function | string, props: Props 
 
   const display = createReactor(true)
   if ("when" in props!) {
-    if (isReactor(props["when"])) {
-      props["when"].subscribe((_: any, curr: any) => display(!!curr))
+    if (isReactable(props["when"])) {
+      reactable(props["when"]).subscribe((_: any, curr: any) => display(!!curr))
       display(!!props["when"]())
-    }
-    else if (props["when"] instanceof Function) {
-      const when = createComputed(props["when"])
-      when.subscribe((_: any, curr: any) =>
-        display(!!curr)
-      )
-      display(!!when())
     } else display(!!props["when"])
   }
 
@@ -125,7 +118,7 @@ export function h(tag: NoConditionalComponent | Function | string, props: Props 
     } else if (prop === "classList") {
       const classList = props[prop]
       for (const item in classList) {
-        if (isReactor(classList[item])) classList[item].subscribe((_: any, curr: any) => {
+        if (isReactable(classList[item])) reactable(classList[item]).subscribe((_: any, curr: any) => {
           if (!!curr) element.classList.add(item)
           else element.classList.remove(item)
         })
@@ -136,13 +129,17 @@ export function h(tag: NoConditionalComponent | Function | string, props: Props 
       const value = props[prop]?.__html
       if (!value) continue
 
-      if (isReactor(value)) value.subscribe((_, curr) => element.innerHTML = curr)
+      if (isReactable(value)) reactable<string>(value).subscribe((_, curr) => element.innerHTML = curr)
       element.innerHTML = getValue(value)
     } else if (prop === "style") {
       const style = props[prop]
       for (const item in style) {
-        if (isReactor(style[item])) style[item].subscribe((_: any, curr: any) => element.style.setProperty(item, curr))
+        if (isReactable(style[item])) reactable(style[item]).subscribe((_: any, curr: any) => {
+          element.style.setProperty(item, curr)
+          element.style[item as any] = curr
+        })
         element.style.setProperty(item, getValue<string>(style[item])!)
+        element.style[item as any] = getValue<string>(style[item])!
       }
     } else if (isEvent(prop)) {
       const [eventName, ...modifiers] = prop.slice(2).toLowerCase().split(":")
@@ -178,7 +175,7 @@ export function h(tag: NoConditionalComponent | Function | string, props: Props 
     } else {
       let writable = true
       const attributeName = isSVGTag(tag) && !isSVGCamelCaseAttr(prop) ? kebabCase(prop) : prop
-      if (isReactor(props[prop])) props[prop].subscribe((_: any, curr: any) => {
+      if (isReactable(props[prop])) reactable(props[prop]).subscribe((_: any, curr: any) => {
         if (prop in element && writable) {
           if (isDefined(curr) && curr !== false) (element as any)[prop] = curr === true ? "" : stringify(curr)
           else (element as any)[prop] = undefined
@@ -205,7 +202,7 @@ export function h(tag: NoConditionalComponent | Function | string, props: Props 
 
     if (context.id) element.setAttribute(`data-${context.id}`, "")
 
-    if ("when" in props! && (isReactor(props["when"]) || props["when"] instanceof Function)) return display.when(element, fallback)
+    if ("when" in props! && isReactable(props["when"])) return display.when(element, fallback)
 
     return display() ? element : fallback
   }) as ElementCaller
@@ -217,7 +214,7 @@ export function h(tag: NoConditionalComponent | Function | string, props: Props 
 }
 
 function hComp(
-  component: NoConditionalComponent,
+  component: NoConditionalComponent<any>,
   props: Props | null,
   fallback: any,
   children: Array<JSX.Element>
@@ -240,7 +237,7 @@ function hComp(
 
     while (currentContext) {
       if (currentContext.condition === false) return fallback
-      if (isReactor(currentContext.condition)) allConditions.push(currentContext.condition)
+      if (isReactable(currentContext.condition)) allConditions.push(reactable(currentContext.condition))
       allConditions.push(...currentContext.htmlConditions)
       currentContext = currentContext.parent!
     }
@@ -281,7 +278,7 @@ function hComp(
         if (!styleElement && context.style) {
           style = document.createElement("style")
           style.setAttribute(`data-style-${context.id}`, "1")
-          style.innerHTML = addCSSHash(context.style, context.id!)
+          addCSSHash(context.style, context.id!).then((content) => style.innerHTML = content)
           context.topContext?.element?.prepend(style)
         } else if (styleElement) {
           style = styleElement

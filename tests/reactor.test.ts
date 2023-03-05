@@ -190,6 +190,18 @@ describe("createReactor", () => {
     // @ts-ignore
     expect(reactor.a).toBe(undefined)
   })
+
+  test("native method on primitive types keep reactivity", () => {
+    const reactor = createReactor(1.234)
+    const reactor2 = createReactor(Symbol("hi"))
+
+    // @ts-ignore
+    expect(reactor.toFixed).toBeTypeOf("function")
+    expect(reactor.toFixed(2)()).toBe("1.23")
+
+    expect(reactor2.description).toBeTypeOf("function")
+    expect(reactor2.description()).toBe("hi")
+  })
 })
 
 describe("boolean operators", () => {

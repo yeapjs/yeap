@@ -1,5 +1,6 @@
 import { Reactive } from "../types/app"
 import { YeapConfig } from "../types/utils"
+import { createComputed, isReactor } from "./app"
 import { equals, GLOBAL_CONTEXT, recordReactor } from "./helpers"
 
 export function config<K extends keyof YeapConfig>(key: K, value?: YeapConfig[K]): YeapConfig[K] {
@@ -33,6 +34,11 @@ export function record<T>(callback: () => T): [value: T, recordedReactors: Array
   recordReactor.start()
   const value = callback()
   return [value, Array.from(recordReactor.stop() ?? [])]
+}
+
+export function reactable<T>(callback: Reactive<T> | (() => T)): Reactive<T> {
+  if (isReactor(callback)) return callback
+  return createComputed(callback)
 }
 
 export function untrack<T>(callback: Function, ...deps: Array<Reactive<T>>): Function {

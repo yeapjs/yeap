@@ -143,10 +143,12 @@ export type Reactive<T> = Reactor<T> | ReadOnlyReactor<T>
  * takes a function and calls the fetcher asynchronously, returns the data, the error and if the fetcher is being called with the load
  */
 export function createAsync<T, E>(fetcher: () => Promise<T>): AsyncReturn<T, E>
+export function createAsync<T, E, A extends Array<unknown>>(fetcher: (...args: A) => Promise<T>): AsyncReturn<T, E>
 /**
  * takes a function and calls the fetcher asynchronously, returns the data, the error and if the fetcher is being called with the load, takes a default value
  */
 export function createAsync<T, E>(fetcher: () => Promise<T>, defaultValue: T): AsyncReturn<T, E>
+export function createAsync<T, E, A extends Array<unknown>>(fetcher: (...args: A) => Promise<T>, defaultValue: T): AsyncReturn<T, E>
 /**
  * shortened to
  * ```js
@@ -201,7 +203,7 @@ export function createEffect<T>(handle: (this: Closer) => void, option: CreateEf
 /**
  * returns a event dispatcher
  */
-export function createEventDispatcher(): (name: string, detail: any) => void
+export function createEventDispatcher<D>(): (name: string, detail: D) => void
 
 /**
  * create an event modifer, it will update the event, to call it `onEvent:event-modifier`

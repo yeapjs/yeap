@@ -6,14 +6,14 @@ import { batch, cap, directives, getCurrentContext, hash, isDefined, modifiers }
 import { record } from "./utils"
 import { ComponentContext } from "./types"
 
-export function createAsync<T, E>(fetcher: () => Promise<T>, defaultValue?: T): AsyncReturn<T, E> {
+export function createAsync<T, E, A extends Array<unknown>>(fetcher: (...args: A) => Promise<T>, defaultValue?: T): AsyncReturn<T, E> {
   const data = createReactor<T>(defaultValue)
   const error = createReactor<E | null>(null)
   const loading = createReactor(false)
 
-  function refetch() {
+  function refetch(...args: A) {
     loading(true)
-    Promise.all([fetcher()])
+    Promise.all([fetcher(...args)])
       .then(([result]) => {
         data(result)
         if (error() !== null) error(null)
@@ -22,7 +22,7 @@ export function createAsync<T, E>(fetcher: () => Promise<T>, defaultValue?: T): 
       .finally(() => loading(false))
   }
 
-  refetch()
+  refetch.apply(undefined)
 
   return {
     data: data.reader(),
@@ -37,22 +37,20 @@ export function createAsyncComputed<T, E, U>(fetcher: (this: Closer) => Promise<
     deps.push(defaultValue)
     defaultValue = undefined
   }
-  if (isReactor(option) || !isDefined(option)) {
-    if (isDefined(option)) deps.push(option as any)
-    option = {
-      immediate: true,
-      observableInitialValue: false,
-      unsubscription: true
-    }
+  if (isReactor(option)) deps.push(option)
+  if (!isDefined(option)) option = {
+    immediate: true,
+    observableInitialValue: false,
+    unsubscription: true
   }
-  option = {
+  else option = {
     immediate: true,
     observableInitialValue: false,
     unsubscription: true,
     ...option
   }
 
-  const { data, error, loading, refetch } = createAsync<T, E>(fetcher, defaultValue as T)
+  const { data, error, loading, refetch } = createAsync<T, E, []>(fetcher, defaultValue!)
   createEffect(refetch, option, ...deps)
 
   return { data, error, loading }
@@ -62,14 +60,14 @@ export function createComputed<T, U>(reactorHandle: (this: Closer) => Reactive<T
   const dependencies = new Set(deps)
   const updates = new Map<Reactive<U>, { prev: U | NULL, curr: U | NULL }>()
   const handle = reactorHandle.bind({ close })
-  if (isReactor(option) || !isDefined(option)) {
-    if (isDefined(option)) dependencies.add(option as any)
-    option = {
-      observableInitialValue: false,
-      unsubscription: true,
-      record: true
-    }
+
+  if (isReactor(option)) deps.push(option)
+  if (!isDefined(option)) option = {
+    observableInitialValue: false,
+    unsubscription: true,
+    record: true
   }
+
   const optionWithDefault = {
     observableInitialValue: false,
     unsubscription: true,
@@ -77,9 +75,15 @@ export function createComputed<T, U>(reactorHandle: (this: Closer) => Reactive<T
     ...option
   }
 
-  const [initialValue, recordedReactors] = record(handle)
-  if (optionWithDefault.record) recordedReactors.forEach((v) => dependencies.add(v as Reactive<U>))
-  if (isReactor(initialValue) && optionWithDefault.observableInitialValue) dependencies.add(initialValue as any)
+  let initialValue: T | Reactive<T>
+
+  if (optionWithDefault.record) {
+    const [value, recordedReactors] = record(handle)
+    initialValue = value
+    recordedReactors.forEach((v) => dependencies.add(v))
+  } else initialValue = handle()
+
+  if (isReactor(initialValue) && optionWithDefault.observableInitialValue) dependencies.add(initialValue as unknown as Reactive<U>)
 
   const reactor = createReactor(initialValue)
 
@@ -216,7 +220,7 @@ export function createEffect<T>(reactorHandle: (this: Closer) => void, option?: 
   if (optionWithDefault.unsubscription) onUnmounted(close)
 }
 
-export function createEventDispatcher(): (name: string, detail: any) => void {
+export function createEventDispatcher<D>(): (name: string, detail: D) => void {
   const context = getCurrentContext()
 
   // force if the persistent callbacks are set, pass the while loop
@@ -226,12 +230,12 @@ export function createEventDispatcher(): (name: string, detail: any) => void {
   let globalContext = context
   while (globalContext.parent) globalContext = globalContext.parent
 
-  if (globalContext.element) return createPersistentCallback((name: string, detail: any) => {
+  if (globalContext.element) return createPersistentCallback((name: string, detail: D) => {
     const event = new CustomEvent(name, { detail })
     globalContext.element!.dispatchEvent(event)
   })
 
-  return createPersistentCallback((name: string, detail: any) => {
+  return createPersistentCallback((name: string, detail: D) => {
     const eventName = "on" + cap(name)
     if (context.props[eventName]) {
       const event = new CustomEvent(name, { detail })
@@ -268,13 +272,13 @@ export function createPersistentReactor<T>(initialValue?: Reactive<T> | T) {
 export function createReactor<T>(initialValue?: Reactive<T> | (() => T) | T): Reactor<T> {
   if (initialValue instanceof Function && !isReactor(initialValue)) initialValue = initialValue()
 
-  return new DeepObservable(initialValue) as any
+  return new DeepObservable(initialValue) as unknown as Reactor<T>
 }
 
 export function createRef<T>(initialValue?: Reactive<T> | (() => T) | T): Reactor<T> {
   if (initialValue instanceof Function && !isReactor(initialValue)) initialValue = initialValue()
 
-  return new DeepObservable(initialValue, null, false, true) as any
+  return new DeepObservable(initialValue, null, false, true) as unknown as Reactor<T>
 }
 
 export function createTransition(): TransitionReturn {
@@ -292,9 +296,10 @@ export function createTransition(): TransitionReturn {
   ]
 }
 
-export function isReactor(arg: any): arg is Reactive<any> {
+export function isReactor(arg: unknown): arg is Reactive<unknown> {
   return DeepObservable.isObservable(arg)
 }
+
 export function isReadOnlyReactor<T>(arg: Reactive<T> | DeepObservable<T>): arg is ReadOnlyReactor<T> {
   return !arg.metadata().settable
 }

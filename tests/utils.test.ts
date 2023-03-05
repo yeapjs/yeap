@@ -1,6 +1,6 @@
 import { test, expect, vi } from "vitest"
-import { createReactor } from "../src/app"
-import { memo, record, unique, untrack } from "../src/utils"
+import { createReactor, isReactor } from "../src/app"
+import { memo, reactable, record, unique, untrack } from "../src/utils"
 
 test("record", () => {
   const a = createReactor(0)
@@ -65,4 +65,12 @@ test("memo", async () => {
 
   memoedFn()
   expect(fn).toBeCalledTimes(3)
+})
+
+test("reactable", async () => {
+  const a = createReactor(0)
+
+  expect(reactable(a)).toBe(a)
+  expect(reactable(() => a())).toBeTypeOf("function")
+  expect(isReactor(reactable(() => a()))).toBeTruthy()
 })
