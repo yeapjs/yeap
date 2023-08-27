@@ -177,11 +177,13 @@ export function createEffect<T>(reactorHandle: (this: Closer) => void, optionOrD
   }
 
   function subscriber() {
-    if (first && option.record) {
-      const [, recordedReactors] = record(handle)
-      recordedReactors.forEach((v: Reactive<T>) => {
-        unsubscribes.push(sub(v))
-      })
+    if (first) {
+      if (option.record) {
+        const [, recordedReactors] = record(handle)
+        recordedReactors.forEach((v: Reactive<T>) => {
+          unsubscribes.push(sub(v))
+        })
+      } else handle()
       first = false
       return
     }

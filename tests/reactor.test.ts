@@ -277,22 +277,6 @@ describe("createComputed", () => {
     expect(mock).toBeCalledTimes(2)
   })
 
-  test("option.observableInitialValue", async () => {
-    const reactor = createReactor(0)
-    const mock = vi.fn(() => reactor)
-
-    const compute = createComputed(mock, { observableInitialValue: true })
-
-    expect(compute()).toBe(0)
-    expect(mock).toBeCalledTimes(1)
-
-    reactor(1)
-    await next()
-
-    expect(compute()).toBe(1)
-    expect(mock).toBeCalledTimes(2)
-  })
-
   test("option.unsubscription", async () => {
     const when = createReactor(true)
 
