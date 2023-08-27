@@ -1,12 +1,14 @@
 import { Reactive, Reactor, ReactorMetaData, ReadOnlyReactor, SubscribeHandler } from "../types/app"
 import { createComputed } from "./app"
-import { FORCE_SYMBOL, OBSERVABLE_SYMBOL, READONLY_OBSERVABLE_SYMBOL, SEND_EVENT_SYMBOL } from "./constantes"
-import { getValue, GLOBAL_CONTEXT, isArrayMethod, isDefined, isJSXElement, recordReactor } from "./helpers"
+import { ARRAY_METHOD, FORCE_SYMBOL, OBSERVABLE_SYMBOL, READONLY_OBSERVABLE_SYMBOL, SEND_EVENT_SYMBOL } from "./constantes"
+import { getValue, GLOBAL_CONTEXT, isDefined, isJSXElement, recordReactor } from "./helpers"
 import { record } from "./utils";
 
 type SubscribeHandlers<T> = ((prev: T, next: T) => void) | [(prev: T, next: T) => void, any]
 
 export class DeepObservable<T>  {
+  [x: PropertyKey]: any
+
   [OBSERVABLE_SYMBOL] = true;
   [FORCE_SYMBOL]: any = undefined
   static isObservable(arg: any): arg is Reactive<unknown> {
@@ -26,11 +28,13 @@ export class DeepObservable<T>  {
   #proxy: Reactive<T>
   #freeze: boolean
   #once: boolean
+  #value: any
   #handlers: Array<SubscribeHandlers<T>> = []
   #dependencies: Set<Reactive<any>> = new Set()
-  constructor(public value: T, parent?: DeepObservable<any> | null, freeze = false, once = false) {
+  constructor(value: T, parent?: DeepObservable<any> | null, freeze = false, once = false) {
     this.#freeze = freeze
     this.#once = once
+    this.#value = value
 
     this.call = this.call.bind(this)
     this.copy = this.copy.bind(this)
@@ -49,9 +53,9 @@ export class DeepObservable<T>  {
 
     const properties: Record<PropertyKey, any> = {}
 
-    this.#proxy = new Proxy(() => this.value, {
+    this.#proxy = new Proxy(() => this.#value, {
       apply: (_, thisArg, argArray: [((v: T) => T) | T] | []) => {
-        const value = this.value
+        const value = this.#value
         if (DeepObservable.isObservable(value)) return value()
         if (value instanceof Function) {
           const [firstValue, recordedReactors] = record(() => value.apply(getValue(thisArg), argArray))
@@ -76,43 +80,43 @@ export class DeepObservable<T>  {
           return value
         }
 
-        if (argArray[0] instanceof Function && !DeepObservable.isObservable(argArray[0])) this.value = argArray[0](value)
-        else this.value = getValue(argArray[0])! as T
+        if (argArray[0] instanceof Function && !DeepObservable.isObservable(argArray[0])) this.#value = argArray[0](value)
+        else this.#value = getValue(argArray[0])! as T
 
         if (this.#once) this.#freeze = true
 
-        this.call(value, this.value)
+        this.call(value, this.#value)
         return value
       },
       get: (_, p) => {
         if (p in properties) return properties[p]
 
-        const value = (this.value as any)?.[p]
-        if (p in this && p !== "value" && ((["function", "boolean"].includes(typeof (this as any)[p]) && !isArrayMethod(p as string)) || (Array.isArray(this.value) && isArrayMethod(p as string)))) {
-          return (this as any)[p]
+        const value = this.#value?.[p]
+        if (p in this && p !== "value" && ((["function", "boolean"].includes(typeof this[p]) && !ARRAY_METHOD.has(p)) || (Array.isArray(this.#value) && ARRAY_METHOD.has(p)))) {
+          return this[p]
         }
 
-        if (!isDefined(this.value)) throw new TypeError(`Cannot read properties of ${this.value} (reading '${p.toString()}')`)
+        if (!isDefined(this.#value)) throw new TypeError(`Cannot read properties of ${this.#value} (reading '${p.toString()}')`)
 
         if (DeepObservable.isObservable(value)) return value
 
         try {
-          if (!(p in (this.value as any))) return value
+          if (!(p in this.#value)) return value
         } catch (e) {
           if (!value) return undefined
         }
 
-        const descriptor = Object.getOwnPropertyDescriptor(this.value, p)
-        const freeze = this.#freeze || typeof this.value !== "object" || !(descriptor?.writable ?? descriptor?.set)
+        const descriptor = Object.getOwnPropertyDescriptor(this.#value, p)
+        const freeze = this.#freeze || typeof this.#value !== "object" || !(descriptor?.writable ?? descriptor?.set)
         const reactive = new DeepObservable(value, value instanceof Function ? this : null, freeze)
 
         this.subscribe((_, curr: any) => {
           reactive[FORCE_SYMBOL] = curr?.[p]
         })
         if (reactive.metadata().settable) reactive.subscribe((_, curr) => {
-          if (isDefined(this.value)) {
-            if (isDefined(curr)) (this.value as any)[p] = curr
-            else delete (this.value as any)[p]
+          if (isDefined(this.#value)) {
+            if (isDefined(curr)) this.#value[p] = curr
+            else delete this.#value[p]
           }
         })
 
@@ -122,18 +126,18 @@ export class DeepObservable<T>  {
       },
       set: (_, p, value) => {
         if (p === FORCE_SYMBOL) {
-          const prev = this.value
-          this.value = value
-          this.call(prev, this.value)
+          const prev = this.#value
+          this.#value = value
+          this.call(prev, this.#value)
         }
         else if (!this.#freeze) {
-          (this.value as any)[p] = value
+          this.#value[p] = value
           if (p in properties) properties[p](value)
         }
         return true
       },
       deleteProperty: (_, p) => {
-        if (delete (this.value as any)?.[p]) {
+        if (delete this.#value?.[p]) {
           properties[p][SEND_EVENT_SYMBOL]("delete")
           delete properties[p]
           return true
@@ -161,18 +165,18 @@ export class DeepObservable<T>  {
   }
 
   copy() {
-    return new DeepObservable(this.value, null, false, false)
+    return new DeepObservable(this.#value, null, false, false)
   }
 
   freeze() {
-    const freezed = new DeepObservable(this.value, null, true, false)
+    const freezed = new DeepObservable(this.#value, null, true, false)
     freezed.metadata().dependencies = this.#dependencies
 
     return freezed
   }
 
   reader() {
-    const observable = new DeepObservable(this.value, null, true, false)
+    const observable = new DeepObservable(this.#value, null, true, false)
     this.subscribe((prev, curr) => {
       if (prev === curr) return
 
@@ -184,7 +188,7 @@ export class DeepObservable<T>  {
   }
 
   compute<U>(handle: (value: T) => U): ReadOnlyReactor<U> {
-    return createComputed(() => handle(this.value), { observableInitialValue: GLOBAL_CONTEXT.yeapContext?.recordObserverCompute }, this.#proxy)
+    return createComputed(() => handle(this.#value), {}, this.#proxy)
   }
 
   when<U, F>(condition: (value: T) => boolean, truthy: U | (() => U), falsy?: F | (() => F)): ReadOnlyReactor<U | F> {
@@ -237,7 +241,7 @@ export class DeepObservable<T>  {
 
   /// Array Method for iterate on an array without lost the reactivity on the item
   mapReactor<I extends T extends Array<infer I> ? I : never, U>(this: Reactive<Array<I>>, callbackfn: (value: Reactive<I>, index: number) => U) {
-    return this.map((_, i) => callbackfn((this as any)[i], i))
+    return this.map((_, i) => callbackfn(this[i] as Reactive<I>, i))
   }
 
   /// Array Method Overwrite for allow the reactivity

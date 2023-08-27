@@ -32,58 +32,47 @@ export function createAsync<T, E, A extends Array<unknown>>(fetcher: (...args: A
   }
 }
 
-export function createAsyncComputed<T, E, U>(fetcher: (this: Closer) => Promise<T>, defaultValue?: Reactive<U> | T, option?: CreateEffectOption | Reactive<U>, ...deps: Array<Reactive<U>>): AsyncComputedReturn<T, E> {
+export function createAsyncComputed<T, E, U>(fetcher: (this: Closer) => Promise<T>, defaultValue?: Reactive<U> | T, optionOrDependency?: CreateEffectOption | Reactive<U>, ...dependencies: Array<Reactive<U>>): AsyncComputedReturn<T, E> {
   if (isReactor(defaultValue)) {
-    deps.push(defaultValue)
+    dependencies.push(defaultValue)
     defaultValue = undefined
-  }
-  if (isReactor(option)) deps.push(option)
-  if (!isDefined(option)) option = {
-    immediate: true,
-    observableInitialValue: false,
-    unsubscription: true
-  }
-  else option = {
-    immediate: true,
-    observableInitialValue: false,
-    unsubscription: true,
-    ...option
   }
 
   const { data, error, loading, refetch } = createAsync<T, E, []>(fetcher, defaultValue!)
-  createEffect(refetch, option, ...deps)
+  createEffect(refetch, optionOrDependency, ...dependencies)
 
   return { data, error, loading }
 }
 
-export function createComputed<T, U>(reactorHandle: (this: Closer) => Reactive<T> | T, option?: CreateComputedOption | Reactive<U>, ...deps: Array<Reactive<U>>): ReadOnlyReactor<T> {
-  const dependencies = new Set(deps)
+export function createComputed<T, U>(reactorHandle: (this: Closer) => Reactive<T> | T, optionOrDependency?: CreateComputedOption | Reactive<U>, ...dependencies: Array<Reactive<U>>): ReadOnlyReactor<T> {
   const updates = new Map<Reactive<U>, { prev: U | NULL, curr: U | NULL }>()
   const handle = reactorHandle.bind({ close })
 
-  if (isReactor(option)) deps.push(option)
-  if (!isDefined(option)) option = {
-    observableInitialValue: false,
-    unsubscription: true,
-    record: true
-  }
+  const option = (() => {
+    const defaultOption = {
+      unsubscription: true,
+      record: true
+    }
 
-  const optionWithDefault = {
-    observableInitialValue: false,
-    unsubscription: true,
-    record: true,
-    ...option
-  }
+    if (isReactor(optionOrDependency)) {
+      dependencies.push(optionOrDependency)
+      return defaultOption
+    }
 
-  let initialValue: T | Reactive<T>
+    return {
+      ...defaultOption,
+      ...optionOrDependency
+    }
+  })()
 
-  if (optionWithDefault.record) {
-    const [value, recordedReactors] = record(handle)
-    initialValue = value
-    recordedReactors.forEach((v) => dependencies.add(v))
-  } else initialValue = handle()
-
-  if (isReactor(initialValue) && optionWithDefault.observableInitialValue) dependencies.add(initialValue as unknown as Reactive<U>)
+  const initialValue: T | Reactive<T> = (() => {
+    if (option.record) {
+      const [value, recordedReactors] = record(handle)
+      recordedReactors.forEach((v) => dependencies.push(v))
+      return value
+    }
+    return handle()
+  })()
 
   const reactor = createReactor(initialValue)
 
@@ -112,9 +101,9 @@ export function createComputed<T, U>(reactorHandle: (this: Closer) => Reactive<T
     unsubscribes.forEach((unsubscribe) => unsubscribe())
   }
 
-  if (optionWithDefault.unsubscription) onUnmounted(close)
+  if (option.unsubscription) onUnmounted(close)
 
-  reactor.metadata().dependencies = dependencies
+  reactor.metadata().dependencies = new Set(dependencies)
   return reactor.reader()
 }
 
@@ -154,27 +143,28 @@ export function createDirective<T, E extends HTMLElement = HTMLElement>(name: st
   directives.set(name, callback)
 }
 
-export function createEffect<T>(reactorHandle: (this: Closer) => void, option?: CreateEffectOption | Reactive<T>, ...deps: Array<Reactive<T>>): void {
-  const dependencies = new Set(deps)
+export function createEffect<T>(reactorHandle: (this: Closer) => void, optionOrDependency?: CreateEffectOption | Reactive<T>, ...dependencies: Array<Reactive<T>>): void {
   const updates = new Map<Reactive<T>, { prev: T | NULL, curr: T | NULL }>()
   const handle = reactorHandle.bind({ close })
-  if (isReactor(option) || !isDefined(option)) {
-    if (isDefined(option)) dependencies.add(option as Reactive<T>)
-    option = {
+  const option = (() => {
+    const defaultOption = {
       immediate: true,
-      observableInitialValue: false,
       unsubscription: true,
       record: false
     }
-  }
+
+    if (isReactor(optionOrDependency)) {
+      dependencies.push(optionOrDependency)
+      return defaultOption
+    }
+
+    return {
+      ...defaultOption,
+      ...optionOrDependency
+    }
+  })()
+
   let first = true
-  const optionWithDefault = {
-    immediate: true,
-    observableInitialValue: false,
-    unsubscription: true,
-    record: false,
-    ...option
-  }
 
   function sub(dep: Reactive<T>) {
     const value: { prev: T | NULL, curr: T | NULL } = { prev: NULL, curr: NULL }
@@ -187,12 +177,11 @@ export function createEffect<T>(reactorHandle: (this: Closer) => void, option?: 
   }
 
   function subscriber() {
-    if (first) {
-      const [value, recordedReactors] = record(handle)
-      if (optionWithDefault.record) recordedReactors.forEach((v: Reactive<T>) => {
+    if (first && option.record) {
+      const [, recordedReactors] = record(handle)
+      recordedReactors.forEach((v: Reactive<T>) => {
         unsubscribes.push(sub(v))
       })
-      if (isReactor(value) && optionWithDefault.observableInitialValue) unsubscribes.push(value.subscribe(subscriber))
       first = false
       return
     }
@@ -210,14 +199,14 @@ export function createEffect<T>(reactorHandle: (this: Closer) => void, option?: 
   const callback = batch(subscriber)
   const unsubscribes = Array.from(dependencies).map(sub)
 
-  if (optionWithDefault.immediate) subscriber()
+  if (option.immediate) subscriber()
 
   function close() {
     updates.clear()
     unsubscribes.forEach((unsubscribe) => unsubscribe())
   }
 
-  if (optionWithDefault.unsubscription) onUnmounted(close)
+  if (option.unsubscription) onUnmounted(close)
 }
 
 export function createEventDispatcher<D>(): (name: string, detail: D) => void {

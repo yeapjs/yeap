@@ -1,7 +1,7 @@
 import type { CssNode, Selector } from "css-tree"
 import { Reactive, Reactor } from "../types/app"
 import { NoConditionalComponent } from "../types/components"
-import { ARRAY_METHOD, COMPONENT_SYMBOL, ELEMENT_SYMBOL, MANIPULABLE_SYMBOL, NULL, SVG_CAMELCASE_ATTR, SVG_TAGS } from "./constantes"
+import { COMPONENT_SYMBOL, ELEMENT_SYMBOL, MANIPULABLE_SYMBOL, } from "./constantes"
 import { Recorder } from "./Recorder"
 import { cancelRuntimeCallback, requestRuntimeCallback } from "./runtimeLoop"
 import { ComponentContext, ComponentCaller, ElementCaller, Children, CssTreeList } from "./types"
@@ -16,15 +16,6 @@ function isPseudoSelector(item: CssNode) {
   return (
     item.type === "PseudoElementSelector" || item.type === "PseudoClassSelector"
   )
-}
-
-function makeMap(str: string): (key: string) => boolean {
-  const map: Record<string, boolean> = {}
-  const list: Array<string> = str.split(",")
-  for (let i = 0; i < list.length; i++) {
-    map[list[i].toLowerCase()] = true
-  }
-  return val => typeof val === "string" && !!map[val.toLocaleLowerCase()]
 }
 
 export const recordReactor: Recorder<Reactive<any>> = new Recorder()
@@ -61,9 +52,6 @@ GLOBAL_CONTEXT.element = document.head
 GLOBAL_CONTEXT.yeapContext = { recordObserverValueMethod: false, recordObserverCompute: false }
 setContextParent(GLOBAL_CONTEXT)
 
-export const isArrayMethod = makeMap(ARRAY_METHOD)
-export const isSVGTag = makeMap(SVG_TAGS)
-export const isSVGCamelCaseAttr = makeMap(SVG_CAMELCASE_ATTR)
 export function kebabCase(str: string) {
   return str
     .match(/[A-Z]{2,}(?=[A-Z][a-z]+[0-9]*|\b)|[A-Z]?[a-z]+[0-9]*|[A-Z]|[0-9]+/g)!

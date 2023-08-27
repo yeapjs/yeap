@@ -6,7 +6,6 @@ type CSSProperties = {
 }
 
 export interface CreateComputedOption {
-  observableInitialValue?: boolean
   unsubscription?: boolean
   record?: boolean
 }
