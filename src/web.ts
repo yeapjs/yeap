@@ -2,10 +2,10 @@ import { Reactive, Reactor } from "../types/app"
 import { NoConditionalComponent } from "../types/components"
 import { DefineCustomElementOption, HElement, Props } from "../types/web"
 import { createComputed, createReactor } from "./app"
-import { COMPONENT_SYMBOL, ELEMENT_SYMBOL } from "./constantes"
+import { COMPONENT_SYMBOL, ELEMENT_SYMBOL, SVG_CAMELCASE_ATTR, SVG_TAGS } from "./constantes"
 import { generateDOM } from "./dom"
 import { DirectiveError, ModifierError } from "./errors"
-import { createComponentContext, getValue, GLOBAL_CONTEXT, isDefined, isEvent, isSVGTag, setCurrentContext, setContextParent, stringify, toArray, getCurrentContext, isDirective, isSVGCamelCaseAttr, kebabCase, directives, modifiers as modifiersMap, addCSSHash, isReactable } from "./helpers"
+import { createComponentContext, getValue, GLOBAL_CONTEXT, isDefined, isEvent, setCurrentContext, setContextParent, stringify, toArray, getCurrentContext, isDirective, kebabCase, directives, modifiers as modifiersMap, addCSSHash, isReactable } from "./helpers"
 import { ComponentCaller, ComponentContext, ElementCaller } from "./types"
 import { reactable, unique } from "./utils"
 
@@ -40,13 +40,13 @@ export function define<T>(name: string, component: NoConditionalComponent<Custom
         const value = this.attributes[i].nodeValue
         if (component.attributeTypes && reactiveAttributes && reactiveAttributes.includes(name)) {
           if (name in component.attributeTypes) this.props[name] = this.#reactiveProps[name].compute((value) => {
-            if ([Number, BigInt].includes(component.attributeTypes![name] as any)) return component.attributeTypes![name](value)
+            if (component.attributeTypes![name] === Number || component.attributeTypes![name] === BigInt) return component.attributeTypes![name](value)
             else if (component.attributeTypes![name] === Boolean) return this.hasAttribute(name)
             return component.attributeTypes![name](this, value)
           })
           else this.props[name] = this.#reactiveProps[name].reader()
         } else if (component.attributeTypes && name in component.attributeTypes) {
-          if ([Number, BigInt].includes(component.attributeTypes[name] as any)) this.props[name] = component.attributeTypes[name](value)
+          if (Number === component.attributeTypes[name] || BigInt === component.attributeTypes[name]) this.props[name] = component.attributeTypes[name](value)
           else if (component.attributeTypes[name] === Boolean) this.props[name] = true
           else this.props[name] = component.attributeTypes[name](this, value)
         } else this.props[name] = value
@@ -56,7 +56,7 @@ export function define<T>(name: string, component: NoConditionalComponent<Custom
         if (name in this.props) continue
 
         if (component.attributeTypes && name in component.attributeTypes) this.props[name] = this.#reactiveProps[name].compute((value) => {
-          if ([Number, BigInt].includes(component.attributeTypes![name] as any)) return component.attributeTypes![name](value)
+          if (component.attributeTypes![name] === Number || component.attributeTypes![name] === BigInt) return component.attributeTypes![name](value)
           else if (component.attributeTypes![name] === Boolean) return this.hasAttribute(name)
           return component.attributeTypes![name](this, value)
         })
@@ -107,7 +107,7 @@ export function h(tag: NoConditionalComponent<any> | Function | string, props: P
   }
 
   const is = props?.is?.toString()
-  const element = isSVGTag(tag) ? document.createElementNS("http://www.w3.org/2000/svg", tag) : document.createElement(tag, { is })
+  const element = SVG_TAGS.has(tag) ? document.createElementNS("http://www.w3.org/2000/svg", tag) : document.createElement(tag, { is })
 
   for (const prop in props) {
     if (!isDefined(props[prop]) || prop === "key" || prop === "is" || prop === "fallback" || prop === "when") continue
@@ -174,7 +174,7 @@ export function h(tag: NoConditionalComponent<any> | Function | string, props: P
       directive(element, props[prop])
     } else {
       let writable = true
-      const attributeName = isSVGTag(tag) && !isSVGCamelCaseAttr(prop) ? kebabCase(prop) : prop
+      const attributeName = SVG_TAGS.has(tag) && !SVG_CAMELCASE_ATTR.has(prop) ? kebabCase(prop) : prop
       if (isReactable(props[prop])) reactable(props[prop]).subscribe((_: any, curr: any) => {
         if (prop in element && writable) {
           if (isDefined(curr) && curr !== false) (element as any)[prop] = curr === true ? "" : stringify(curr)
