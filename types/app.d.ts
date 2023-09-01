@@ -30,7 +30,7 @@ export interface Context<T> {
   id: symbol
   defaultValue?: T
   Consumer: Component<{}, [(v: T) => JSX.Element]>
-  Provider: Component<{ value: T }, [Function]>
+  Provider: Component<{ value: T }, Array<JSX.Element>>
 }
 
 export interface Closer {
@@ -113,9 +113,7 @@ export interface ReadOnlyReactorMethod<T> {
   metadata(): ReactorMetaData<T>
 }
 
-export type ReadOnlyReactor<T> = ToReadOnlyReactorObject<PrimitivesToObject<T>> & ReadOnlyReactorMethod<T> & {
-  (): T
-}
+export type ReadOnlyReactor<T> = ToReadOnlyReactorObject<PrimitivesToObject<T>> & ReadOnlyReactorMethod<T> & (() => T)
 
 export interface ReactorMethod<T> extends ReadOnlyReactorMethod<T> {
   /**
