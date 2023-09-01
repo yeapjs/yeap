@@ -1,12 +1,13 @@
-import { Reactive, Reactor } from "../types/app"
+import { Reactive, Reactor, ReadOnlyReactor } from "../types/app"
 import { NoConditionalComponent } from "../types/components"
-import { DefineCustomElementOption, HElement, Props } from "../types/web"
+import { DefineCustomElementOption, Props } from "../types/web"
 import { createComputed, createReactor } from "./app"
 import { COMPONENT_SYMBOL, ELEMENT_SYMBOL, SVG_CAMELCASE_ATTR, SVG_TAGS } from "./constantes"
 import { generateDOM } from "./dom"
 import { DirectiveError, ModifierError } from "./errors"
+import { extend } from "./functions"
 import { createComponentContext, getValue, GLOBAL_CONTEXT, isDefined, isEvent, setCurrentContext, setContextParent, stringify, toArray, getCurrentContext, isDirective, kebabCase, directives, modifiers as modifiersMap, addCSSHash, isReactable } from "./helpers"
-import { ComponentCaller, ComponentContext, ElementCaller } from "./types"
+import { ComponentContext } from "./types"
 import { reactable, unique } from "./utils"
 
 type CustomAttribute<T> = T & { ref?: HTMLElement }
@@ -91,12 +92,14 @@ export function define<T>(name: string, component: NoConditionalComponent<Custom
   return () => new Component()
 }
 
-export function h(tag: NoConditionalComponent<any> | Function | string, props: Props | null, ...children: Array<JSX.Element>): HElement<HTMLElement> | (() => HElement<HTMLElement>) {
+type ElementGiver<E, F> = (...args: any[]) => E | F | ReadOnlyReactor<E | F>
+
+export function h(tag: NoConditionalComponent<any> | (() => JSX.Element) | string, props: Props | null, ...children: Array<JSX.Element>): ElementGiver<HTMLElement | SVGElement, Array<any>> | ((...args: any[]) => ElementGiver<HTMLElement | SVGElement, Array<any>>) {
   if (!isDefined(props)) props = {}
 
   const fallback = toArray(props!["fallback"] ?? [new Text()])
 
-  if (tag instanceof Function) return hComp(tag as any, props, fallback, children)
+  if (tag instanceof Function) return hComp(tag, props, fallback, children)
 
   const display = createReactor(true)
   if ("when" in props!) {
@@ -195,7 +198,7 @@ export function h(tag: NoConditionalComponent<any> | Function | string, props: P
     }
   }
 
-  const createElement = unique(() => {
+  return extend(unique(() => {
     const context = getCurrentContext()
     context.htmlConditions.push(display)
     element.append(...generateDOM(children, element))
@@ -205,12 +208,10 @@ export function h(tag: NoConditionalComponent<any> | Function | string, props: P
     if ("when" in props! && isReactable(props["when"])) return display.when(element, fallback)
 
     return display() ? element : fallback
-  }) as ElementCaller
-
-  createElement.key = props!["key"]
-  createElement[ELEMENT_SYMBOL] = true
-
-  return createElement as any
+  }), {
+    [ELEMENT_SYMBOL]: true,
+    key: props!["key"]
+  })
 }
 
 function hComp(
@@ -218,7 +219,7 @@ function hComp(
   props: Props | null,
   fallback: any,
   children: Array<JSX.Element>
-): () => HElement<HTMLElement> {
+): ElementGiver<HTMLElement, any> {
   const properties = Object.assign({}, component.defaultProps, props)
 
   component.metadata = {
@@ -226,7 +227,7 @@ function hComp(
     ...component.metadata
   }
 
-  const createComponent = unique((parent: Element, previousSibling?: Element | Text) => {
+  return extend(unique((parent: Element, previousSibling?: Element | Text) => {
     const context = createComponentContext(component)
 
     context.props = properties
@@ -309,15 +310,13 @@ function hComp(
     }, { unsubscription: false }, ...allConditions)
 
     return allConditions.length === 0 ? element() : element
-  }) as ComponentCaller
-
-  createComponent.key = props!["key"]
-  createComponent[COMPONENT_SYMBOL] = true
-  createComponent.props = props
-  createComponent.component = component
-  createComponent.children = children
-
-  return createComponent as any
+  }), {
+    key: props!["key"],
+    [COMPONENT_SYMBOL]: true,
+    props,
+    component,
+    children,
+  })
 }
 
 function mount(context: ComponentContext) {

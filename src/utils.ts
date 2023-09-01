@@ -8,26 +8,28 @@ export function config<K extends keyof YeapConfig>(key: K, value?: YeapConfig[K]
   return GLOBAL_CONTEXT.yeapContext![key]
 }
 
-export function unique(fn: Function): Function {
+export function unique<F extends (...args: any[]) => any>(fn: F): F {
   let called = false
-  let value: any
-  return function (this: any, ...args: any[]) {
+  let value: ReturnType<F>
+
+  return function (this: ThisParameterType<F>, ...args: Parameters<F>) {
     if (!called) {
       value = fn.apply(this, args)
       called = true
     }
     return value
-  }
+  } as F
 }
 
-export function memo(fn: Function): Function {
-  let value: any
-  let lastArgs: any
-  return function (this: any, ...args: any[]) {
+export function memo<F extends (...args: any[]) => any>(fn: F): F {
+  let lastArgs: Parameters<F>
+  let value: ReturnType<F>
+
+  return function (this: ThisParameterType<F>, ...args: Parameters<F>) {
     if (!equals(lastArgs, args)) value = fn.apply(this, args)
     lastArgs = args
     return value
-  }
+  } as F
 }
 
 export function record<T>(callback: () => T): [value: T, recordedReactors: Array<Reactive<any>>] {
@@ -41,13 +43,13 @@ export function reactable<T>(callback: Reactive<T> | (() => T)): Reactive<T> {
   return createComputed(callback)
 }
 
-export function untrack<T>(callback: Function, ...deps: Array<Reactive<T>>): Function {
-  return function (this: any, ...args: any[]) {
+export function untrack<T, F extends (...args: any[]) => any>(callback: F, ...deps: Array<Reactive<T>>): F {
+  return function (this: ThisParameterType<F>, ...args: Parameters<F>) {
     if (!deps.length) recordReactor.pause()
     const value = callback.apply(this, args)
     if (!deps.length) recordReactor.resume()
     else recordReactor.pop(...deps)
 
     return value
-  }
+  } as F
 }
