@@ -12,9 +12,9 @@ import {
   setStyledComponent,
 } from "../src/app"
 import { DirectiveError, ModifierError } from "../src/errors"
-import { next } from "../src/runtimeLoop"
+import { next } from "../src/runtime"
 import { h, render } from "../src/web"
-import { HElement } from "../types/web"
+import { ElementGiver } from "../types/web"
 import "./polyfill"
 
 /** @jsx h */
@@ -26,7 +26,7 @@ describe("directive", () => {
 
     expect(mock).not.toBeCalled()
     // @ts-ignore
-    const div = (<div use:hello={0} />) as HElement<HTMLDivElement>
+    const div = (<div use:hello={0} />) as ElementGiver<HTMLDivElement, never>
 
     expect(mock).toBeCalled()
     expect(mock).toBeCalledWith(div(), 0)
@@ -118,8 +118,14 @@ describe("dom/jsx", () => {
     })
 
     test("class attribute", () => {
-      const div = (<div class="test test2" />) as HElement<HTMLDivElement>
-      const div2 = (<div className="test" />) as HElement<HTMLDivElement>
+      const div = (<div class="test test2" />) as ElementGiver<
+        HTMLDivElement,
+        never
+      >
+      const div2 = (<div className="test" />) as ElementGiver<
+        HTMLDivElement,
+        never
+      >
 
       expect(div().className).toBe("test test2")
       expect(div2().className).toBe("test")
@@ -128,7 +134,10 @@ describe("dom/jsx", () => {
 
     test("classList attribute", async () => {
       const test = createReactor(true)
-      const div = (<div classList={{ test }} />) as HElement<HTMLDivElement>
+      const div = (<div classList={{ test }} />) as ElementGiver<
+        HTMLDivElement,
+        never
+      >
 
       expect(div().className).toBe("test")
       test(false)
@@ -139,14 +148,17 @@ describe("dom/jsx", () => {
     test("dangerouslySetInnerHTML attribute", () => {
       const div = (
         <div dangerouslySetInnerHTML={{ __html: "<p></p>" }} />
-      ) as HElement<HTMLDivElement>
+      ) as ElementGiver<HTMLDivElement, never>
 
       expect(div().querySelector("p")).not.toBeNull()
     })
 
     test("style attribute", async () => {
       const color = createReactor("red")
-      const div = (<div style={{ color }} />) as HElement<HTMLDivElement>
+      const div = (<div style={{ color }} />) as ElementGiver<
+        HTMLDivElement,
+        never
+      >
 
       expect(div().style.color).toBe("red")
       color("blue")
@@ -156,9 +168,10 @@ describe("dom/jsx", () => {
 
     test("style attribute on camel case inline style", async () => {
       const color = createReactor("red")
-      const div = (
-        <div style={{ backgroundColor: color }} />
-      ) as HElement<HTMLDivElement>
+      const div = (<div style={{ backgroundColor: color }} />) as ElementGiver<
+        HTMLDivElement,
+        never
+      >
 
       expect(div().style.backgroundColor).toBe("red")
       color("blue")
@@ -168,7 +181,7 @@ describe("dom/jsx", () => {
       const color2 = createReactor("red")
       const div2 = (
         <div style={{ backgroundColor: color2 }} />
-      ) as HElement<HTMLDivElement>
+      ) as ElementGiver<HTMLDivElement, never>
 
       expect(div2().style.backgroundColor).toBe("red")
       color2("blue")
@@ -180,7 +193,7 @@ describe("dom/jsx", () => {
       const color = createReactor("red")
       const div = (
         <div style={{ "background-color": color } as any} />
-      ) as HElement<HTMLDivElement>
+      ) as ElementGiver<HTMLDivElement, never>
 
       expect(div().style.backgroundColor).toBe("red")
       color("blue")
@@ -190,7 +203,7 @@ describe("dom/jsx", () => {
       const color2 = createReactor("red")
       const div2 = (
         <div style={{ backgroundColor: color2 }} />
-      ) as HElement<HTMLDivElement>
+      ) as ElementGiver<HTMLDivElement, never>
 
       expect(div2().style.backgroundColor).toBe("red")
       color2("blue")
@@ -200,7 +213,7 @@ describe("dom/jsx", () => {
 
     test("random attributes", async () => {
       const color = createReactor("red")
-      const div = (<div id={color} />) as HElement<HTMLDivElement>
+      const div = (<div id={color} />) as ElementGiver<HTMLDivElement, never>
 
       expect(div().id).toBe("red")
       color("blue")
@@ -210,7 +223,10 @@ describe("dom/jsx", () => {
 
     test("event", () => {
       const handleClick = vi.fn()
-      const div = (<div onClick={handleClick} />) as HElement<HTMLDivElement>
+      const div = (<div onClick={handleClick} />) as ElementGiver<
+        HTMLDivElement,
+        never
+      >
 
       expect(handleClick).not.toBeCalled()
       div().click()
@@ -219,9 +235,10 @@ describe("dom/jsx", () => {
 
     test("event with an array", () => {
       const handleClick = vi.fn()
-      const div = (
-        <div onClick={[handleClick, 4]} />
-      ) as HElement<HTMLDivElement>
+      const div = (<div onClick={[handleClick, 4]} />) as ElementGiver<
+        HTMLDivElement,
+        never
+      >
 
       expect(handleClick).not.toBeCalled()
       div().click()
@@ -232,9 +249,10 @@ describe("dom/jsx", () => {
     test("event modifiers", () => {
       let e: MouseEvent | null = null
       const handleClick = vi.fn((ev: MouseEvent) => (e = ev))
-      const div = (
-        <div onClick:prevent={handleClick} />
-      ) as HElement<HTMLDivElement>
+      const div = (<div onClick:prevent={handleClick} />) as ElementGiver<
+        HTMLDivElement,
+        never
+      >
 
       expect(handleClick).not.toBeCalled()
       expect(e).toBeNull()
@@ -256,7 +274,7 @@ describe("dom/jsx", () => {
   })
 
   test("h", () => {
-    const div = (<div />) as HElement<HTMLDivElement>
+    const div = (<div />) as ElementGiver<HTMLDivElement, never>
 
     expect(div).toBeTypeOf("function")
     expect(div()).toBeInstanceOf(HTMLDivElement)
@@ -264,7 +282,7 @@ describe("dom/jsx", () => {
 
   test("reactor to text node", async () => {
     const reactor = createReactor(0)
-    const div = (<div>{reactor}</div>) as HElement<HTMLDivElement>
+    const div = (<div>{reactor}</div>) as ElementGiver<HTMLDivElement, never>
 
     expect(div().innerHTML).toBe("0")
     reactor(1)
@@ -274,7 +292,10 @@ describe("dom/jsx", () => {
 
   test("function to text node without losing reactivity", async () => {
     const reactor = createReactor(0)
-    const div = (<div>{() => reactor()}</div>) as HElement<HTMLDivElement>
+    const div = (<div>{() => reactor()}</div>) as ElementGiver<
+      HTMLDivElement,
+      never
+    >
 
     expect(div().innerHTML).toBe("0")
     reactor(1)

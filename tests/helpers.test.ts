@@ -1,6 +1,6 @@
 import { test, expect, vi } from "vitest"
 import { batch, equals } from "../src/helpers"
-import { next } from "../src/runtimeLoop"
+import { next } from "../src/runtime"
 
 import "./polyfill"
 

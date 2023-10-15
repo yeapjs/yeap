@@ -1,7 +1,7 @@
 import { describe, test, expect, vi } from "vitest"
 
 import { createComputed, createEffect, createReactor, createRef, isReactor, isReadOnlyReactor } from "../src/app"
-import { next } from "../src/runtimeLoop"
+import { next } from "../src/runtime"
 import { untrack } from "../src/utils"
 import { h } from "../src/web"
 import "./polyfill"

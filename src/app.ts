@@ -1,7 +1,7 @@
 import { AsyncComputedReturn, AsyncReturn, Closer, Context, CreateComputedOption, CreateEffectOption, Reactive, Reactor, ReadOnlyReactor, StyleComponentSheet, TransitionReturn } from "../types/app"
 import { NULL } from "./constantes"
 import { DeepObservable } from "./Observable"
-import { next } from "./runtimeLoop"
+import { next } from "./runtime"
 import { batch, cap, directives, getCurrentContext, hash, isDefined, modifiers } from "./helpers"
 import { record } from "./utils"
 import { ComponentContext } from "./types"

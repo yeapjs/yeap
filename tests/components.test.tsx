@@ -10,7 +10,7 @@ import {
   Portal,
   getChildrenInfos,
 } from "../src/components"
-import { next } from "../src/runtimeLoop"
+import { next } from "../src/runtime"
 import { h, render } from "../src/web"
 
 import "./polyfill"

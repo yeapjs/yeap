@@ -3,7 +3,7 @@ import { Reactive, Reactor } from "../types/app"
 import { NoConditionalComponent } from "../types/components"
 import { COMPONENT_SYMBOL, ELEMENT_SYMBOL, MANIPULABLE_SYMBOL, } from "./constantes"
 import { Recorder } from "./Recorder"
-import { cancelRuntimeCallback, requestRuntimeCallback } from "./runtimeLoop"
+import { cancelRuntimeCallback, requestRuntimeCallback } from "./runtime"
 import { ComponentContext, ComponentCaller, ElementCaller, Children, CssTreeList } from "./types"
 
 function hex(n: number) {
