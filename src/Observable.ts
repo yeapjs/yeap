@@ -2,7 +2,7 @@ import { Reactive, Reactor, ReactorMetaData, ReadOnlyReactor, SubscribeHandler }
 import { createComputed } from "./app"
 import { ARRAY_METHOD, FORCE_SYMBOL, OBSERVABLE_SYMBOL, READONLY_OBSERVABLE_SYMBOL, SEND_EVENT_SYMBOL } from "./constantes"
 import { getValue, GLOBAL_CONTEXT, isDefined, isJSXElement, recordReactor } from "./helpers"
-import { record } from "./utils";
+import { record } from "./utils"
 
 type SubscribeHandlers<T> = ((prev: T, next: T) => void) | [(prev: T, next: T) => void, any]
 
@@ -60,7 +60,7 @@ export class DeepObservable<T>  {
         if (value instanceof Function) {
           const [firstValue, recordedReactors] = record(() => value.apply(getValue(thisArg), argArray))
 
-          const reactive = new DeepObservable(firstValue) as unknown as Reactor<T>;
+          const reactive = new DeepObservable(firstValue) as unknown as Reactor<T>
 
           const subscribe = () => reactive(value.apply(getValue(thisArg), argArray))
 
@@ -71,7 +71,7 @@ export class DeepObservable<T>  {
         }
 
         if (this.#freeze) {
-          if (argArray.length > 0) throw new TypeError("Cannot assign to read only reactor");
+          if (argArray.length > 0) throw new TypeError("Cannot assign to read only reactor")
           return value
         }
 

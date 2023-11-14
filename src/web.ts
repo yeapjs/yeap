@@ -6,7 +6,7 @@ import { COMPONENT_SYMBOL, ELEMENT_SYMBOL, SVG_CAMELCASE_ATTR, SVG_TAGS } from "
 import { generateDOM } from "./dom"
 import { DirectiveError, ModifierError } from "./errors"
 import { extend } from "./functions"
-import { createComponentContext, getValue, GLOBAL_CONTEXT, isDefined, isEvent, setCurrentContext, setContextParent, stringify, toArray, getCurrentContext, isDirective, kebabCase, directives, modifiers as modifiersMap, addCSSHash, isReactable } from "./helpers"
+import { createComponentContext, getValue, GLOBAL_CONTEXT, isDefined, isEvent, setCurrentContext, setContextParent, stringify, toArray, getCurrentContext, isDirective, kebabCase, directives, modifiers as modifiersMap, isReactable } from "./helpers"
 import { ComponentContext } from "./types"
 import { reactable, unique } from "./utils"
 
@@ -203,8 +203,6 @@ export function h(tag: NoConditionalComponent<any> | (() => JSX.Element) | strin
     context.htmlConditions.push(display)
     element.append(...generateDOM(children, element))
 
-    if (context.id) element.setAttribute(`data-${context.id}`, "")
-
     if ("when" in props! && isReactable(props["when"])) return display.when(element, fallback)
 
     return display() ? element : fallback
@@ -246,7 +244,6 @@ function hComp(
     let toMount = true
     let dom: Array<Element | Text>
     let domFallback: Array<Element | Text>
-    let style: HTMLStyleElement
 
     const element = createComputed(() => {
       setCurrentContext(context)
@@ -255,13 +252,6 @@ function hComp(
           if (toMount) {
             mount(context)
             toMount = false
-
-            if (style) {
-              const counter = +style.getAttribute(`data-style-${context.id}`)!
-              style.setAttribute(`data-style-${context.id}`, (counter + 1).toString())
-
-              if (counter === 0) context.topContext?.element?.prepend(style)
-            }
           }
 
           return dom
@@ -275,18 +265,6 @@ function hComp(
         mount(context)
         toMount = false
 
-        const styleElement = context.topContext?.element?.querySelector<HTMLStyleElement>(`[data-style-${context.id}]`)
-        if (!styleElement && context.style) {
-          style = document.createElement("style")
-          style.setAttribute(`data-style-${context.id}`, "1")
-          addCSSHash(context.style, context.id!).then((content) => style.innerHTML = content)
-          context.topContext?.element?.prepend(style)
-        } else if (styleElement) {
-          style = styleElement
-          const counter = +style.getAttribute(`data-style-${context.id}`)!
-          style.setAttribute(`data-style-${context.id}`, (counter + 1).toString())
-        }
-
         setCurrentContext(context.parent!)
         setContextParent(context.parent!)
 
@@ -295,13 +273,6 @@ function hComp(
         if (!toMount) {
           unmount(context)
           toMount = true
-
-          if (style) {
-            const counter = +style.getAttribute(`data-style-${context.id}`)!
-
-            style.setAttribute(`data-style-${context.id}`, (+style.getAttribute(`data-style-${context.id}`)! - 1).toString())
-            if (counter === 1) style.remove()
-          }
         }
 
         if (!domFallback) domFallback = generateDOM(toArray(fallback), parent, previousSibling)

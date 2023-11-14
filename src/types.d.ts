@@ -10,8 +10,6 @@ interface ProvidedContext<T> {
 }
 
 export interface ComponentContext {
-  id?: string
-  style?: string
   element?: Element
   parent?: ComponentContext
   condition: Reactive<boolean> | boolean

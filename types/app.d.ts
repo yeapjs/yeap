@@ -251,10 +251,6 @@ export function onMounted(handle: Function): void
  */
 export function onUnmounted(handle: Function): void
 
-export function setStyledComponent(style: TemplateStringsArray, ...expression: Array<any>): void
-export function setStyledComponent(style: Exclude<StyleComponentSheet, Array<string>>): void
-export const css: typeof setStyledComponent
-
 /**
  * retrieves the nearest context (provided before/parent)
  */

@@ -1,4 +1,3 @@
-import type { CssNode, Selector } from "css-tree"
 import { Reactive, Reactor } from "../types/app"
 import { NoConditionalComponent } from "../types/components"
 import { COMPONENT_SYMBOL, ELEMENT_SYMBOL, MANIPULABLE_SYMBOL, } from "./constantes"
@@ -10,12 +9,6 @@ function hex(n: number) {
   let ret = ((n < 0 ? 0x8 : 0) + ((n >> 28) & 0x7)).toString(16) + (n & 0xfffffff).toString(16)
   while (ret.length < 8) ret = '0' + ret
   return ret
-}
-
-function isPseudoSelector(item: CssNode) {
-  return (
-    item.type === "PseudoElementSelector" || item.type === "PseudoClassSelector"
-  )
 }
 
 export const recordReactor: Recorder<Reactive<any>> = new Recorder()
@@ -200,30 +193,4 @@ export function hash(str: string): string {
     hash |= 0 // Convert to 32bit integer
   }
   return hex(hash ** 2)
-}
-
-export async function addCSSHash(css: string, hash: string): Promise<string> {
-  const { generate, parse, walk } = await import("css-tree");
-
-  const ast = parse(css)
-  walk(ast, (node, item, list) => {
-    if (node.type === "Selector" || node.type === "Combinator") {
-      const attribute: CssNode = {
-        type: "AttributeSelector",
-        name: { type: "Identifier", name: `data-${hash}` },
-        matcher: null,
-        value: null,
-        flags: null,
-      }
-      const parent = ((node as Selector).children ?? list) as CssTreeList<CssNode>
-      let insertItem = node.type === "Combinator" ? item : parent.tail
-      while (!!insertItem?.prev && isPseudoSelector(insertItem.prev.data))
-        insertItem = insertItem.prev
-
-      if (!insertItem?.next) parent.appendData(attribute)
-      else parent.insertData(attribute, insertItem)
-    }
-  })
-
-  return generate(ast)
 }

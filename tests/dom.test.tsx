@@ -9,7 +9,6 @@ import {
   createRef,
   onMounted,
   onUnmounted,
-  setStyledComponent,
 } from "../src/app"
 import { DirectiveError, ModifierError } from "../src/errors"
 import { next } from "../src/runtime"
@@ -37,11 +36,11 @@ describe("directive", () => {
     expect(() => <div use:hello={0} />).not.toThrow()
     // @ts-ignore
     expect(() => <div use:hello2={0} />).toThrow(
-      new DirectiveError("the directive hello2 does not exist")
+      new DirectiveError("the directive hello2 does not exist"),
     )
     // @ts-ignore
     expect(() => <div {...{ "use:hello2:p": 0 }} />).toThrow(
-      new DirectiveError('syntax error "use:" can be take only one directive')
+      new DirectiveError('syntax error "use:" can be take only one directive'),
     )
   })
 })
@@ -323,27 +322,5 @@ describe("dom/jsx", () => {
     await next()
     expect(body.querySelector("p")).toBeNull()
     expect(body.querySelector("span")).not.toBeNull()
-  })
-
-  test("style", () => {
-    function App() {
-      setStyledComponent(`
-        div {
-          color: "red";
-        }
-      `)
-
-      return <div>Hello</div>
-    }
-
-    render(<App />, body)
-
-    expect(document.head.querySelector("style")).not.toBeNull()
-    expect(
-      document.head.querySelector("style")!.hasAttribute("data-style-04060401")
-    ).toBeTruthy()
-    expect(
-      body.querySelector("div")!.hasAttribute("data-04060401")
-    ).toBeTruthy()
   })
 })

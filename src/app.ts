@@ -315,20 +315,6 @@ export function onUnmounted(handler: Function) {
   else context.unmounted!.push(handler)
 }
 
-export const css = setStyledComponent
-export function setStyledComponent(style: StyleComponentSheet, ...rest: any[]) {
-  let styleSheet = ""
-
-  if (Array.isArray(style)) {
-    for (let i = 0; i < rest.length; i++) styleSheet += style[i] + rest[i]
-    styleSheet += style[rest.length]
-  } else styleSheet = style
-
-  const context = getCurrentContext()
-  context.id = hash(context.component?.name ?? "")
-  context.style = styleSheet
-}
-
 export function useContext<T>(context: Context<T>): T {
   let componentContext: ComponentContext | undefined = getCurrentContext()
 
