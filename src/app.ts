@@ -2,9 +2,9 @@ import { AsyncComputedReturn, AsyncReturn, Closer, Context, CreateComputedOption
 import { NULL } from "./constantes"
 import { DeepObservable } from "./Observable"
 import { next } from "./runtime"
-import { batch, cap, directives, getCurrentContext, hash, isDefined, modifiers } from "./helpers"
+import { batch, cap, directives, getCurrentInternalContext, hash, isDefined, modifiers } from "./helpers"
 import { record } from "./utils"
-import { ComponentContext } from "./types"
+import { InternalContext } from "./types"
 
 export function createAsync<T, E, A extends Array<unknown>>(fetcher: (...args: A) => Promise<T>, defaultValue?: T): AsyncReturn<T, E> {
   const data = createReactor<T>(defaultValue)
@@ -108,8 +108,8 @@ export function createComputed<T, U>(reactorHandle: (this: Closer) => Reactive<T
 }
 
 export function createContext<T>(defaultValue?: T): Context<T> {
-  const componentContext = getCurrentContext()
-  const id = Symbol()
+  const internalContext = getCurrentInternalContext()
+  const id = Symbol("context")
   const context: Context<T> = {
     id,
     defaultValue,
@@ -117,10 +117,10 @@ export function createContext<T>(defaultValue?: T): Context<T> {
       return children[0](useContext(context))
     },
     Provider({ value }, children) {
-      const componentContext = getCurrentContext()?.parent ?? getCurrentContext()
+      const internalContext = getCurrentInternalContext()?.parent ?? getCurrentInternalContext()
 
-      componentContext.contexts[id] = {
-        context: componentContext.contexts[id]?.context ?? null,
+      internalContext.contexts[id] = {
+        context: internalContext.contexts[id]?.context ?? null,
         provider: {
           id,
           value
@@ -131,8 +131,8 @@ export function createContext<T>(defaultValue?: T): Context<T> {
     },
   }
 
-  componentContext.contexts[id] = {
-    provider: componentContext.contexts[id]?.provider ?? null,
+  internalContext.contexts[id] = {
+    provider: internalContext.contexts[id]?.provider ?? null,
     context
   }
 
@@ -212,7 +212,7 @@ export function createEffect<T>(reactorHandle: (this: Closer) => void, optionOrD
 }
 
 export function createEventDispatcher<D>(): (name: string, detail: D) => void {
-  const context = getCurrentContext()
+  const context = getCurrentInternalContext()
 
   // force if the persistent callbacks are set, pass the while loop
   if (context.hookIndex in context.hooks)
@@ -228,9 +228,9 @@ export function createEventDispatcher<D>(): (name: string, detail: D) => void {
 
   return createPersistentCallback((name: string, detail: D) => {
     const eventName = "on" + cap(name)
-    if (context.props[eventName]) {
+    if (context.moduleContext.props[eventName]) {
       const event = new CustomEvent(name, { detail })
-      context.props[eventName](event)
+      context.moduleContext.props[eventName](event)
     }
   })
 }
@@ -240,7 +240,7 @@ export function createEventModifier(name: string, callback: ((e: Event) => void)
 }
 
 export function createPersistor<T>(handle: () => T): T {
-  const context = getCurrentContext()
+  const context = getCurrentInternalContext()
   if (context.hookIndex in context.hooks) {
     return context.hooks[context.hookIndex++]
   }
@@ -300,9 +300,8 @@ export function onMounted(handler: Function) {
 
   if (!first(false)) return
 
-  const context = getCurrentContext()
-  if (!isDefined(context.mounted)) context.mounted = [handler]
-  else context.mounted!.push(handler)
+  const context = getCurrentInternalContext()
+  context.mounted.push(handler)
 }
 
 export function onUnmounted(handler: Function) {
@@ -310,17 +309,16 @@ export function onUnmounted(handler: Function) {
 
   if (!first(false)) return
 
-  const context = getCurrentContext()
-  if (!isDefined(context.unmounted)) context.unmounted = [handler]
-  else context.unmounted!.push(handler)
+  const context = getCurrentInternalContext()
+  context.unmounted.push(handler)
 }
 
 export function useContext<T>(context: Context<T>): T {
-  let componentContext: ComponentContext | undefined = getCurrentContext()
+  let internalContext: InternalContext | undefined = getCurrentInternalContext()
 
-  while (isDefined(componentContext?.contexts)) {
-    if (isDefined(componentContext!.contexts[context.id]?.provider)) return componentContext!.contexts[context.id]!.provider!.value
-    componentContext = componentContext!.parent
+  while (isDefined(internalContext?.contexts)) {
+    if (isDefined(internalContext!.contexts[context.id]?.provider)) return internalContext!.contexts[context.id]!.provider!.value
+    internalContext = internalContext!.parent
   }
 
   return context.defaultValue!

@@ -2,7 +2,6 @@ import { Reactive } from "./app"
 
 export interface YeapConfig {
   recordObserverValueMethod: boolean
-  recordObserverCompute: boolean
 }
 
 export function config<K extends keyof YeapConfig>(key: K, value?: YeapConfig[K]): YeapConfig[K]

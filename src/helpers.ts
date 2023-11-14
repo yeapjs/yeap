@@ -1,9 +1,10 @@
 import { Reactive, Reactor } from "../types/app"
 import { NoConditionalComponent } from "../types/components"
+import { ModuleContext } from "../types/modules"
 import { COMPONENT_SYMBOL, ELEMENT_SYMBOL, MANIPULABLE_SYMBOL, } from "./constantes"
 import { Recorder } from "./Recorder"
 import { cancelRuntimeCallback, requestRuntimeCallback } from "./runtime"
-import { ComponentContext, ComponentCaller, ElementCaller, Children, CssTreeList } from "./types"
+import { InternalContext, ComponentCaller, ElementCaller, Children } from "./types"
 
 function hex(n: number) {
   let ret = ((n < 0 ? 0x8 : 0) + ((n >> 28) & 0x7)).toString(16) + (n & 0xfffffff).toString(16)
@@ -37,13 +38,24 @@ export const directives = new Map<string, Function>([
 ])
 
 
-let current: ComponentContext
-let parent: ComponentContext
+let current: InternalContext
+let parent: InternalContext
 
-export const GLOBAL_CONTEXT = createComponentContext(null)
-GLOBAL_CONTEXT.element = document.head
-GLOBAL_CONTEXT.yeapContext = { recordObserverValueMethod: false, recordObserverCompute: false }
-setContextParent(GLOBAL_CONTEXT)
+export const GLOBAL_CONTEXT: Omit<InternalContext, "assemblyCondition" | "moduleContext"> = {
+  global: 1,
+  element: undefined,
+  parent: undefined,
+  highestContext: undefined,
+  htmlConditions: [],
+  contexts: {},
+  mounted: [],
+  unmounted: [],
+  hooks: [],
+  hookIndex: 0,
+  yeapContext: { recordObserverValueMethod: false }
+}
+setContextParent(GLOBAL_CONTEXT as any)
+setCurrentInternalContext(GLOBAL_CONTEXT as any)
 
 export function kebabCase(str: string) {
   return str
@@ -52,19 +64,24 @@ export function kebabCase(str: string) {
     .toLowerCase()
 }
 
-export function createComponentContext(component: NoConditionalComponent<any> | null): ComponentContext {
-  const context: ComponentContext = {
+export function createInternalContext(component: NoConditionalComponent<any>, webComponent: ModuleContext["webComponent"]): InternalContext {
+  const context: InternalContext = {
+    global: 0,
     parent,
-    topContext: parent?.topContext ?? parent,
-    condition: true,
-    component,
+    highestContext: parent?.highestContext ?? parent,
+    assemblyCondition: true,
     htmlConditions: [],
     contexts: {},
-    mounted: null,
-    unmounted: null,
+    mounted: [],
+    unmounted: [],
     hooks: [],
     hookIndex: 0,
-    props: {}
+    moduleContext: {
+      webComponent,
+      props: {},
+      component,
+      extracted: 0
+    }
   }
 
   current = context
@@ -72,15 +89,15 @@ export function createComponentContext(component: NoConditionalComponent<any> | 
   return context
 }
 
-export function setCurrentContext(context: ComponentContext) {
+export function setCurrentInternalContext(context: InternalContext) {
   current = context
 }
 
-export function setContextParent(context: ComponentContext) {
+export function setContextParent(context: InternalContext) {
   parent = context
 }
 
-export function getCurrentContext(): ComponentContext {
+export function getCurrentInternalContext(): InternalContext {
   return current
 }
 

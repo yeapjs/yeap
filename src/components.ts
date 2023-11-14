@@ -3,7 +3,7 @@ import { CaseProps } from "../types/components"
 import { createContext, createReactor, isReactor, useContext } from "./app"
 import { MANIPULABLE_SYMBOL } from "./constantes"
 import { generateDOM } from "./dom"
-import { getCurrentContext, isComponent, isElement, isReactable } from "./helpers"
+import { getCurrentInternalContext, isComponent, isElement, isReactable } from "./helpers"
 import { Children } from "./types"
 import { reactable } from "./utils"
 import { h } from "./web"
@@ -16,7 +16,7 @@ interface MatchContextValue {
 const MatchContext = createContext<MatchContextValue>()
 
 export function getComponentParent(): NoConditionalComponent<any> | null {
-  return getCurrentContext().parent?.component ?? null
+  return getCurrentInternalContext().parent?.moduleContext.component ?? null
 }
 
 export function getChildrenInfos(callback: () => Array<unknown>): Children {

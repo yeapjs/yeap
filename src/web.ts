@@ -6,8 +6,8 @@ import { COMPONENT_SYMBOL, ELEMENT_SYMBOL, SVG_CAMELCASE_ATTR, SVG_TAGS } from "
 import { generateDOM } from "./dom"
 import { DirectiveError, ModifierError } from "./errors"
 import { extend } from "./functions"
-import { createComponentContext, getValue, GLOBAL_CONTEXT, isDefined, isEvent, setCurrentContext, setContextParent, stringify, toArray, getCurrentContext, isDirective, kebabCase, directives, modifiers as modifiersMap, isReactable } from "./helpers"
-import { ComponentContext } from "./types"
+import { createInternalContext, getValue, GLOBAL_CONTEXT, isDefined, isEvent, setCurrentInternalContext, setContextParent, stringify, toArray, getCurrentInternalContext, isDirective, kebabCase, directives, modifiers as modifiersMap, isReactable } from "./helpers"
+import { InternalContext } from "./types"
 import { reactable, unique } from "./utils"
 
 type CustomAttribute<T> = T & { ref?: HTMLElement }
@@ -15,7 +15,7 @@ type CustomAttribute<T> = T & { ref?: HTMLElement }
 export function define<T>(name: string, component: NoConditionalComponent<CustomAttribute<T>>, { reactiveAttributes, shadowed }: DefineCustomElementOption = {}) {
   class Component extends HTMLElement {
     private props: CustomAttribute<any> = {}
-    #context: ComponentContext
+    #context: InternalContext
     #parent: this | ShadowRoot
     #reactiveProps: Record<string, Reactor<string | undefined>>
 
@@ -23,10 +23,14 @@ export function define<T>(name: string, component: NoConditionalComponent<Custom
 
     constructor() {
       super()
-      this.#context = createComponentContext(component)
+      this.#context = createInternalContext(component, {
+        element: this,
+        mode: shadowed ?? false
+      })
+      this.#context.global = 2
       this.#context.element = this
       this.#context.parent = undefined
-      this.#context.topContext = undefined
+      this.#context.highestContext = undefined
       this.#parent = shadowed ? this.attachShadow({ mode: shadowed }) : this
       this.#reactiveProps = {}
     }
@@ -71,13 +75,11 @@ export function define<T>(name: string, component: NoConditionalComponent<Custom
         toArray(hComp(component, this.props, null, Array.from(this.childNodes))),
         this.#parent as Element
       ))
-      if (isDefined(this.#context.mounted)) this.#context.mounted!.forEach((handle) => handle())
-      this.#context.mounted = null
+      this.#context.mounted.forEach((handle) => handle())
     }
 
     disconnectedCallback() {
-      if (isDefined(this.#context.unmounted)) this.#context.unmounted!.forEach((handle) => handle())
-      this.#context.unmounted = null
+      this.#context.unmounted.forEach((handle) => handle())
     }
 
     attributeChangedCallback(propName: string, prev: string, curr: string) {
@@ -199,7 +201,7 @@ export function h(tag: NoConditionalComponent<any> | (() => JSX.Element) | strin
   }
 
   return extend(unique(() => {
-    const context = getCurrentContext()
+    const context = getCurrentInternalContext()
     context.htmlConditions.push(display)
     element.append(...generateDOM(children, element))
 
@@ -226,19 +228,19 @@ function hComp(
   }
 
   return extend(unique((parent: Element, previousSibling?: Element | Text) => {
-    const context = createComponentContext(component)
+    const context = createInternalContext(component, null)
 
-    context.props = properties
-    if ("when" in props! && !component.metadata?.noconditional) context.condition = props["when"]
+    context.moduleContext.props = properties
+    if ("when" in props! && !component.metadata?.noconditional) context.assemblyCondition = props["when"]
 
     const allConditions: Array<Reactive<boolean>> = []
-    let currentContext = context
+    let currentContext: InternalContext | undefined = context
 
     while (currentContext) {
-      if (currentContext.condition === false) return fallback
-      if (isReactable(currentContext.condition)) allConditions.push(reactable(currentContext.condition))
+      if (currentContext.assemblyCondition === false) return fallback
+      if (isReactable(currentContext.assemblyCondition)) allConditions.push(reactable(currentContext.assemblyCondition))
       allConditions.push(...currentContext.htmlConditions)
-      currentContext = currentContext.parent!
+      currentContext = currentContext.parent
     }
 
     let toMount = true
@@ -246,11 +248,11 @@ function hComp(
     let domFallback: Array<Element | Text>
 
     const element = createComputed(() => {
-      setCurrentContext(context)
+      setCurrentInternalContext(context)
       if (!allConditions.some((reactive) => !reactive())) {
         if (dom) {
           if (toMount) {
-            mount(context)
+            context.mounted.forEach((handle) => handle())
             toMount = false
           }
 
@@ -262,16 +264,16 @@ function hComp(
         const elements = toArray(component(properties, children))
         dom = generateDOM(elements, parent, previousSibling)
 
-        mount(context)
+        context.mounted.forEach((handle) => handle())
         toMount = false
 
-        setCurrentContext(context.parent!)
+        setCurrentInternalContext(context.parent!)
         setContextParent(context.parent!)
 
         return dom
       } else {
         if (!toMount) {
-          unmount(context)
+          context.unmounted.forEach((handle) => handle())
           toMount = true
         }
 
@@ -290,16 +292,9 @@ function hComp(
   })
 }
 
-function mount(context: ComponentContext) {
-  if (isDefined(context.mounted)) context.mounted!.forEach((handle) => handle())
-}
-function unmount(context: ComponentContext) {
-  if (isDefined(context.unmounted)) context.unmounted!.forEach((handle) => handle())
-}
-
 export function render(children: JSX.Element, container: HTMLElement | SVGElement) {
   container.append(...generateDOM(toArray(children), container))
 
-  if (isDefined(GLOBAL_CONTEXT.mounted)) GLOBAL_CONTEXT.mounted!.forEach((handle) => handle())
-  GLOBAL_CONTEXT.mounted = null
+  GLOBAL_CONTEXT.mounted.forEach((handle) => handle())
+  GLOBAL_CONTEXT.mounted = []
 }

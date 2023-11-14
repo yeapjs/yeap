@@ -1,6 +1,6 @@
-import { List, ListItem } from "css-tree"
-import { Context, CSSProperties, Reactive } from "../types/app"
+import { Context, Reactive } from "../types/app"
 import { ComponentInfos, DataInfos, ElementInfos, NoConditionalComponent } from "../types/components"
+import { ModuleContext } from "../types/modules"
 import { YeapConfig } from "../types/utils"
 import { COMPONENT_SYMBOL, ELEMENT_SYMBOL, MANIPULABLE_SYMBOL } from "./constantes"
 
@@ -9,20 +9,20 @@ interface ProvidedContext<T> {
   value?: T
 }
 
-export interface ComponentContext {
+export interface InternalContext {
+  global: 0 /* local */ | 1 /* global */ | 2 /* web component */,
   element?: Element
-  parent?: ComponentContext
-  condition: Reactive<boolean> | boolean
-  component: NoConditionalComponent<object> | null
+  parent?: InternalContext
+  assemblyCondition: Reactive<boolean> | boolean
   htmlConditions: Array<Reactive<boolean>>
-  topContext?: ComponentContext
+  highestContext?: InternalContext
   contexts: Record<symbol, { context?: Context<any> | null, provider: ProvidedContext<any> | null }>
-  mounted: Array<Function> | null
-  unmounted: Array<Function> | null
+  mounted: Array<Function>
+  unmounted: Array<Function>
   hooks: Array<any>
   hookIndex: number
-  props: Record<PropertyKey, any>
   yeapContext?: YeapConfig
+  moduleContext: ModuleContext
 }
 
 export type ComponentCaller = Function & {
@@ -37,7 +37,3 @@ export type ElementCaller = Function & {
   [ELEMENT_SYMBOL]: true
 }
 export type Children = Array<{ [MANIPULABLE_SYMBOL]: true } & (ComponentInfos | DataInfos | ElementInfos)>
-export interface CssTreeList<T> extends List<T> {
-  head: ListItem<T> | null,
-  tail: ListItem<T> | null,
-}
