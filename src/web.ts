@@ -6,9 +6,9 @@ import { COMPONENT_SYMBOL, ELEMENT_SYMBOL, SVG_CAMELCASE_ATTR, SVG_TAGS } from "
 import { generateDOM } from "./dom"
 import { DirectiveError, ModifierError } from "./errors"
 import { extend } from "./functions"
-import { createInternalContext, getValue, GLOBAL_CONTEXT, isDefined, isEvent, setCurrentInternalContext, setContextParent, stringify, toArray, getCurrentInternalContext, isDirective, kebabCase, directives, modifiers as modifiersMap, isReactable } from "./helpers"
+import { createInternalContext, GLOBAL_CONTEXT, isDefined, isEvent, setCurrentInternalContext, setContextParent, stringify, toArray, getCurrentInternalContext, isDirective, kebabCase, directives, modifiers as modifiersMap, isReactable } from "./helpers"
 import { InternalContext } from "./types"
-import { reactable, unique } from "./utils"
+import { reactable, unique, unwrap } from "./utils"
 
 type CustomAttribute<T> = T & { ref?: HTMLElement }
 
@@ -128,14 +128,14 @@ export function h(tag: NoConditionalComponent<any> | (() => JSX.Element) | strin
           else element.classList.remove(item)
         })
 
-        if (!!getValue(classList[item])) element.classList.add(item)
+        if (!!unwrap(classList[item])) element.classList.add(item)
       }
     } else if (prop === "dangerouslySetInnerHTML") {
       const value = props[prop]?.__html
       if (!value) continue
 
       if (isReactable(value)) reactable<string>(value).subscribe((_, curr) => element.innerHTML = curr)
-      element.innerHTML = getValue(value)
+      element.innerHTML = unwrap(value)
     } else if (prop === "style") {
       const style = props[prop]
       for (const item in style) {
@@ -143,8 +143,8 @@ export function h(tag: NoConditionalComponent<any> | (() => JSX.Element) | strin
           element.style.setProperty(item, curr)
           element.style[item as any] = curr
         })
-        element.style.setProperty(item, getValue<string>(style[item])!)
-        element.style[item as any] = getValue<string>(style[item])!
+        element.style.setProperty(item, unwrap<string>(style[item])!)
+        element.style[item as any] = unwrap<string>(style[item])!
       }
     } else if (isEvent(prop)) {
       const [eventName, ...modifiers] = prop.slice(2).toLowerCase().split(":")
@@ -189,13 +189,13 @@ export function h(tag: NoConditionalComponent<any> | (() => JSX.Element) | strin
         else element.removeAttribute(prop)
       })
 
-      if (isDefined(getValue(props[prop])) && getValue(props[prop]) !== false) {
+      if (isDefined(unwrap(props[prop])) && unwrap(props[prop]) !== false) {
         if (prop in element) try {
-          (element as any)[prop] = getValue(props[prop]) === true ? "" : stringify(getValue(props[prop]))
+          (element as any)[prop] = unwrap(props[prop]) === true ? "" : stringify(unwrap(props[prop]))
         } catch (error) {
           writable = false
         }
-        element.setAttribute(attributeName, getValue(props[prop]) === true ? "" : stringify(getValue(props[prop])))
+        element.setAttribute(attributeName, unwrap(props[prop]) === true ? "" : stringify(unwrap(props[prop])))
       }
     }
   }

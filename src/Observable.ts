@@ -1,8 +1,8 @@
 import { Reactive, Reactor, ReactorMetaData, ReadOnlyReactor, SubscribeHandler } from "../types/app"
 import { createComputed } from "./app"
 import { ARRAY_METHOD, FORCE_SYMBOL, OBSERVABLE_SYMBOL, READONLY_OBSERVABLE_SYMBOL, SEND_EVENT_SYMBOL } from "./constantes"
-import { getValue, GLOBAL_CONTEXT, isDefined, isJSXElement, recordReactor } from "./helpers"
-import { record } from "./utils"
+import { GLOBAL_CONTEXT, isDefined, isJSXElement, recordReactor } from "./helpers"
+import { record, unwrap } from "./utils"
 
 type SubscribeHandlers<T> = ((prev: T, next: T) => void) | [(prev: T, next: T) => void, any]
 
@@ -58,11 +58,11 @@ export class DeepObservable<T>  {
         const value = this.#value
         if (DeepObservable.isObservable(value)) return value()
         if (value instanceof Function) {
-          const [firstValue, recordedReactors] = record(() => value.apply(getValue(thisArg), argArray))
+          const [firstValue, recordedReactors] = record(() => value.apply(unwrap(thisArg), argArray))
 
           const reactive = new DeepObservable(firstValue) as unknown as Reactor<T>
 
-          const subscribe = () => reactive(value.apply(getValue(thisArg), argArray))
+          const subscribe = () => reactive(value.apply(unwrap(thisArg), argArray))
 
           if (parent) parent.subscribe(subscribe)
           if (GLOBAL_CONTEXT.yeapContext?.recordObserverValueMethod) recordedReactors.forEach((recordedReactor) => recordedReactor.subscribe(subscribe))
@@ -81,7 +81,7 @@ export class DeepObservable<T>  {
         }
 
         if (argArray[0] instanceof Function && !DeepObservable.isObservable(argArray[0])) this.#value = argArray[0](value)
-        else this.#value = getValue(argArray[0])! as T
+        else this.#value = unwrap(argArray[0])! as T
 
         if (this.#once) this.#freeze = true
 

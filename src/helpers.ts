@@ -129,10 +129,6 @@ export function cap(str: string): string {
   return str.charAt(0).toUpperCase() + str.slice(1)
 }
 
-export function getValue<T>(a: Reactive<T> | (() => T) | T | undefined): T | undefined {
-  return isReactable(a) ? a() : a
-}
-
 export function toArray<T>(value: T | Array<T>): Array<T> {
   return value instanceof Array ? value : [value]
 }
@@ -142,7 +138,7 @@ export function isDefined(v: unknown): typeof v extends null ? never : typeof v 
 }
 
 export function isReactable(v: any): v is Function {
-  return typeof v === "function"
+  return v instanceof Function
 }
 
 export function isEvent(v: string): boolean {
@@ -206,7 +202,7 @@ export function diff(obj1: Record<string, [any, any]>, obj2: Record<string, [any
 export function hash(str: string): string {
   let hash = 0
   for (let i = 0; i < str.length; i++) {
-    hash = (hash << 5) - hash + str.charCodeAt(i)
+    hash = (hash << 5) - hash + str.charCodeAt(i) + i
     hash |= 0 // Convert to 32bit integer
   }
   return hex(hash ** 2)

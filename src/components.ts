@@ -3,7 +3,7 @@ import { CaseProps } from "../types/components"
 import { createContext, createReactor, isReactor, useContext } from "./app"
 import { MANIPULABLE_SYMBOL } from "./constantes"
 import { generateDOM } from "./dom"
-import { getCurrentInternalContext, isComponent, isElement, isReactable } from "./helpers"
+import { getCurrentInternalContext, isComponent, isElement } from "./helpers"
 import { Children } from "./types"
 import { reactable } from "./utils"
 import { h } from "./web"
@@ -84,7 +84,7 @@ export const Portal: Component<{ mount: Element }> = noconditional(({ mount = do
 export const Match: NoConditionalComponent<{ when: any }> = noconditional(({ when }, children) => {
   const value: MatchContextValue = { when: reactable(when), matched: false }
 
-  if (isReactable(when)) value.when.subscribe(() => {
+  if (isReactor(when)) value.when.subscribe(() => {
     value.matched = false
   })
 
