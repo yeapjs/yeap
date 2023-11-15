@@ -1,9 +1,9 @@
-import { AsyncComputedReturn, AsyncReturn, Closer, Context, CreateComputedOption, CreateEffectOption, Reactive, Reactor, ReadOnlyReactor, StyleComponentSheet, TransitionReturn } from "../types/app"
+import { AsyncComputedReturn, AsyncReturn, Context, CreateComputedOption, CreateEffectOption, Reactive, Reactor, ReadOnlyReactor, TransitionReturn } from "../types/app"
 import { NULL } from "./constantes"
 import { DeepObservable } from "./Observable"
 import { next } from "./runtime"
-import { batch, cap, directives, getCurrentInternalContext, hash, isDefined, modifiers } from "./helpers"
-import { autoid, record } from "./utils"
+import { batch, cap, directives, getCurrentInternalContext, isDefined, modifiers } from "./helpers"
+import { autoid, record, unwrap } from "./utils"
 import { InternalContext } from "./types"
 
 export function createAsync<T, E, A extends Array<unknown>>(fetcher: (...args: A) => Promise<T>, defaultValue?: T): AsyncReturn<T, E> {
@@ -32,21 +32,20 @@ export function createAsync<T, E, A extends Array<unknown>>(fetcher: (...args: A
   }
 }
 
-export function createAsyncComputed<T, E, U>(fetcher: (this: Closer) => Promise<T>, defaultValue?: Reactive<U> | T, optionOrDependency?: CreateEffectOption | Reactive<U>, ...dependencies: Array<Reactive<U>>): AsyncComputedReturn<T, E> {
+export function createAsyncComputed<T, E, U>(fetcher: () => Promise<T>, defaultValue?: Reactive<U> | T, optionOrDependency?: CreateEffectOption | Reactive<U>, ...dependencies: Array<Reactive<U>>): AsyncComputedReturn<T, E> {
   if (isReactor(defaultValue)) {
     dependencies.push(defaultValue)
     defaultValue = undefined
   }
 
-  const { data, error, loading, refetch } = createAsync<T, E, []>(fetcher, defaultValue!)
+  const { data, error, loading, refetch } = createAsync<T, E, []>(fetcher, defaultValue)
   createEffect(refetch, optionOrDependency, ...dependencies)
 
   return { data, error, loading }
 }
 
-export function createComputed<T, U>(reactorHandle: (this: Closer) => Reactive<T> | T, optionOrDependency?: CreateComputedOption | Reactive<U>, ...dependencies: Array<Reactive<U>>): ReadOnlyReactor<T> {
+export function createComputed<T, U>(handle: () => T, optionOrDependency?: CreateComputedOption | Reactive<U>, ...dependencies: Array<Reactive<U>>): ReadOnlyReactor<T> {
   const updates = new Map<Reactive<U>, { prev: U | NULL, curr: U | NULL }>()
-  const handle = reactorHandle.bind({ close })
 
   const option = (() => {
     const defaultOption = {
@@ -65,7 +64,7 @@ export function createComputed<T, U>(reactorHandle: (this: Closer) => Reactive<T
     }
   })()
 
-  const initialValue: T | Reactive<T> = (() => {
+  const initialValue: T = (() => {
     if (option.record) {
       const [value, recordedReactors] = record(handle)
       recordedReactors.forEach((v) => dependencies.push(v))
@@ -145,11 +144,10 @@ export function createDirective<T, E extends HTMLElement = HTMLElement>(name: st
 
 const effectId = autoid()
 const effectCloseCallbacks = new Map<number, Array<() => void>>()
-export function createEffect<T>(reactorHandle: (this: Closer) => void, optionOrDependency?: CreateEffectOption | Reactive<T>, ...dependencies: Array<Reactive<T>>): number {
+export function createEffect<T>(handle: () => void, optionOrDependency?: CreateEffectOption | Reactive<T>, ...dependencies: Array<Reactive<T>>): number {
   const id = effectId()
 
   const updates = new Map<Reactive<T>, { prev: T | NULL, curr: T | NULL }>()
-  const handle = reactorHandle.bind({ close })
   const option = (() => {
     const defaultOption = {
       immediate: true,
@@ -193,7 +191,7 @@ export function createEffect<T>(reactorHandle: (this: Closer) => void, optionOrD
     }
 
     const callbacks = effectCloseCallbacks.get(id)
-    if (isDefined(callbacks)) callbacks!.forEach((callback) => callback())
+    if (isDefined(callbacks)) callbacks.forEach((callback) => callback())
 
     let update = false
     for (const v of updates.values()) {
@@ -212,7 +210,7 @@ export function createEffect<T>(reactorHandle: (this: Closer) => void, optionOrD
 
   function close() {
     const callbacks = effectCloseCallbacks.get(id)
-    if (isDefined(callbacks)) callbacks!.forEach((callback) => callback())
+    if (isDefined(callbacks)) callbacks.forEach((callback) => callback())
     updates.clear()
     unsubscribes.forEach((unsubscribe) => unsubscribe())
   }
@@ -241,9 +239,10 @@ export function createEventDispatcher<D>(): (name: string, detail: D) => void {
   let globalContext = context
   while (globalContext.parent) globalContext = globalContext.parent
 
-  if (globalContext.element) return createPersistentCallback((name: string, detail: D) => {
+  const el = globalContext.element
+  if (el) return createPersistentCallback((name: string, detail: D) => {
     const event = new CustomEvent(name, { detail })
-    globalContext.element!.dispatchEvent(event)
+    el.dispatchEvent(event)
   })
 
   return createPersistentCallback((name: string, detail: D) => {
@@ -277,19 +276,17 @@ export function createPersistentCallback<T extends Function>(callback: T): T {
   return createPersistor(() => callback)
 }
 
-export function createPersistentReactor<T>(initialValue?: Reactive<T> | T) {
+export function createPersistentReactor<T>(initialValue?: T) {
   return createPersistor(() => createReactor(initialValue))
 }
-export function createReactor<T>(initialValue?: Reactive<T> | (() => T) | T): Reactor<T> {
-  if (initialValue instanceof Function && !isReactor(initialValue)) initialValue = initialValue()
-
-  return new DeepObservable(initialValue) as unknown as Reactor<T>
+export function createReactor<T>(initialValue?: (() => T) | T): Reactor<T> {
+  // CAST-SAFETY: DeepObservable is a Proxy to type Reactor 
+  return new DeepObservable(unwrap(initialValue)) as unknown as Reactor<T>
 }
 
-export function createRef<T>(initialValue?: Reactive<T> | (() => T) | T): Reactor<T> {
-  if (initialValue instanceof Function && !isReactor(initialValue)) initialValue = initialValue()
-
-  return new DeepObservable(initialValue, null, false, true) as unknown as Reactor<T>
+export function createRef<T>(initialValue?: (() => T) | T): Reactor<T> {
+  // CAST-SAFETY: DeepObservable is a Proxy to type Reactor 
+  return new DeepObservable(unwrap(initialValue), null, false, true) as unknown as Reactor<T>
 }
 
 export function createTransition(): TransitionReturn {
@@ -336,9 +333,9 @@ export function onUnmounted(handler: Function) {
 export function useContext<T>(context: Context<T>): T {
   let internalContext: InternalContext | undefined = getCurrentInternalContext()
 
-  while (isDefined(internalContext?.contexts)) {
-    if (isDefined(internalContext!.contexts[context.id]?.provider)) return internalContext!.contexts[context.id]!.provider!.value
-    internalContext = internalContext!.parent
+  while (isDefined(internalContext) && isDefined(internalContext.contexts)) {
+    if (isDefined(internalContext.contexts[context.id]?.provider)) return internalContext.contexts[context.id].provider!.value
+    internalContext = internalContext.parent
   }
 
   return context.defaultValue!

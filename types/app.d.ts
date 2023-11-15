@@ -33,14 +33,6 @@ export interface Context<T> {
   Provider: Component<{ value: T }, Array<JSX.Element>>
 }
 
-export interface Closer {
-  close(): void
-}
-
-export type StyleComponentSheet = string | Array<string> /*Array<[Array<any> | string, CSSProperties]> | {
-  [key: string]: CSSProperties
-}*/
-
 /// REACTIVE
 interface ReactorMetaData<T> {
   readonly settable: boolean
@@ -153,7 +145,7 @@ export function createAsync<T, E, A extends Array<unknown>>(fetcher: (...args: A
  * createComputed(refetch, deps) // or createEffect(refetch, deps)
  * ```
  */
-export function createAsyncComputed<T, E, U>(fetcher: (this: Closer) => Promise<T>, ...deps: Array<Reactive<U>>): AsyncComputedReturn<T, E>
+export function createAsyncComputed<T, E, U>(fetcher: () => Promise<T>, ...deps: Array<Reactive<U>>): AsyncComputedReturn<T, E>
 /**
  * shortened to
  * ```js
@@ -161,7 +153,7 @@ export function createAsyncComputed<T, E, U>(fetcher: (this: Closer) => Promise<
  * createComputed(refetch, deps) // or createEffect(refetch, deps)
  * ```
  */
-export function createAsyncComputed<T, E, U>(fetcher: (this: Closer) => Promise<T>, defaultValue: T, ...deps: Array<Reactive<U>>): AsyncComputedReturn<T, E>
+export function createAsyncComputed<T, E, U>(fetcher: () => Promise<T>, defaultValue: T, ...deps: Array<Reactive<U>>): AsyncComputedReturn<T, E>
 /**
  * shortened to
  * ```js
@@ -169,16 +161,16 @@ export function createAsyncComputed<T, E, U>(fetcher: (this: Closer) => Promise<
  * createComputed(refetch, deps) // or createEffect(refetch, option, deps)
  * ```
  */
-export function createAsyncComputed<T, E, U>(fetcher: (this: Closer) => Promise<T>, defaultValue: T, option: CreateEffectOption, ...deps: Array<Reactive<U>>): AsyncComputedReturn<T, E>
+export function createAsyncComputed<T, E, U>(fetcher: () => Promise<T>, defaultValue: T, option: CreateEffectOption, ...deps: Array<Reactive<U>>): AsyncComputedReturn<T, E>
 
 /**
  * observes all dependencies and calls the function again when a dependency has been updated, returns a reactor, it cannot be updated
  */
-export function createComputed<T, U>(handle: (this: Closer) => Reactive<T> | T, ...deps: Array<Reactive<U>>): ReadOnlyReactor<T>
+export function createComputed<T, U>(handle: () => Reactive<T> | T, ...deps: Array<Reactive<U>>): ReadOnlyReactor<T>
 /**
  * observes all dependencies and calls the function again when a dependency has been updated, returns a reactor, it cannot be updated, it takes options
  */
-export function createComputed<T, U>(handle: (this: Closer) => Reactive<T> | T, option: CreateComputedOption, ...deps: Array<Reactive<U>>): ReadOnlyReactor<T>
+export function createComputed<T, U>(handle: () => Reactive<T> | T, option: CreateComputedOption, ...deps: Array<Reactive<U>>): ReadOnlyReactor<T>
 
 export function createContext<T>(defaultValue?: T): Context<T>
 
@@ -191,11 +183,11 @@ export function createDirective<T, E extends HTMLElement = HTMLElement>(name: st
 /**
  * observes all dependencies and calls the function again when a dependency has been updated, returns a reactor
  */
-export function createEffect<T>(handle: (this: Closer) => void, ...deps: Array<Reactive<T>>): number
+export function createEffect<T>(handle: () => void, ...deps: Array<Reactive<T>>): number
 /**
  * observes all dependencies and calls the function again when a dependency has been updated, returns a reactor, it takes options
  */
-export function createEffect<T>(handle: (this: Closer) => void, option: CreateEffectOption, ...deps: Array<Reactive<T>>): number
+export function createEffect<T>(handle: () => void, option: CreateEffectOption, ...deps: Array<Reactive<T>>): number
 
 export function cleanupEffect(effectId: number, callback: () => void): void
 

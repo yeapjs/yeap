@@ -96,22 +96,22 @@ export function define<T>(name: string, component: NoConditionalComponent<Custom
 
 type ElementGiver<E, F> = (...args: any[]) => E | F | ReadOnlyReactor<E | F>
 
-export function h(tag: NoConditionalComponent<any> | (() => JSX.Element) | string, props: Props | null, ...children: Array<JSX.Element>): ElementGiver<HTMLElement | SVGElement, Array<any>> | ((...args: any[]) => ElementGiver<HTMLElement | SVGElement, Array<any>>) {
-  if (!isDefined(props)) props = {}
+export function h(tag: NoConditionalComponent<any> | (() => JSX.Element) | string, originalProps: Props | null, ...children: Array<JSX.Element>): ElementGiver<HTMLElement | SVGElement, Array<any>> | ((...args: any[]) => ElementGiver<HTMLElement | SVGElement, Array<any>>) {
+  const props = isDefined(originalProps) ? originalProps : {}
 
-  const fallback = toArray(props!["fallback"] ?? [new Text()])
+  const fallback = toArray(props["fallback"] ?? [new Text()])
 
   if (tag instanceof Function) return hComp(tag, props, fallback, children)
 
   const display = createReactor(true)
-  if ("when" in props!) {
+  if ("when" in props) {
     if (isReactable(props["when"])) {
       reactable(props["when"]).subscribe((_: any, curr: any) => display(!!curr))
       display(!!props["when"]())
     } else display(!!props["when"])
   }
 
-  const is = props?.is?.toString()
+  const is = props.is?.toString()
   const element = SVG_TAGS.has(tag) ? document.createElementNS("http://www.w3.org/2000/svg", tag) : document.createElement(tag, { is })
 
   for (const prop in props) {
@@ -163,9 +163,9 @@ export function h(tag: NoConditionalComponent<any> | (() => JSX.Element) | strin
           if (modifier instanceof Function) modifier(e)
         }
 
-        if (props![prop] instanceof Function) props![prop](e)
+        if (props[prop] instanceof Function) props[prop](e)
         else {
-          const [fn, ...args] = props![prop]
+          const [fn, ...args] = props[prop]
 
           fn(...args)
         }
@@ -189,13 +189,14 @@ export function h(tag: NoConditionalComponent<any> | (() => JSX.Element) | strin
         else element.removeAttribute(prop)
       })
 
-      if (isDefined(unwrap(props[prop])) && unwrap(props[prop]) !== false) {
+      const unwrapedValue = unwrap(props[prop])
+      if (isDefined(unwrapedValue) && unwrapedValue !== false) {
         if (prop in element) try {
-          (element as any)[prop] = unwrap(props[prop]) === true ? "" : stringify(unwrap(props[prop]))
+          (element as any)[prop] = unwrapedValue === true ? "" : stringify(unwrapedValue)
         } catch (error) {
           writable = false
         }
-        element.setAttribute(attributeName, unwrap(props[prop]) === true ? "" : stringify(unwrap(props[prop])))
+        element.setAttribute(attributeName, unwrapedValue === true ? "" : stringify(unwrapedValue))
       }
     }
   }
@@ -205,18 +206,18 @@ export function h(tag: NoConditionalComponent<any> | (() => JSX.Element) | strin
     context.htmlConditions.push(display)
     element.append(...generateDOM(children, element))
 
-    if ("when" in props! && isReactable(props["when"])) return display.when(element, fallback)
+    if ("when" in props && isReactable(props["when"])) return display.when(element, fallback)
 
     return display() ? element : fallback
   }), {
     [ELEMENT_SYMBOL]: true,
-    key: props!["key"]
+    key: props["key"]
   })
 }
 
 function hComp(
   component: NoConditionalComponent<any>,
-  props: Props | null,
+  props: Props,
   fallback: any,
   children: Array<JSX.Element>
 ): ElementGiver<HTMLElement, any> {
@@ -231,7 +232,7 @@ function hComp(
     const context = createInternalContext(component, null)
 
     context.moduleContext.props = properties
-    if ("when" in props! && !component.metadata?.noconditional) context.assemblyCondition = props["when"]
+    if ("when" in props && !component.metadata?.noconditional) context.assemblyCondition = props["when"]
 
     const allConditions: Array<Reactive<boolean>> = []
     let currentContext: InternalContext | undefined = context
@@ -284,7 +285,7 @@ function hComp(
 
     return allConditions.length === 0 ? element() : element
   }), {
-    key: props!["key"],
+    key: props["key"],
     [COMPONENT_SYMBOL]: true,
     props,
     component,

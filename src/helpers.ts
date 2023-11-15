@@ -133,7 +133,7 @@ export function toArray<T>(value: T | Array<T>): Array<T> {
   return value instanceof Array ? value : [value]
 }
 
-export function isDefined(v: unknown): typeof v extends null ? never : typeof v extends undefined ? never : typeof v {
+export function isDefined<T>(v: T): v is NonNullable<T> {
   return v !== null && v !== undefined
 }
 

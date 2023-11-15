@@ -60,6 +60,7 @@ export class DeepObservable<T>  {
         if (value instanceof Function) {
           const [firstValue, recordedReactors] = record(() => value.apply(unwrap(thisArg), argArray))
 
+          // CAST-SAFETY: DeepObservable is a Proxy to type Reactor 
           const reactive = new DeepObservable(firstValue) as unknown as Reactor<T>
 
           const subscribe = () => reactive(value.apply(unwrap(thisArg), argArray))
