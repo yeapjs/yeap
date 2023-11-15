@@ -9,3 +9,5 @@ export interface ModuleContext {
     component: NoConditionalComponent<object>,
     extracted: number
 }
+
+export function getContext(): ModuleContext | null

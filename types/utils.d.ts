@@ -15,3 +15,9 @@ export function record<T>(callback: () => T): [value: T, recordedReactors: Array
 export function reactable<T>(callback: Reactive<T> | (() => T)): Reactive<T>
 
 export function untrack<T, F extends Function>(callback: F, ...deps: Array<Reactive<T>>): F
+
+export function unwrap<T>(a: Reactive<T> | (() => T) | T): T
+
+export function autoid(): () => number
+
+export function extend<O, F extends (...args: any) => any>(func: F, extention: O): F & O
