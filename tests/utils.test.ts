@@ -1,6 +1,18 @@
 import { test, expect, vi } from "vitest"
 import { createReactor, isReactor } from "../src/app"
-import { memo, reactable, record, unique, untrack } from "../src/utils"
+import { autoid, memo, reactable, record, unique, untrack } from "../src/utils"
+
+test("autoid", () => {
+  const a = autoid()
+  expect(a()).toBe(0)
+  expect(a()).toBe(1)
+  expect(a()).toBe(2)
+
+  const b = autoid()
+  expect(b()).toBe(0)
+  expect(a()).toBe(3)
+  expect(b()).toBe(1)
+})
 
 test("record", () => {
   const a = createReactor(0)

@@ -82,7 +82,7 @@ export class DeepObservable<T>  {
         }
 
         if (argArray[0] instanceof Function && !DeepObservable.isObservable(argArray[0])) this.#value = argArray[0](value)
-        else this.#value = unwrap(argArray[0])! as T
+        else this.#value = unwrap(argArray[0])
 
         if (this.#once) this.#freeze = true
 

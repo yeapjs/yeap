@@ -54,8 +54,8 @@ export const GLOBAL_CONTEXT: Omit<InternalContext, "assemblyCondition" | "module
   hookIndex: 0,
   yeapContext: { recordObserverValueMethod: false }
 }
-setContextParent(GLOBAL_CONTEXT as any)
-setCurrentInternalContext(GLOBAL_CONTEXT as any)
+setContextParent(GLOBAL_CONTEXT as InternalContext)
+setCurrentInternalContext(GLOBAL_CONTEXT as InternalContext)
 
 export function kebabCase(str: string) {
   return str

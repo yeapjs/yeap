@@ -1,10 +1,11 @@
 import { describe, test, expect, vi } from "vitest"
 
-import { createComputed, createEffect, createReactor, createRef, isReactor, isReadOnlyReactor } from "../src/app"
+import { cleanupEffect, createComputed, createEffect, createReactor, createRef, isReactor, isReadOnlyReactor } from "../src/app"
 import { next } from "../src/runtime"
 import { untrack } from "../src/utils"
 import { h } from "../src/web"
 import "./polyfill"
+import { nano } from "./utils"
 
 test("if createRef bacame a ReadOnlyReactor after update", () => {
   const ref = createRef(0)
@@ -386,5 +387,35 @@ describe("createEffect", () => {
     reactor(1)
     await next()
     expect(mock).toBeCalledTimes(2)
+  })
+
+  test("cleanupEffect", async () => {
+    const reactor = createReactor(0)
+    let date1: number = 0
+    let date2: number = 0
+    const effectMock = vi.fn(() => {
+      date1 = nano(process.hrtime())
+      reactor()
+    })
+    const cleanupMock = vi.fn(() => {
+      date2 = nano(process.hrtime())
+    })
+
+    const id = createEffect(effectMock, {
+      record: true
+    })
+
+    cleanupEffect(id, cleanupMock)
+
+    expect(effectMock).toBeCalledTimes(1)
+    expect(cleanupMock).toBeCalledTimes(0)
+    expect(date1).not.toBe(0)
+    expect(date2).toBe(0)
+    reactor(1)
+    await next()
+    expect(effectMock).toBeCalledTimes(2)
+    expect(cleanupMock).toBeCalledTimes(1)
+    // if date1 - date2 > 0 it means the cleanupMock is call before effectMock
+    expect(date1 - date2).above(0)
   })
 })
