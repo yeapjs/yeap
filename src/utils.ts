@@ -58,3 +58,8 @@ export function untrack<T, F extends (...args: any[]) => any>(callback: F, ...de
 export function unwrap<T>(a: Reactive<T> | (() => T) | T): T {
   return a instanceof Function ? a() : a
 }
+
+export function autoid(): () => number {
+  let i = 0
+  return () => i++
+}

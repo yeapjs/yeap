@@ -1,6 +1,8 @@
+import { autoid } from "./utils"
+
 const callbacks = new Map<number, Function>()
 let idleId: number | null = null
-let i = 0
+const runtimeId = autoid()
 
 function loop(deadline: IdleDeadline) {
   for (const callback of callbacks.values()) {
@@ -19,7 +21,7 @@ export function next() {
 }
 
 export function requestRuntimeCallback(callback: Function): number {
-  const id = i++
+  const id = runtimeId()
 
   callbacks.set(id, () => {
     callback()
