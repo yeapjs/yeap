@@ -191,11 +191,13 @@ export function createDirective<T, E extends HTMLElement = HTMLElement>(name: st
 /**
  * observes all dependencies and calls the function again when a dependency has been updated, returns a reactor
  */
-export function createEffect<T>(handle: (this: Closer) => void, ...deps: Array<Reactive<T>>): void
+export function createEffect<T>(handle: (this: Closer) => void, ...deps: Array<Reactive<T>>): number
 /**
  * observes all dependencies and calls the function again when a dependency has been updated, returns a reactor, it takes options
  */
-export function createEffect<T>(handle: (this: Closer) => void, option: CreateEffectOption, ...deps: Array<Reactive<T>>): void
+export function createEffect<T>(handle: (this: Closer) => void, option: CreateEffectOption, ...deps: Array<Reactive<T>>): number
+
+export function cleanupEffect(effectId: number, callback: () => void): void
 
 /**
  * returns a event dispatcher

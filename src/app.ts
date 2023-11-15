@@ -3,7 +3,7 @@ import { NULL } from "./constantes"
 import { DeepObservable } from "./Observable"
 import { next } from "./runtime"
 import { batch, cap, directives, getCurrentInternalContext, hash, isDefined, modifiers } from "./helpers"
-import { record } from "./utils"
+import { autoid, record } from "./utils"
 import { InternalContext } from "./types"
 
 export function createAsync<T, E, A extends Array<unknown>>(fetcher: (...args: A) => Promise<T>, defaultValue?: T): AsyncReturn<T, E> {
@@ -143,7 +143,11 @@ export function createDirective<T, E extends HTMLElement = HTMLElement>(name: st
   directives.set(name, callback)
 }
 
-export function createEffect<T>(reactorHandle: (this: Closer) => void, optionOrDependency?: CreateEffectOption | Reactive<T>, ...dependencies: Array<Reactive<T>>): void {
+const effectId = autoid()
+const effectCloseCallbacks = new Map<number, Array<() => void>>()
+export function createEffect<T>(reactorHandle: (this: Closer) => void, optionOrDependency?: CreateEffectOption | Reactive<T>, ...dependencies: Array<Reactive<T>>): number {
+  const id = effectId()
+
   const updates = new Map<Reactive<T>, { prev: T | NULL, curr: T | NULL }>()
   const handle = reactorHandle.bind({ close })
   const option = (() => {
@@ -188,6 +192,9 @@ export function createEffect<T>(reactorHandle: (this: Closer) => void, optionOrD
       return
     }
 
+    const callbacks = effectCloseCallbacks.get(id)
+    if (isDefined(callbacks)) callbacks!.forEach((callback) => callback())
+
     let update = false
     for (const v of updates.values()) {
       if (v.prev == NULL) continue
@@ -204,11 +211,24 @@ export function createEffect<T>(reactorHandle: (this: Closer) => void, optionOrD
   if (option.immediate) subscriber()
 
   function close() {
+    const callbacks = effectCloseCallbacks.get(id)
+    if (isDefined(callbacks)) callbacks!.forEach((callback) => callback())
     updates.clear()
     unsubscribes.forEach((unsubscribe) => unsubscribe())
   }
 
   if (option.unsubscription) onUnmounted(close)
+
+  return id
+}
+
+export function cleanupEffect(effectId: number, callback: () => void) {
+  if (!effectCloseCallbacks.has(effectId)) {
+    effectCloseCallbacks.set(effectId, [callback])
+    return
+  }
+  const callbacks = effectCloseCallbacks.get(effectId)!
+  callbacks.push(callback)
 }
 
 export function createEventDispatcher<D>(): (name: string, detail: D) => void {
