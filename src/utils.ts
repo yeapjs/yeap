@@ -63,3 +63,7 @@ export function autoid(): () => number {
   let i = 0
   return () => i++
 }
+
+export function extend<O, F extends (...args: any) => any>(func: F, extention: O): F & O {
+  return Object.assign(func, extention)
+}

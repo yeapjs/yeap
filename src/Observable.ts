@@ -31,7 +31,7 @@ export class DeepObservable<T>  {
   #value: any
   #handlers: Array<SubscribeHandlers<T>> = []
   #dependencies: Set<Reactive<any>> = new Set()
-  constructor(value: T, parent?: DeepObservable<any> | null, freeze = false, once = false) {
+  constructor(value: T, parent: DeepObservable<any> | null = null, freeze = false, once = false) {
     this.#freeze = freeze
     this.#once = once
     this.#value = value
