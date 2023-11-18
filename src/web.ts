@@ -11,7 +11,7 @@ import { extend, reactable, unique, unwrap } from "./utils"
 
 type CustomAttribute<T> = T & { ref?: HTMLElement }
 
-export function define<T extends Record<string, any>>(name: string, component: NoConditionalComponent<CustomAttribute<T>>, { shadowed, reactiveAttributes = [], attributeCast = {} as any }: DefineCustomElementOption<T> = {}) {
+export function define<T extends Record<string, any>>(name: string, component: NoConditionalComponent<CustomAttribute<T>>, { shadowed, reactiveAttributes = [], attributeCast = {} }: DefineCustomElementOption<T> = {}) {
   class Component extends HTMLElement {
     private props: CustomAttribute<any> = {}
     #context: InternalContext
@@ -46,7 +46,7 @@ export function define<T extends Record<string, any>>(name: string, component: N
           if (name in attributeCast)
             this.props[name] = this.#reactiveProps[name].compute((value) => {
               if (attributeCast[name] === Number || attributeCast[name] === BigInt)
-                return attributeCast[name](value)
+                return attributeCast[name]!(value)
               else if (attributeCast[name] === Boolean)
                 return this.hasAttribute(name)
               return (attributeCast[name] as Function)(this, value)
@@ -54,7 +54,7 @@ export function define<T extends Record<string, any>>(name: string, component: N
           else this.props[name] = this.#reactiveProps[name].reader()
         } else if (attributeCast && name in attributeCast) {
           if (Number === attributeCast[name] || BigInt === attributeCast[name])
-            this.props[name] = attributeCast[name](value)
+            this.props[name] = attributeCast[name]!(value)
           else if (attributeCast[name] === Boolean)
             this.props[name] = true
           else this.props[name] = (attributeCast[name] as Function)(this, value)
@@ -67,7 +67,7 @@ export function define<T extends Record<string, any>>(name: string, component: N
         if (attributeCast && name in attributeCast)
           this.props[name] = this.#reactiveProps[name].compute((value) => {
             if (attributeCast[name] === Number || attributeCast[name] === BigInt)
-              return attributeCast[name](value)
+              return attributeCast[name]!(value)
             else if (attributeCast[name] === Boolean)
               return this.hasAttribute(name)
             return (attributeCast[name] as Function)(this, value)

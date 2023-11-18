@@ -8,7 +8,7 @@ interface DefineCustomElementOption<P> {
   reactiveAttributes?: string[]
   shadowed?: "closed" | "open" | false
   attributeCast?: {
-    [K in keyof P]: ((el: HTMLElement, value: string | null) => P[K]) |
+    [K in keyof P]?: ((el: HTMLElement, value: string | null) => P[K]) |
     P[K] extends number ? NumberConstructor :
     P[K] extends boolean ? BooleanConstructor :
     P[K] extends bigint ? BigIntConstructor : Function
