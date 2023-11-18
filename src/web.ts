@@ -16,7 +16,7 @@ export function define<T extends Record<string, any>>(name: string, component: N
     private props: CustomAttribute<any> = {}
     #context: InternalContext
     #parent: this | ShadowRoot
-    #reactiveProps: Record<string, Reactor<string | undefined>>
+    #reactiveProps: Record<string, Reactor<any>>
 
     static get observedAttributes() { return reactiveAttributes }
 
@@ -35,8 +35,17 @@ export function define<T extends Record<string, any>>(name: string, component: N
     }
 
     connectedCallback() {
-      for (const reactiveAttribute of reactiveAttributes) {
-        this.#reactiveProps[reactiveAttribute] = createReactor<string>(component.defaultProps?.[reactiveAttribute])
+      for (const attr of reactiveAttributes) {
+        if (!(attr in this.#reactiveProps))
+          this.#reactiveProps[attr] = createReactor(component.defaultProps?.[attr])
+      }
+
+      const cast = (name: string, value: string) => {
+        if (attributeCast[name] === Number || attributeCast[name] === BigInt)
+          return attributeCast[name]!(value)
+        else if (attributeCast[name] === Boolean)
+          return this.hasAttribute(name)
+        return (attributeCast[name] as Function)(this, value)
       }
 
       const attributes = Array.from(this.attributes)
@@ -44,38 +53,24 @@ export function define<T extends Record<string, any>>(name: string, component: N
         const name = attributes[i].name
         const value = attributes[i].value
 
-        if (attributeCast && reactiveAttributes && reactiveAttributes.includes(name)) {
-          if (name in attributeCast)
-            this.props[name] = this.#reactiveProps[name].compute((value) => {
-              if (attributeCast[name] === Number || attributeCast[name] === BigInt)
-                return attributeCast[name]!(value)
-              else if (attributeCast[name] === Boolean)
-                return this.hasAttribute(name)
-              return (attributeCast[name] as Function)(this, value)
-            })
-          else this.props[name] = this.#reactiveProps[name].reader()
-        } else if (attributeCast && name in attributeCast) {
-          if (Number === attributeCast[name] || BigInt === attributeCast[name])
-            this.props[name] = attributeCast[name]!(value)
-          else if (attributeCast[name] === Boolean)
-            this.props[name] = true
-          else this.props[name] = (attributeCast[name] as Function)(this, value)
-        } else {
-          this.props[name] = value
+        if (!reactiveAttributes || !reactiveAttributes.includes(name)) {
+          if (attributeCast && name in attributeCast)
+            this.props[name] = cast(name, value)
+          else
+            this.props[name] = value
         }
       }
 
-      for (const name in this.#reactiveProps) {
+      for (const name in attributeCast) {
         if (name in this.props) continue
 
+        if (attributeCast[name] === Boolean)
+          this.props[name] = false
+      }
+
+      for (const name in this.#reactiveProps) {
         if (attributeCast && name in attributeCast)
-          this.props[name] = this.#reactiveProps[name].compute((value) => {
-            if (attributeCast[name] === Number || attributeCast[name] === BigInt)
-              return attributeCast[name]!(value)
-            else if (attributeCast[name] === Boolean)
-              return this.hasAttribute(name)
-            return (attributeCast[name] as Function)(this, value)
-          })
+          this.props[name] = this.#reactiveProps[name].compute((value) => cast(name, value))
         else this.props[name] = this.#reactiveProps[name].reader()
       }
 
@@ -95,7 +90,10 @@ export function define<T extends Record<string, any>>(name: string, component: N
     attributeChangedCallback(propName: string, prev: string, curr: string) {
       if (prev === curr) return
 
-      this.#reactiveProps[propName](curr)
+      if (propName in this.#reactiveProps)
+        this.#reactiveProps[propName](curr)
+      else
+        this.#reactiveProps[propName] = createReactor(curr)
     }
   }
 
