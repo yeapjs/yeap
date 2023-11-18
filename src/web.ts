@@ -39,9 +39,11 @@ export function define<T extends Record<string, any>>(name: string, component: N
         this.#reactiveProps[reactiveAttribute] = createReactor<string>(component.defaultProps?.[reactiveAttribute])
       }
 
-      for (let i = 0; i < this.attributes.length; i++) {
-        const name = this.attributes[i].nodeName
-        const value = this.attributes[i].nodeValue
+      const attributes = Array.from(this.attributes)
+      for (let i = 0; i < attributes.length; i++) {
+        const name = attributes[i].name
+        const value = attributes[i].value
+
         if (attributeCast && reactiveAttributes && reactiveAttributes.includes(name)) {
           if (name in attributeCast)
             this.props[name] = this.#reactiveProps[name].compute((value) => {
@@ -58,7 +60,9 @@ export function define<T extends Record<string, any>>(name: string, component: N
           else if (attributeCast[name] === Boolean)
             this.props[name] = true
           else this.props[name] = (attributeCast[name] as Function)(this, value)
-        } else this.props[name] = value
+        } else {
+          this.props[name] = value
+        }
       }
 
       for (const name in this.#reactiveProps) {
@@ -79,10 +83,9 @@ export function define<T extends Record<string, any>>(name: string, component: N
 
       setContextParent(this.#context)
       this.#parent.append(...generateDOM(
-        toArray(hComp(component, this.props, null, Array.from(this.childNodes))),
+        toArray(hComp(component, this.props, null, Array.from(this.childNodes), this.#context)),
         this.#parent as Element
       ))
-      this.#context.mounted.forEach((handle) => handle())
     }
 
     disconnectedCallback() {
@@ -226,7 +229,8 @@ function hComp(
   component: NoConditionalComponent<any>,
   props: Props,
   fallback: any,
-  children: Array<JSX.Element>
+  children: Array<JSX.Element>,
+  executionContext?: InternalContext
 ): ElementGiver<HTMLElement, any> {
   const properties = Object.assign({}, component.defaultProps, props)
 
@@ -236,7 +240,7 @@ function hComp(
   }
 
   return extend(unique((parent: Element, previousSibling?: Element | Text) => {
-    const context = createInternalContext(component, null)
+    const context = executionContext ?? createInternalContext(component, null)
 
     context.moduleContext.props = properties
     if ("when" in props && !component.metadata?.noconditional) context.assemblyCondition = props["when"]
