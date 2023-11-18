@@ -1,8 +1,8 @@
 import { Context, Reactive } from "../types/app"
 import { ComponentInfos, DataInfos, ElementInfos, NoConditionalComponent } from "../types/components"
 import { ModuleContext } from "../types/modules"
-import { YeapConfig } from "../types/utils"
 import { COMPONENT_SYMBOL, ELEMENT_SYMBOL, MANIPULABLE_SYMBOL } from "./constantes"
+import { ContextLevel } from "./helpers"
 
 interface ProvidedContext<T> {
   id: symbol
@@ -10,7 +10,7 @@ interface ProvidedContext<T> {
 }
 
 export interface InternalContext {
-  global: 0 /* local */ | 1 /* global */ | 2 /* web component */,
+  level: ContextLevel,
   element?: Element
   parent?: InternalContext
   assemblyCondition: Reactive<boolean> | boolean
@@ -21,7 +21,6 @@ export interface InternalContext {
   unmounted: Array<Function>
   hooks: Array<any>
   hookIndex: number
-  yeapContext?: YeapConfig
   moduleContext: ModuleContext
 }
 

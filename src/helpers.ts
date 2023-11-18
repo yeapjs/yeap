@@ -37,12 +37,17 @@ export const directives = new Map<string, Function>([
   }]
 ])
 
+export enum ContextLevel {
+  global,
+  local,
+  component
+}
 
 let current: InternalContext
 let parent: InternalContext
 
 export const GLOBAL_CONTEXT: Omit<InternalContext, "assemblyCondition" | "moduleContext"> = {
-  global: 1,
+  level: ContextLevel.global,
   element: undefined,
   parent: undefined,
   highestContext: undefined,
@@ -51,8 +56,7 @@ export const GLOBAL_CONTEXT: Omit<InternalContext, "assemblyCondition" | "module
   mounted: [],
   unmounted: [],
   hooks: [],
-  hookIndex: 0,
-  yeapContext: { recordObserverValueMethod: false }
+  hookIndex: 0
 }
 setContextParent(GLOBAL_CONTEXT as InternalContext)
 setCurrentInternalContext(GLOBAL_CONTEXT as InternalContext)
@@ -66,7 +70,7 @@ export function kebabCase(str: string) {
 
 export function createInternalContext(component: NoConditionalComponent<any>, webComponent: ModuleContext["webComponent"]): InternalContext {
   const context: InternalContext = {
-    global: 0,
+    level: ContextLevel.local,
     parent,
     highestContext: parent?.highestContext ?? parent,
     assemblyCondition: true,

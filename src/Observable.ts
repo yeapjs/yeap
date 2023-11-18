@@ -1,8 +1,8 @@
 import { Reactive, Reactor, ReactorMetaData, ReadOnlyReactor, SubscribeHandler } from "../types/app"
 import { createComputed } from "./app"
 import { ARRAY_METHOD, FORCE_SYMBOL, OBSERVABLE_SYMBOL, READONLY_OBSERVABLE_SYMBOL, SEND_EVENT_SYMBOL } from "./constantes"
-import { GLOBAL_CONTEXT, isDefined, isJSXElement, recordReactor } from "./helpers"
-import { record, unwrap } from "./utils"
+import { isDefined, isJSXElement, recordReactor } from "./helpers"
+import { unwrap } from "./utils"
 
 type SubscribeHandlers<T> = ((prev: T, next: T) => void) | [(prev: T, next: T) => void, any]
 
@@ -58,7 +58,7 @@ export class DeepObservable<T>  {
         const value = this.#value
         if (DeepObservable.isObservable(value)) return value()
         if (value instanceof Function) {
-          const [firstValue, recordedReactors] = record(() => value.apply(unwrap(thisArg), argArray))
+          const firstValue = value.apply(unwrap(thisArg), argArray)
 
           // CAST-SAFETY: DeepObservable is a Proxy to type Reactor 
           const reactive = new DeepObservable(firstValue) as unknown as Reactor<T>
@@ -66,7 +66,6 @@ export class DeepObservable<T>  {
           const subscribe = () => reactive(value.apply(unwrap(thisArg), argArray))
 
           if (parent) parent.subscribe(subscribe)
-          if (GLOBAL_CONTEXT.yeapContext?.recordObserverValueMethod) recordedReactors.forEach((recordedReactor) => recordedReactor.subscribe(subscribe))
 
           return reactive.reader()
         }

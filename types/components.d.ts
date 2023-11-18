@@ -32,7 +32,6 @@ export type ComponentProps<T> = T & { fallback?: JSX.Element, when?: unknown | R
 export interface NoConditionalComponent<T extends object, C extends Array<JSX.Element> = Array<JSX.Element>> {
   (props: T, children: C): JSX.Element
   metadata?: ComponentMetadata
-  attributeTypes?: Record<string, NumberConstructor | BooleanConstructor | BigIntConstructor | ((el: HTMLElement, value?: string | null) => void)>
   defaultProps?: T
 }
 

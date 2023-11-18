@@ -5,20 +5,20 @@ import { createComputed, createReactor } from "./app"
 import { COMPONENT_SYMBOL, ELEMENT_SYMBOL, SVG_CAMELCASE_ATTR, SVG_TAGS } from "./constantes"
 import { generateDOM } from "./dom"
 import { DirectiveError, ModifierError } from "./errors"
-import { createInternalContext, GLOBAL_CONTEXT, isDefined, isEvent, setCurrentInternalContext, setContextParent, stringify, toArray, getCurrentInternalContext, isDirective, kebabCase, directives, modifiers as modifiersMap, isReactable } from "./helpers"
+import { createInternalContext, GLOBAL_CONTEXT, isDefined, isEvent, setCurrentInternalContext, setContextParent, stringify, toArray, getCurrentInternalContext, isDirective, kebabCase, directives, modifiers as modifiersMap, isReactable, ContextLevel } from "./helpers"
 import { InternalContext } from "./types"
 import { extend, reactable, unique, unwrap } from "./utils"
 
 type CustomAttribute<T> = T & { ref?: HTMLElement }
 
-export function define<T>(name: string, component: NoConditionalComponent<CustomAttribute<T>>, { reactiveAttributes, shadowed }: DefineCustomElementOption = {}) {
+export function define<T extends Record<string, any>>(name: string, component: NoConditionalComponent<CustomAttribute<T>>, { shadowed, reactiveAttributes = [], attributeCast = {} as any }: DefineCustomElementOption<T> = {}) {
   class Component extends HTMLElement {
     private props: CustomAttribute<any> = {}
     #context: InternalContext
     #parent: this | ShadowRoot
     #reactiveProps: Record<string, Reactor<string | undefined>>
 
-    static get observedAttributes() { return reactiveAttributes ?? [] }
+    static get observedAttributes() { return reactiveAttributes }
 
     constructor() {
       super()
@@ -26,44 +26,52 @@ export function define<T>(name: string, component: NoConditionalComponent<Custom
         element: this,
         mode: shadowed ?? false
       })
-      this.#context.global = 2
-      this.#context.element = this
+      this.#context.level = ContextLevel.component
+      this.#parent = shadowed ? this.attachShadow({ mode: shadowed }) : this
+      this.#context.element = this.#parent as HTMLElement
       this.#context.parent = undefined
       this.#context.highestContext = undefined
-      this.#parent = shadowed ? this.attachShadow({ mode: shadowed }) : this
       this.#reactiveProps = {}
     }
 
     connectedCallback() {
-      for (const reactiveAttribute of reactiveAttributes ?? []) {
-        this.#reactiveProps[reactiveAttribute] = createReactor<string>((component.defaultProps as any)?.[reactiveAttribute] ?? undefined)
+      for (const reactiveAttribute of reactiveAttributes) {
+        this.#reactiveProps[reactiveAttribute] = createReactor<string>(component.defaultProps?.[reactiveAttribute])
       }
 
       for (let i = 0; i < this.attributes.length; i++) {
         const name = this.attributes[i].nodeName
         const value = this.attributes[i].nodeValue
-        if (component.attributeTypes && reactiveAttributes && reactiveAttributes.includes(name)) {
-          if (name in component.attributeTypes) this.props[name] = this.#reactiveProps[name].compute((value) => {
-            if (component.attributeTypes![name] === Number || component.attributeTypes![name] === BigInt) return component.attributeTypes![name](value)
-            else if (component.attributeTypes![name] === Boolean) return this.hasAttribute(name)
-            return component.attributeTypes![name](this, value)
-          })
+        if (attributeCast && reactiveAttributes && reactiveAttributes.includes(name)) {
+          if (name in attributeCast)
+            this.props[name] = this.#reactiveProps[name].compute((value) => {
+              if (attributeCast[name] === Number || attributeCast[name] === BigInt)
+                return attributeCast[name](value)
+              else if (attributeCast[name] === Boolean)
+                return this.hasAttribute(name)
+              return (attributeCast[name] as Function)(this, value)
+            })
           else this.props[name] = this.#reactiveProps[name].reader()
-        } else if (component.attributeTypes && name in component.attributeTypes) {
-          if (Number === component.attributeTypes[name] || BigInt === component.attributeTypes[name]) this.props[name] = component.attributeTypes[name](value)
-          else if (component.attributeTypes[name] === Boolean) this.props[name] = true
-          else this.props[name] = component.attributeTypes[name](this, value)
+        } else if (attributeCast && name in attributeCast) {
+          if (Number === attributeCast[name] || BigInt === attributeCast[name])
+            this.props[name] = attributeCast[name](value)
+          else if (attributeCast[name] === Boolean)
+            this.props[name] = true
+          else this.props[name] = (attributeCast[name] as Function)(this, value)
         } else this.props[name] = value
       }
 
       for (const name in this.#reactiveProps) {
         if (name in this.props) continue
 
-        if (component.attributeTypes && name in component.attributeTypes) this.props[name] = this.#reactiveProps[name].compute((value) => {
-          if (component.attributeTypes![name] === Number || component.attributeTypes![name] === BigInt) return component.attributeTypes![name](value)
-          else if (component.attributeTypes![name] === Boolean) return this.hasAttribute(name)
-          return component.attributeTypes![name](this, value)
-        })
+        if (attributeCast && name in attributeCast)
+          this.props[name] = this.#reactiveProps[name].compute((value) => {
+            if (attributeCast[name] === Number || attributeCast[name] === BigInt)
+              return attributeCast[name](value)
+            else if (attributeCast[name] === Boolean)
+              return this.hasAttribute(name)
+            return (attributeCast[name] as Function)(this, value)
+          })
         else this.props[name] = this.#reactiveProps[name].reader()
       }
 

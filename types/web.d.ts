@@ -4,15 +4,21 @@ import { NoConditionalComponent } from "./components"
 type Props = Record<string, EventListenerOrEventListenerObject | Reactive<any> | any>
 type ElementGiver<E, F> = () => E | F | Reactive<E | F>
 
-interface DefineCustomElementOption {
+interface DefineCustomElementOption<P> {
   reactiveAttributes?: string[]
   shadowed?: "closed" | "open" | false
+  attributeCast?: {
+    [K in keyof P]: ((el: HTMLElement, value: string | null) => P[K]) |
+    P[K] extends number ? NumberConstructor :
+    P[K] extends boolean ? BooleanConstructor :
+    P[K] extends bigint ? BigIntConstructor : Function
+  }
 }
 
 /**
  * transforms a functional component into a web component
  */
-export function define<T>(name: string, component: NoConditionalComponent<T & { ref: Element }>, options?: DefineCustomElementOption): () => HTMLElement
+export function define<T>(name: string, component: NoConditionalComponent<T & { ref: Element }>, options?: DefineCustomElementOption<T>): () => HTMLElement
 
 /**
  * JSX to HTML element
