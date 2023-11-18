@@ -1,12 +1,6 @@
 import { Reactive } from "../types/app"
-import { YeapConfig } from "../types/utils"
 import { createComputed, createReactor, isReactor } from "./app"
-import { equals, GLOBAL_CONTEXT, recordReactor } from "./helpers"
-
-export function config<K extends keyof YeapConfig>(key: K, value?: YeapConfig[K]): YeapConfig[K] {
-  if (value) GLOBAL_CONTEXT.yeapContext![key] = value
-  return GLOBAL_CONTEXT.yeapContext![key]
-}
+import { equals, recordReactor } from "./helpers"
 
 export function unique<F extends (...args: any[]) => any>(fn: F): F {
   let called = false
