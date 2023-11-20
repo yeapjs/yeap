@@ -118,22 +118,15 @@ test("reactive attribute", () => {
 })
 
 test("casting attribute", () => {
+  const values = [
+    { a: true, b: 0, c: true },
+    { a: false, b: 1, c: false },
+  ]
   let i = 0
   const component = ({ ref, ...attributes }) => {
-    if (i === 0)
-      expect(attributes).toMatchObject({
-        a: true,
-        b: 0,
-        c: true,
-      })
-    else if (i === 1)
-      expect(attributes).toMatchObject({
-        a: false,
-        b: 1,
-        c: false,
-      })
-
+    expect(attributes).toMatchObject(values[i++])
     expect(ref).not.toBeNull()
+
     return <p>Hello</p>
   }
   define("test-1", component, {
@@ -147,7 +140,6 @@ test("casting attribute", () => {
   })
   // @ts-ignore
   render(<test-1 a="a" b={0} c></test-1>, document.body)
-  i++
   // @ts-ignore
   render(<test-1 a="b" b="1"></test-1>, document.body)
 })
