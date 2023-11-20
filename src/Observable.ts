@@ -158,7 +158,7 @@ export class DeepObservable<T>  {
   }
 
   call(prev: T, next: T) {
-    this.#handlers.forEach((handle) => {
+    if (prev !== next) this.#handlers.forEach((handle) => {
       if (Array.isArray(handle)) handle[0](prev, next)
       else handle(prev, next)
     })
@@ -177,9 +177,7 @@ export class DeepObservable<T>  {
 
   reader() {
     const observable = new DeepObservable(this.#value, null, true, false)
-    this.subscribe((prev, curr) => {
-      if (prev === curr) return
-
+    this.subscribe((_, curr) => {
       observable[FORCE_SYMBOL] = curr
     })
     observable.metadata().dependencies = this.#dependencies
