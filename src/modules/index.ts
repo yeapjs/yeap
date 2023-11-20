@@ -1,5 +1,6 @@
-import { ModuleContext } from "../../types/modules";
-import { ContextLevel, getCurrentInternalContext } from "../helpers";
+import { ModuleContext } from "../../types/modules"
+import { createPersistentReactor } from "../app"
+import { ContextLevel, getCurrentInternalContext } from "../helpers"
 
 export function getContext(): ModuleContext | null {
     const internalContext = getCurrentInternalContext()
@@ -7,4 +8,22 @@ export function getContext(): ModuleContext | null {
 
     internalContext.moduleContext.extracted++
     return internalContext.moduleContext
+}
+
+export function onElementCreation(handler: (el: HTMLElement) => void) {
+    const first = createPersistentReactor(true)
+
+    if (!first(false)) return
+
+    const internalContext = getCurrentInternalContext()
+    internalContext.events.push("element-creation", handler)
+}
+
+export function onElementPopulate(handler: (el: HTMLElement) => void) {
+    const first = createPersistentReactor(true)
+
+    if (!first(false)) return
+
+    const internalContext = getCurrentInternalContext()
+    internalContext.events.push("element-populate", handler)
 }

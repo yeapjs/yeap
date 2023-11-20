@@ -84,7 +84,7 @@ export function define<T extends Record<string, any>>(name: string, component: N
     }
 
     disconnectedCallback() {
-      this.#context.unmounted.forEach((handle) => handle())
+      this.#context.call("unmounted")
     }
 
     attributeChangedCallback(propName: string, prev: string, curr: string) {
@@ -209,10 +209,14 @@ export function h(tag: NoConditionalComponent<any> | (() => JSX.Element) | strin
     }
   }
 
+
+  const context = getCurrentInternalContext()
+  context.call("element-creation", element)
+
   return extend(unique(() => {
-    const context = getCurrentInternalContext()
     context.htmlConditions.push(display)
     element.append(...generateDOM(children, element))
+    context.call("element-populate", element)
 
     if ("when" in props && isReactable(props["when"])) return display.when(element, fallback)
 
@@ -262,7 +266,7 @@ function hComp(
       if (!allConditions.some((reactive) => !reactive())) {
         if (dom) {
           if (toMount) {
-            context.mounted.forEach((handle) => handle())
+            context.call("mounted")
             toMount = false
           }
 
@@ -274,7 +278,7 @@ function hComp(
         const elements = toArray(component(properties, children))
         dom = generateDOM(elements, parent, previousSibling)
 
-        context.mounted.forEach((handle) => handle())
+        context.call("mounted")
         toMount = false
 
         setCurrentInternalContext(context.parent!)
@@ -283,7 +287,7 @@ function hComp(
         return dom
       } else {
         if (!toMount) {
-          context.unmounted.forEach((handle) => handle())
+          context.call("unmounted")
           toMount = true
         }
 
@@ -304,7 +308,4 @@ function hComp(
 
 export function render(children: JSX.Element, container: HTMLElement | SVGElement) {
   container.append(...generateDOM(toArray(children), container))
-
-  GLOBAL_CONTEXT.mounted.forEach((handle) => handle())
-  GLOBAL_CONTEXT.mounted = []
 }

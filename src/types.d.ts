@@ -1,6 +1,7 @@
 import { Context, Reactive } from "../types/app"
 import { ComponentInfos, DataInfos, ElementInfos, NoConditionalComponent } from "../types/components"
 import { ModuleContext } from "../types/modules"
+import { MapList } from "./MapList"
 import { COMPONENT_SYMBOL, ELEMENT_SYMBOL, MANIPULABLE_SYMBOL } from "./constantes"
 import { ContextLevel } from "./helpers"
 
@@ -17,11 +18,11 @@ export interface InternalContext {
   htmlConditions: Array<Reactive<boolean>>
   highestContext?: InternalContext
   contexts: Record<symbol, { context?: Context<any> | null, provider: ProvidedContext<any> | null }>
-  mounted: Array<Function>
-  unmounted: Array<Function>
+  events: MapList<string, Function>
   hooks: Array<any>
   hookIndex: number
   moduleContext: ModuleContext
+  call(key: string, ...args: Array<any>): void
 }
 
 export type ComponentCaller = Function & {

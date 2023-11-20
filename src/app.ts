@@ -318,7 +318,7 @@ export function onMounted(handler: Function) {
   if (!first(false)) return
 
   const context = getCurrentInternalContext()
-  context.mounted.push(handler)
+  context.events.push("mounted", handler)
 }
 
 export function onUnmounted(handler: Function) {
@@ -327,7 +327,7 @@ export function onUnmounted(handler: Function) {
   if (!first(false)) return
 
   const context = getCurrentInternalContext()
-  context.unmounted.push(handler)
+  context.events.push("unmounted", handler)
 }
 
 export function useContext<T>(context: Context<T>): T {

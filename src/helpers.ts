@@ -2,6 +2,7 @@ import { Reactive, Reactor } from "../types/app"
 import { NoConditionalComponent } from "../types/components"
 import { ModuleContext } from "../types/modules"
 import { COMPONENT_SYMBOL, ELEMENT_SYMBOL, MANIPULABLE_SYMBOL, } from "./constantes"
+import { MapList } from "./MapList"
 import { Recorder } from "./Recorder"
 import { cancelRuntimeCallback, requestRuntimeCallback } from "./runtime"
 import { InternalContext, ComponentCaller, ElementCaller, Children } from "./types"
@@ -53,10 +54,10 @@ export const GLOBAL_CONTEXT: Omit<InternalContext, "assemblyCondition" | "module
   highestContext: undefined,
   htmlConditions: [],
   contexts: {},
-  mounted: [],
-  unmounted: [],
+  events: new MapList(),
   hooks: [],
-  hookIndex: 0
+  hookIndex: 0,
+  call
 }
 setContextParent(GLOBAL_CONTEXT as InternalContext)
 setCurrentInternalContext(GLOBAL_CONTEXT as InternalContext)
@@ -68,6 +69,10 @@ export function kebabCase(str: string) {
     .toLowerCase()
 }
 
+function call(this: InternalContext, key: string, ...args: Array<any>) {
+  this.events.forEach(key, (handle) => handle(...args))
+}
+
 export function createInternalContext(component: NoConditionalComponent<any>, webComponent: ModuleContext["webComponent"]): InternalContext {
   const context: InternalContext = {
     level: ContextLevel.local,
@@ -76,8 +81,7 @@ export function createInternalContext(component: NoConditionalComponent<any>, we
     assemblyCondition: true,
     htmlConditions: [],
     contexts: {},
-    mounted: [],
-    unmounted: [],
+    events: new MapList(),
     hooks: [],
     hookIndex: 0,
     moduleContext: {
@@ -85,7 +89,8 @@ export function createInternalContext(component: NoConditionalComponent<any>, we
       props: {},
       component,
       extracted: 0
-    }
+    },
+    call
   }
 
   current = context
