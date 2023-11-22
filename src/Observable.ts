@@ -4,7 +4,7 @@ import { ARRAY_METHOD, FORCE_SYMBOL, OBSERVABLE_SYMBOL, READONLY_OBSERVABLE_SYMB
 import { isDefined, isJSXElement, recordReactor } from "./helpers"
 import { unwrap } from "./utils"
 
-type SubscribeHandlers<T> = ((prev: T, next: T) => void) | [(prev: T, next: T) => void, any]
+type SubscribeHandlers<T> = ((prev: T, next: T) => void) | [(prev: T, next: T) => void, PropertyKey]
 
 export class DeepObservable<T>  {
   [x: PropertyKey]: any
@@ -149,7 +149,7 @@ export class DeepObservable<T>  {
     return this.#proxy as any
   }
 
-  subscribe(handler: SubscribeHandler<T>, id?: any) {
+  subscribe(handler: SubscribeHandler<T>, id?: PropertyKey) {
     if (id) this.#handlers.push([handler, id])
     else this.#handlers.push(handler)
     return () => {

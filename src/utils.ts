@@ -2,7 +2,7 @@ import { Reactive } from "../types/app"
 import { createComputed, createReactor, isReactor } from "./app"
 import { equals, recordReactor } from "./helpers"
 
-export function unique<F extends (...args: any[]) => any>(fn: F): F {
+export function unique<F extends (...args: Array<any>) => any>(fn: F): F {
   let called = false
   let value: ReturnType<F>
 
@@ -15,7 +15,7 @@ export function unique<F extends (...args: any[]) => any>(fn: F): F {
   } as F
 }
 
-export function memo<F extends (...args: any[]) => any>(fn: F): F {
+export function memo<F extends (...args: Array<any>) => any>(fn: F): F {
   let lastArgs: Parameters<F>
   let value: ReturnType<F>
 
@@ -38,7 +38,7 @@ export function reactable<T>(callback: Reactive<T> | (() => T) | T): Reactive<T>
   return createReactor(callback)
 }
 
-export function untrack<T, F extends (...args: any[]) => any>(callback: F, ...deps: Array<Reactive<T>>): F {
+export function untrack<T, F extends (...args: Array<any>) => any>(callback: F, ...deps: Array<Reactive<T>>): F {
   return function (this: ThisParameterType<F>, ...args: Parameters<F>) {
     if (!deps.length) recordReactor.pause()
     const value = callback.apply(this, args)

@@ -56,7 +56,7 @@ export function noconditional<T extends object>(comp: NoConditionalComponent<T>)
 }
 
 export const Dynamic: Component<{
-  component: Component<any> | string
+  component: Component | string
 }> = ({ component, ...props }, children) => {
   return h(component, props, children)
 }

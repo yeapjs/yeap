@@ -5,7 +5,7 @@ import { createComputed, createReactor } from "./app"
 import { COMPONENT_SYMBOL, ELEMENT_SYMBOL, SVG_CAMELCASE_ATTR, SVG_TAGS } from "./constantes"
 import { generateDOM } from "./dom"
 import { DirectiveError, ModifierError } from "./errors"
-import { createInternalContext, GLOBAL_CONTEXT, isDefined, isEvent, setCurrentInternalContext, setContextParent, stringify, toArray, getCurrentInternalContext, isDirective, kebabCase, directives, modifiers as modifiersMap, isReactable, ContextLevel } from "./helpers"
+import { createInternalContext, isDefined, isEvent, setCurrentInternalContext, setContextParent, stringify, toArray, getCurrentInternalContext, isDirective, kebabCase, directives, modifiers as modifiersMap, isReactable, ContextLevel } from "./helpers"
 import { InternalContext } from "./types"
 import { extend, reactable, unique, unwrap } from "./utils"
 

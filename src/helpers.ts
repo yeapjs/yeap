@@ -191,7 +191,7 @@ export function equals(a: any, b: any) {
 }
 
 export function diff(obj1: Record<string, [any, any]>, obj2: Record<string, [any, any]>): Record<string, { old: any, new: any, action: "add" | "del" | "update" }> | null {
-  const result: Record<any, any> = {}
+  const result: Record<string, any> = {}
 
   if (Object.is(obj1, obj2)) return null
   if (!obj2 || typeof obj2 !== 'object') return obj2;

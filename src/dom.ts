@@ -5,7 +5,7 @@ import { batch, diff, isJSXElement, isManipulable, isReactable, stringify, toArr
 import { ComponentCaller, ElementCaller } from "./types"
 import { reactable } from "./utils"
 
-function generateTextNode(data: any): Element | Text {
+function generateTextNode(data: unknown): Element | Text {
   return document.createTextNode(stringify(data))
 }
 
@@ -83,7 +83,7 @@ export function generateDOM(jsxElements: Array<JSX.Element | ElementCaller | Com
 }
 
 function toArrayObject(obj: any) {
-  const result: Record<any, any> = {}
+  const result: Record<PropertyKey, any> = {}
   for (const i in obj) {
     const key = !isReactor(obj[i]) && isJSXElement(obj[i]) ? obj[i]?.key ?? i : i
     result[key] = [+i, obj[i]]

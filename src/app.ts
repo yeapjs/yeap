@@ -138,7 +138,7 @@ export function createContext<T>(defaultValue?: T): Context<T> {
   return context
 }
 
-export function createDirective<T, E extends HTMLElement = HTMLElement>(name: string, callback: ((el: E, value: T) => any)) {
+export function createDirective<T, E extends HTMLElement = HTMLElement>(name: string, callback: (el: E, value: T) => void) {
   directives.set(name, callback)
 }
 

@@ -26,14 +26,14 @@ export interface InternalContext {
 }
 
 export type ComponentCaller = Function & {
-  key: any
-  props: any,
+  key: PropertyKey
+  props: object,
   component: NoConditionalComponent<object>,
   children: Array<JSX.Element>,
   [COMPONENT_SYMBOL]: true
 }
 export type ElementCaller = Function & {
-  key: any
+  key: PropertyKey
   [ELEMENT_SYMBOL]: true
 }
 export type Children = Array<{ [MANIPULABLE_SYMBOL]: true } & (ComponentInfos | DataInfos | ElementInfos)>
