@@ -1,3 +1,10 @@
+export class CSSError extends Error {
+  constructor(message?: string, options?: ErrorOptions) {
+    super(message, options)
+    this.name = "CSSError"
+  }
+}
+
 export class DirectiveError extends Error {
   constructor(message?: string, options?: ErrorOptions) {
     super(message, options)

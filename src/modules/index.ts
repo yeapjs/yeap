@@ -2,6 +2,8 @@ import { ModuleContext } from "../../types/modules"
 import { createPersistentReactor } from "../app"
 import { ContextLevel, getCurrentInternalContext } from "../helpers"
 
+export * from "./css"
+
 export function getContext(): ModuleContext | null {
     const internalContext = getCurrentInternalContext()
     if (internalContext.level == ContextLevel.global) return null
