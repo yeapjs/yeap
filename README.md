@@ -30,6 +30,8 @@ pnpm add yeap
 
 ## How to use
 
+## /!\ THE FOLLOWING DOCUMENTATION IS NOT UP TO DATE
+
 Yeap use the jsx, and the reactivity system.
 The reactivity system is based on the function `createReactor`.
 
