@@ -245,7 +245,7 @@ export class DeepObservable<T>  {
   /// Array Method Overwrite for allow the reactivity
   push<I extends T extends Array<infer I> ? I : never>(this: Reactive<Array<I>>, ...items: Array<I>): number {
     this((arr) => [...arr, ...items])
-    return this.length
+    return this.length()
   }
   pop<I extends T extends Array<infer I> ? I : never>(this: Reactive<Array<I>>): Reactive<I> | undefined {
     let l = this.length()
@@ -258,7 +258,7 @@ export class DeepObservable<T>  {
 
   unshift<I extends T extends Array<infer I> ? I : never>(this: Reactive<Array<I>>, ...items: Array<I>): number {
     this((arr) => [...items, ...arr])
-    return this.length
+    return this.length()
   }
   shift<I extends T extends Array<infer I> ? I : never>(this: Reactive<Array<I>>): Reactive<I> | undefined {
     const first = this[0]

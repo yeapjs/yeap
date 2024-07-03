@@ -11,3 +11,8 @@ export interface ModuleContext {
 }
 
 export function getContext(): ModuleContext | null
+export function onElementCreation(handler: (el: HTMLElement) => void): void
+export function onElementPopulate(handler: (el: HTMLElement) => void): void
+
+// CSS MODULE
+export function css(value: string): void

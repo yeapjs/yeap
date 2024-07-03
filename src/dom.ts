@@ -32,7 +32,8 @@ function generateSensibleDOM(reactor: Reactive<any>, parent: Element, previousSi
 
       if (action === "del") {
         currentElements[i].remove()
-        if (isReactor(currentValues[i])) currentValues[i][SEND_EVENT_SYMBOL]("delete_dom")
+        if (isReactor(currentValues[i]))
+          (currentValues[i] as any)[SEND_EVENT_SYMBOL]("delete_dom")
         delete currentElements[i]
       } else if (action === "add") {
         const newElements = generateDOM(values, parent)
