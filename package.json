@@ -45,7 +45,7 @@
     "coverage": "vitest --coverage",
     "dev": "tsc --watch",
     "build": "tsc",
-    "prepack": "npm run build"
+    "prepack": "rm -rf lib && npm run build"
   },
   "repository": {
     "type": "git",
